@@ -7,9 +7,7 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    html {
-      scroll-behavior: smooth;
-    }
+    html { scroll-behavior: smooth; }
     body {
       min-height: 100vh;
       background: #000;
@@ -18,7 +16,6 @@
       color: #fff;
     }
 
-    /* === CINEMA SECTION — pinned to viewport === */
     #cinema-section {
       position: fixed;
       inset: 0;
@@ -45,7 +42,6 @@
     body.vr-mode #view-resume-btn,
     body.vr-mode #ar-button { display: none; }
 
-    /* === PROJECTOR SCREEN === */
     #screen-wrapper {
       position: relative;
       z-index: 10;
@@ -85,7 +81,6 @@
     }
     #screen-scroll .meta { color: #777; font-size: 0.85em; margin-top: 28px; }
 
-    /* === CARTRIDGES === */
     .cartridge {
       position: relative;
       z-index: 20;
@@ -127,7 +122,6 @@
         0 14px 34px rgba(0,0,0,0.9);
     }
 
-    /* === CINEMA CHROME === */
     #view-resume-btn {
       position: absolute;
       top: 16px; right: 16px;
@@ -175,13 +169,11 @@
     #ar-button:hover { color: #fff; border-color: #666; }
     #ar-button:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    /* === SCROLL SPACER — holds cinema in place while resume scrolls over === */
     #cinema-spacer {
       height: 100vh;
       pointer-events: none;
     }
 
-    /* === RESUME SECTION — real, readable HTML === */
     #resume-section {
       position: relative;
       z-index: 10;
@@ -331,7 +323,6 @@
   </style>
 </head>
 <body>
-  <!-- ============ CINEMA (pinned) ============ -->
   <section id="cinema-section">
     <canvas id="webgl-canvas"></canvas>
     <div id="css3d-root"></div>
@@ -340,7 +331,6 @@
     <button id="ar-button">Step Into Cinema</button>
   </section>
 
-  <!-- ============ RESUME (scrolls over cinema) ============ -->
   <div id="cinema-spacer"></div>
 
   <section id="resume-section">
@@ -435,9 +425,6 @@
     import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
     import html2canvas from 'html2canvas';
 
-    // =========================================================
-    // CONTENT
-    // =========================================================
     const CONTENT = {
       rendering: `<div class="kicker">Lens 01 · Rendering &amp; Throughput</div>
         <h1>Senior Render Wrangler</h1>
@@ -478,9 +465,6 @@
         <h2>Tools</h2><p>Arnold · Katana · Houdini · Nuke · OpenColorIO</p>`,
     };
 
-    // =========================================================
-    // THREE SETUP
-    // =========================================================
     const canvas = document.getElementById('webgl-canvas');
     const css3dRoot = document.getElementById('css3d-root');
 
@@ -500,16 +484,10 @@
     css3dRenderer.domElement.style.pointerEvents = 'none';
     css3dRoot.appendChild(css3dRenderer.domElement);
 
-    // =========================================================
-    // LAYOUT STATE
-    // =========================================================
     const layoutState = { visibleW: 1, visibleH: 1, screenWorldW: 1, screenWorldH: 1 };
     const CART_W = 320;
     const CART_H = 180;
 
-    // =========================================================
-    // 360 PANORAMA — Poly Haven studio, CC0
-    // =========================================================
     const panoTexture = new THREE.TextureLoader().load(
       'https://dl.polyhaven.org/file/ph-assets/HDRIs/extra/Tonemapped%20JPG/studio_small_03.jpg'
     );
@@ -518,9 +496,6 @@
     const pano = new THREE.Mesh(new THREE.SphereGeometry(50, 64, 40), panoMaterial);
     scene.add(pano);
 
-    // =========================================================
-    // PROJECTOR SCREEN
-    // =========================================================
     const screenWrapper = document.createElement('div');
     screenWrapper.id = 'screen-wrapper';
     const screenScroll = document.createElement('div');
@@ -529,9 +504,6 @@
     const screenObject = new CSS3DObject(screenWrapper);
     scene.add(screenObject);
 
-    // =========================================================
-    // CARTRIDGES
-    // =========================================================
     const CARTRIDGE_DEFS = [
       { id: 'rendering', label: 'Cartridge 01', title: 'Senior Render Wrangler',
         bg: 'linear-gradient(145deg,#7a1f17,#c0392b)' },
@@ -566,9 +538,6 @@
       });
     });
 
-    // =========================================================
-    // XR SCREEN
-    // =========================================================
     const xrScreenCanvas = document.createElement('canvas');
     xrScreenCanvas.width = 1280;
     xrScreenCanvas.height = 720;
@@ -579,10 +548,8 @@
     xrScreenMesh.visible = false;
     scene.add(xrScreenMesh);
 
-    // =========================================================
-    // HEAD-LOOK STATE
-    // =========================================================
     let yaw = 0, pitch = 0, targetYaw = 0, targetPitch = 0;
+    let screenYaw = 0, screenTargetYaw = 0;
     const YAW_LIMIT   = THREE.MathUtils.degToRad(70);
     const PITCH_LIMIT = THREE.MathUtils.degToRad(25);
     const CAMERA_DAMP_LAMBDA = 2.5;
@@ -617,6 +584,8 @@
     canvas.addEventListener('pointerup', endDrag);
     canvas.addEventListener('pointercancel', endDrag);
 
+    // Pan camera to face the projector, AND rotate the screen to face the camera.
+    // Both damped with the same lambda so they arrive together, flat-on.
     function faceScreen() {
       const dir = new THREE.Vector3()
         .subVectors(screenObject.position, camera.position)
@@ -624,11 +593,9 @@
         .normalize();
       targetYaw = THREE.MathUtils.clamp(Math.atan2(-dir.x, -dir.z), -YAW_LIMIT, YAW_LIMIT);
       targetPitch = 0;
+      screenTargetYaw = targetYaw;
     }
 
-    // =========================================================
-    // TWEEN SYSTEM
-    // =========================================================
     const sleep = ms => new Promise(r => setTimeout(r, ms));
     function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
     function easeInQuad(t)   { return t * t; }
@@ -682,9 +649,6 @@
       if (cart.anim) { cart.anim.resolve(); cart.anim = null; }
     }
 
-    // =========================================================
-    // POSITIONING
-    // =========================================================
     function snapToHome(cart) {
       cart.obj.position.copy(cart.homePosition);
       cart.obj.scale.setScalar(cart.homeScale);
@@ -694,14 +658,22 @@
       cart.state = 'on_shelf';
     }
 
+    // Rotation-aware slot. As the screen rotates by screenYaw around its own
+    // origin, a point at local (0, localY, localZ) maps to world offset
+    // (localZ * sin(yaw), localY, localZ * cos(yaw)) from screen center.
     function getSlotPosition(cart) {
-      const sx = screenObject.position.x;
-      const sy = screenObject.position.y;
-      const screenTop = sy + layoutState.screenWorldH / 2;
       const insertedScale = cart.homeScale * 0.65;
       const insertedCartH = CART_H * insertedScale;
-      const cartCenterY = screenTop + insertedCartH * 0.3;
-      return new THREE.Vector3(sx, cartCenterY, -0.2);
+      const localY = layoutState.screenWorldH / 2 + insertedCartH * 0.3;
+      const localZ = -0.2;
+      const sy = screenObject.rotation.y;
+      const cos = Math.cos(sy);
+      const sin = Math.sin(sy);
+      return new THREE.Vector3(
+        screenObject.position.x + localZ * sin,
+        screenObject.position.y + localY,
+        screenObject.position.z + localZ * cos
+      );
     }
 
     function snapToSlot(cart) {
@@ -750,9 +722,6 @@
       }
     }
 
-    // =========================================================
-    // LAYOUT
-    // =========================================================
     let currentOrientation = 'landscape';
 
     function updateLayout() {
@@ -797,7 +766,7 @@
 
       xrScreenMesh.scale.set(screenWorldW, screenWorldH, 1);
       xrScreenMesh.position.copy(screenObject.position);
-      xrScreenMesh.quaternion.copy(screenObject.quaternion);
+      xrScreenMesh.rotation.set(0, screenYaw, 0);
 
       for (const cart of cartridgeObjects) {
         if (!cart.anim) continue;
@@ -813,9 +782,6 @@
       if (orientation !== currentOrientation) currentOrientation = orientation;
     }
 
-    // =========================================================
-    // INSERT / EJECT
-    // =========================================================
     function cancelInsert(cart) {
       cancelTween(cart);
       cart.state = 'on_shelf';
@@ -888,9 +854,6 @@
       cart.state = 'on_shelf';
     }
 
-    // =========================================================
-    // SELECTION
-    // =========================================================
     async function selectCartridge(id) {
       const newCart = cartridgeObjects.find(c => c.id === id);
       if (!newCart) return;
@@ -925,9 +888,6 @@
       if (newCart.state === 'inserted') insertedCartridge = newCart;
     }
 
-    // =========================================================
-    // SCROLL NAVIGATION
-    // =========================================================
     document.getElementById('view-resume-btn').addEventListener('click', () => {
       document.getElementById('resume-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
@@ -936,9 +896,6 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 
-    // =========================================================
-    // XR SNAPSHOT
-    // =========================================================
     async function snapshotToXrScreen() {
       try {
         await document.fonts.ready;
@@ -966,9 +923,6 @@
       }
     }
 
-    // =========================================================
-    // XR SESSION
-    // =========================================================
     let xrSession = null;
     let usesDeviceOrientation = false;
     function isInXR() { return webglRenderer.xr.isPresenting || usesDeviceOrientation; }
@@ -1071,9 +1025,6 @@
       }
     });
 
-    // =========================================================
-    // RENDER LOOP
-    // =========================================================
     let lastTime = performance.now();
 
     function isCinemaVisible() {
@@ -1084,6 +1035,17 @@
       yaw   = THREE.MathUtils.damp(yaw,   targetYaw,   CAMERA_DAMP_LAMBDA, dt);
       pitch = THREE.MathUtils.damp(pitch, targetPitch, CAMERA_DAMP_LAMBDA, dt);
       camera.rotation.set(pitch, yaw, 0, 'YXZ');
+
+      // Rotate the projector screen to face the camera after the pan.
+      // Only changes when auto-panning (targetYaw changed via faceScreen).
+      screenYaw = THREE.MathUtils.damp(screenYaw, screenTargetYaw, CAMERA_DAMP_LAMBDA, dt);
+      screenObject.rotation.y = screenYaw;
+      xrScreenMesh.rotation.y = screenYaw;
+
+      // Keep inserted cart aligned with the (possibly rotating) slot.
+      if (insertedCartridge && insertedCartridge.state === 'inserted') {
+        snapToSlot(insertedCartridge);
+      }
     }
 
     function flatAnimate(now) {
@@ -1133,9 +1095,6 @@
       }
     }
 
-    // =========================================================
-    // RESIZE
-    // =========================================================
     let resizeTimer;
     function onResize() {
       clearTimeout(resizeTimer);
@@ -1144,9 +1103,6 @@
     window.addEventListener('resize', onResize);
     window.addEventListener('orientationchange', onResize);
 
-    // =========================================================
-    // BOOT
-    // =========================================================
     updateLayout();
     selectCartridge('rendering');
     startRenderLoop();
