@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Resume Cinema — MVP 0</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: #000;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    #webgl-canvas {
+      position: fixed; inset: 0;
+      width: 100%; height: 100%;
+      display: block;
+      z-index: 1;
+    }
+
+    #css3d-root {
+      position: fixed; inset: 0;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* ---- PROJECTOR SCREEN ---- */
+    /* Wrapper gets the CSS3D transform. It must NOT be the scroll container. */
+    #screen-wrapper {
+      background: #0b0b0d;
+      border: 10px solid #1c1c1f;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow:
+        0 0 0 2px #2a2a2e,
+        0 30px 80px rgba(0, 0, 0, 0.9),
+        0 0 120px rgba(80, 120, 255, 0.06);
+    }
+
+    /* Inner scroller. NO transform on this element. This is the scroll container. */
+    #screen-scroll {
+      width: 100%; height: 100%;
+      overflow-y: auto;
+      overflow-x: hidden;
+      pointer-events: auto;
+      color: #e8e8ec;
+      font-size: clamp(14px, 1.4vw, 20px);
+      line-height: 1.55;
+      padding: 40px 44px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    #screen-scroll::-webkit-scrollbar { width: 8px; }
+    #screen-scroll::-webkit-scrollbar-track { background: #141417; }
+    #screen-scroll::-webkit-scrollbar-thumb {
+      background: #3a3a40; border-radius: 4px;
+    }
+    #screen-scroll h1 { font-size: 2em; margin-bottom: 6px; color: #fff; letter-spacing: -0.01em; }
+    #screen-scroll h2 { font-size: 1.3em; margin: 28px 0 10px; color: #b9c4ff; }
+    #screen-scroll p  { margin-bottom: 14px; color: #c8c8cf; }
+    #screen-scroll ul { margin-left: 22px; margin-bottom: 16px; color: #c8c8cf; }
+    #screen-scroll li { margin-bottom: 6px; }
+    #screen-scroll .kicker {
+      font-size: 0.75em; letter-spacing: 0.12em; text-transform: uppercase;
+      color: #ff9d5c; margin-bottom: 14px; font-weight: 700;
+    }
+    #screen-scroll .meta { color: #777; font-size: 0.85em; margin-top: 28px; }
+
+    /* ---- CARTRIDGES ---- */
+    #cartridge-list {
+      position: fixed;
+      z-index: 10;
+      display: flex;
+      gap: 14px;
+    }
+
+    @media (orientation: landscape) {
+      #cartridge-list {
+        right: 24px; top: 50%;
+        transform: translateY(-50%);
+        flex-direction: column;
+      }
+    }
+    @media (orientation: portrait) {
+      #cartridge-list {
+        bottom: 20px; left: 50%;
+        transform: translateX(-50%);
+        flex-direction: row;
+      }
+    }
+
+    .cartridge {
+      border: 3px solid rgba(255,255,255,0.75);
+      border-radius: 6px;
+      color: #fff;
+      cursor: pointer;
+      padding: 10px 12px;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.7);
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+      width: 140px;
+      height: 180px;
+      font-family: inherit;
+      background: #333;
+    }
+    .cartridge .label {
+      font-size: 10px; opacity: 0.75;
+      text-transform: uppercase; letter-spacing: 1px;
+    }
+    .cartridge .title {
+      font-size: 15px; font-weight: 700; line-height: 1.2;
+    }
+    .cartridge:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 14px 34px rgba(0,0,0,0.85);
+      border-color: #fff;
+    }
+    .cartridge.active {
+      border-color: #ffb87a;
+      box-shadow: 0 0 0 3px rgba(255, 184, 122, 0.35), 0 14px 34px rgba(0,0,0,0.85);
+    }
+
+    @media (orientation: portrait) {
+      .cartridge {
+        width: min(100px, 22vw);
+        height: min(130px, 28vw);
+        padding: 8px;
+      }
+      .cartridge .title { font-size: 12px; }
+      .cartridge .label { font-size: 8px; }
+    }
+
+    /* ---- CHROME ---- */
+    #pdf-link {
+      position: fixed;
+      top: 16px; left: 16px;
+      z-index: 20;
+      color: #aaa; font-size: 13px;
+      text-decoration: none;
+      padding: 8px 12px;
+      border: 1px solid #333;
+      border-radius: 6px;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(6px);
+      transition: color 0.15s, border-color 0.15s;
+    }
+    #pdf-link:hover { color: #fff; border-color: #666; }
+
+    #loading {
+      position: fixed; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: #000; color: #666;
+      font-size: 13px; letter-spacing: 0.15em; text-transform: uppercase;
+      z-index: 100;
+      transition: opacity 0.6s;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="webgl-canvas"></canvas>
+  <div id="css3d-root"></div>
+
+  <a id="pdf-link" href="/resume.pdf" target="_blank" rel="noopener">↓ Plain PDF resume</a>
+
+  <div id="cartridge-list">
+    <button class="cartridge" data-id="rendering" style="background: linear-gradient(145deg,#7a1f17,#c0392b);">
+      <span class="label">Cartridge 01</span>
+      <span class="title">Senior Render Wrangler</span>
+    </button>
+    <button class="cartridge" data-id="pipeline" style="background: linear-gradient(145deg,#1e5c36,#27ae60);">
+      <span class="label">Cartridge 02</span>
+      <span class="title">Pipeline Engineer</span>
+    </button>
+    <button class="cartridge" data-id="lookdev" style="background: linear-gradient(145deg,#1a487a,#2980b9);">
+      <span class="label">Cartridge 03</span>
+      <span class="title">Look Development</span>
+    </button>
+  </div>
+
+  <div id="loading">Loading cinema…</div>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
+
+    // =========================================================
+    // 1. CONTENT — one HTML string per cartridge.
+    //    In production these would be fetched or imported.
+    // =========================================================
+    const CONTENT = {
+      rendering: `
+        <div class="kicker">Lens 01 · Rendering &amp; Throughput</div>
+        <h1>Senior Render Wrangler</h1>
+        <p>The role behind the role: how I've kept render farms alive, shots flowing, and deadlines honest across a decade of production.</p>
+
+        <h2>Through-line</h2>
+        <p><strong>2018 · Studio A.</strong> My title was Production Engineer, but the work was render wrangling — overnight farm triage, shot prioritization, and emergency troubleshooting for 40+ artists.</p>
+        <p><strong>2020–2022 · Studio B.</strong> I owned the submission pipeline. Average shot turnaround dropped 34%, and the nightly render queue never missed a delivery window for two consecutive seasons.</p>
+
+        <h2>What I actually built</h2>
+        <ul>
+          <li>Automated overnight farm triage — reduced artist morning triage from 90 minutes to 15.</li>
+          <li>Shot prioritization system that surfaced blocking renders before artists knew they were blocked.</li>
+          <li>Cloud burst rendering pipeline that scaled to 2,000 nodes during crunch.</li>
+        </ul>
+
+        <h2>Tools</h2>
+        <p>Deadline · OpenCue · AWS · Python · Prometheus · Grafana</p>
+
+        <p class="meta">Click another cartridge to see the same career through a different lens.</p>
+      `,
+      pipeline: `
+        <div class="kicker">Lens 02 · Pipeline &amp; Tooling</div>
+        <h1>Pipeline Engineer</h1>
+        <p>The connective tissue between departments: the tools, naming conventions, and automation that let artists do their work.</p>
+
+        <h2>Through-line</h2>
+        <p>Every role I've held, I ended up building the tool the department didn't know it needed. Asset QC at Studio C. Naming and versioning overhaul at Studio D. Render submission at Studio A.</p>
+
+        <h2>What I actually built</h2>
+        <ul>
+          <li>Naming and versioning overhaul that eliminated 90% of asset mis-delivery incidents.</li>
+          <li>Asset QC automation that flagged 1,200 issues across three shows before they reached lighting.</li>
+          <li>Render submission tool adopted by 4 departments and 80+ artists.</li>
+        </ul>
+
+        <h2>Tools</h2>
+        <p>Python · Maya · Nuke · ShotGrid · Docker · Kubernetes</p>
+
+        <p class="meta">Click another cartridge to see the same career through a different lens.</p>
+      `,
+      lookdev: `
+        <div class="kicker">Lens 03 · Look &amp; Lighting</div>
+        <h1>Look Development</h1>
+        <p>The role that's hardest to see in a resume: the people who make the render actually look like the concept.</p>
+
+        <h2>Through-line</h2>
+        <p>Look dev is often uncredited, but it shows up in every frame. My contributions at Studio B and Studio D set the shader library and lighting rig that became each show's visual baseline.</p>
+
+        <h2>What I actually built</h2>
+        <ul>
+          <li>Shader library used across 3 shows and 200+ assets.</li>
+          <li>Lighting rigs adopted by two lighting teams as the default starting point.</li>
+          <li>Color pipeline that eliminated the "why does the render look different from the comp" problem.</li>
+        </ul>
+
+        <h2>Tools</h2>
+        <p>Arnold · Katana · Houdini · Nuke · OpenColorIO</p>
+
+        <p class="meta">Click another cartridge to see the same career through a different lens.</p>
+      `,
+    };
+
+    // =========================================================
+    // 2. THREE.JS SETUP
+    // =========================================================
+    const canvas = document.getElementById('webgl-canvas');
+    const css3dRoot = document.getElementById('css3d-root');
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 1000);
+    camera.position.set(0, 0, 5);
+    camera.lookAt(0, 0, 0);
+
+    const webglRenderer = new THREE.WebGLRenderer({
+      canvas, antialias: true, alpha: false,
+    });
+    webglRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    const css3dRenderer = new CSS3DRenderer();
+    css3dRenderer.domElement.style.position = 'absolute';
+    css3dRenderer.domElement.style.top = '0';
+    css3dRenderer.domElement.style.left = '0';
+    css3dRenderer.domElement.style.pointerEvents = 'none';
+    css3dRoot.appendChild(css3dRenderer.domElement);
+
+    // =========================================================
+    // 3. 360 PANORAMA  (black for now)
+    // =========================================================
+    // ▼▼▼ DROP YOUR BLENDER RENDERS HERE ▼▼▼
+    //
+    // const panoTextureLandscape = new THREE.TextureLoader().load('/panos/theater-landscape.jpg');
+    // const panoTexturePortrait  = new THREE.TextureLoader().load('/panos/theater-portrait.jpg');
+    // panoTextureLandscape.colorSpace = THREE.SRGBColorSpace;
+    // panoTexturePortrait.colorSpace  = THREE.SRGBColorSpace;
+    // panoMaterial.map = panoTextureLandscape;
+    // panoMaterial.color.set(0xffffff);
+    // panoMaterial.needsUpdate = true;
+    //
+    // ▲▲▲ END PANORAMA DROP ZONE ▲▲▲
+
+    const panoGeometry = new THREE.SphereGeometry(50, 64, 40);
+    const panoMaterial = new THREE.MeshBasicMaterial({
+      color: 0x0a0a0d,
+      side: THREE.BackSide,       // render the inside of the sphere
+    });
+    const pano = new THREE.Mesh(panoGeometry, panoMaterial);
+    scene.add(pano);
+
+    // =========================================================
+    // 4. PROJECTOR SCREEN (CSS3D)
+    // =========================================================
+    const screenWrapper = document.createElement('div');
+    screenWrapper.id = 'screen-wrapper';
+
+    const screenScroll = document.createElement('div');
+    screenScroll.id = 'screen-scroll';
+    screenWrapper.appendChild(screenScroll);
+
+    const screenObject = new CSS3DObject(screenWrapper);
+    screenObject.position.set(0, 0, 0);
+    scene.add(screenObject);
+
+    // =========================================================
+    // 5. LAYOUT — responsive to viewport aspect + orientation
+    // =========================================================
+    let currentOrientation = 'landscape';
+    let currentCartridge = 'rendering';
+
+    function updateLayout() {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const aspect = w / h;
+      const orientation = h >= w ? 'portrait' : 'landscape';
+
+      // Renderers + camera
+      webglRenderer.setSize(w, h);
+      css3dRenderer.setSize(w, h);
+      camera.aspect = aspect;
+      camera.updateProjectionMatrix();
+
+      // Visible world size at the screen plane.
+      // Camera is at z=5, screen at z=0, so distance = 5.
+      const distance = 5;
+      const fovRad = (camera.fov * Math.PI) / 180;
+      const visibleH = 2 * Math.tan(fovRad / 2) * distance;
+      const visibleW = visibleH * aspect;
+
+      // Screen fills 60% of viewport in both dimensions,
+      // so its world aspect matches the viewport aspect.
+      const SCREEN_FRACTION = 0.6;
+      const screenWorldW = visibleW * SCREEN_FRACTION;
+      const screenWorldH = visibleH * SCREEN_FRACTION;
+
+      // Wrapper pixel size: chosen so 1 CSS px ≈ 1 screen px.
+      // wrapper_px = fraction * viewport_px
+      const wrapperWpx = Math.round(w * SCREEN_FRACTION);
+      const wrapperHpx = Math.round(h * SCREEN_FRACTION);
+      screenWrapper.style.width  = wrapperWpx + 'px';
+      screenWrapper.style.height = wrapperHpx + 'px';
+
+      // Scale: world units per CSS pixel.
+      // This makes 1 CSS px map to 1 screen px, so text reads at
+      // the same apparent size on every device.
+      screenObject.scale.set(
+        screenWorldW / wrapperWpx,
+        screenWorldH / wrapperHpx,
+        1
+      );
+
+      // Shift the screen so cartridges have room.
+      // Landscape → shift left; portrait → shift up.
+      if (orientation === 'landscape') {
+        screenObject.position.set(-visibleW * 0.10, 0, 0);
+      } else {
+        screenObject.position.set(0, visibleH * 0.10, 0);
+      }
+
+      // Panorama swap on orientation change.
+      if (orientation !== currentOrientation) {
+        currentOrientation = orientation;
+        // ▼▼▼ Uncomment when you have real panorama textures ▼▼▼
+        // panoMaterial.map = orientation === 'portrait'
+        //   ? panoTexturePortrait
+        //   : panoTextureLandscape;
+        // panoMaterial.color.set(0xffffff);   // stop tinting
+        // panoMaterial.needsUpdate = true;
+        // ▲▲▲
+      }
+    }
+
+    // =========================================================
+    // 6. CARTRIDGE INTERACTION
+    // =========================================================
+    const cartridgeButtons = document.querySelectorAll('.cartridge');
+
+    function selectCartridge(id) {
+      currentCartridge = id;
+      screenScroll.innerHTML = CONTENT[id] || '';
+      screenScroll.scrollTop = 0;
+      cartridgeButtons.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.id === id);
+      });
+    }
+
+    cartridgeButtons.forEach(btn => {
+      btn.addEventListener('click', () => selectCartridge(btn.dataset.id));
+    });
+
+    // =========================================================
+    // 7. RESIZE / ORIENTATION
+    // =========================================================
+    let resizeTimer;
+    function onResize() {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(updateLayout, 60);
+    }
+    window.addEventListener('resize', onResize);
+    window.addEventListener('orientationchange', onResize);
+
+    // =========================================================
+    // 8. RENDER LOOP
+    // =========================================================
+    function animate() {
+      requestAnimationFrame(animate);
+      webglRenderer.render(scene, camera);
+      css3dRenderer.render(scene, camera);
+    }
+
+    // =========================================================
+    // 9. BOOT
+    // =========================================================
+    updateLayout();
+    selectCartridge('rendering');   // show first cartridge on load
+    animate();
+
+    // Hide loading screen
+    const loading = document.getElementById('loading');
+    requestAnimationFrame(() => {
+      loading.style.opacity = '0';
+      setTimeout(() => loading.remove(), 650);
+    });
+  </script>
+</body>
+</html>
