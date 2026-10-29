@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Resume Cinema — MVP 0 + Head Look + VR</title>
+  <title>Resume Cinema — MVP 1: 3D Shelf Cartridges</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
@@ -11,7 +11,7 @@
       overflow: hidden;
       background: #000;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      touch-action: none; /* lets us handle drag for head-look */
+      touch-action: none;
     }
 
     #webgl-canvas {
@@ -29,11 +29,10 @@
       z-index: 2;
     }
 
-    /* === NEW: hide CSS3D screen while in VR === */
     body.vr-mode #css3d-root,
-    body.vr-mode #cartridge-list,
     body.vr-mode #pdf-link { display: none; }
 
+    /* === PROJECTOR SCREEN === */
     #screen-wrapper {
       background: #0b0b0d;
       border: 10px solid #1c1c1f;
@@ -43,6 +42,7 @@
         0 0 0 2px #2a2a2e,
         0 30px 80px rgba(0, 0, 0, 0.9),
         0 0 120px rgba(80, 120, 255, 0.06);
+      pointer-events: none;
     }
 
     #screen-scroll {
@@ -70,63 +70,46 @@
     }
     #screen-scroll .meta { color: #777; font-size: 0.85em; margin-top: 28px; }
 
-    #cartridge-list {
-      position: fixed;
-      z-index: 10;
-      display: flex;
-      gap: 14px;
-    }
-    @media (orientation: landscape) {
-      #cartridge-list {
-        right: 24px; top: 50%;
-        transform: translateY(-50%);
-        flex-direction: column;
-      }
-    }
-    @media (orientation: portrait) {
-      #cartridge-list {
-        bottom: 20px; left: 50%;
-        transform: translateX(-50%);
-        flex-direction: row;
-      }
-    }
-
+    /* === CARTRIDGES (now CSS3D objects, no fixed overlay) === */
     .cartridge {
-      border: 3px solid rgba(255,255,255,0.75);
+      width: 180px;
+      height: 225px;
+      pointer-events: auto;
+      border: 3px solid rgba(255,255,255,0.55);
       border-radius: 6px;
       color: #fff;
       cursor: pointer;
-      padding: 10px 12px;
+      padding: 14px 16px;
       text-align: left;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       box-shadow: 0 8px 24px rgba(0,0,0,0.7);
-      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
-      width: 140px; height: 180px;
+      transition: box-shadow 0.18s ease, border-color 0.18s ease;
       font-family: inherit;
       background: #333;
     }
     .cartridge .label {
-      font-size: 10px; opacity: 0.75;
+      font-size: 11px; opacity: 0.75;
       text-transform: uppercase; letter-spacing: 1px;
     }
-    .cartridge .title { font-size: 15px; font-weight: 700; line-height: 1.2; }
+    .cartridge .title {
+      font-size: 17px; font-weight: 700; line-height: 1.2;
+    }
     .cartridge:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 14px 34px rgba(0,0,0,0.85);
       border-color: #fff;
+      box-shadow:
+        0 0 0 2px rgba(255,255,255,0.35),
+        0 14px 34px rgba(0,0,0,0.9);
     }
     .cartridge.active {
       border-color: #ffb87a;
-      box-shadow: 0 0 0 3px rgba(255, 184, 122, 0.35), 0 14px 34px rgba(0,0,0,0.85);
-    }
-    @media (orientation: portrait) {
-      .cartridge { width: min(100px, 22vw); height: min(130px, 28vw); padding: 8px; }
-      .cartridge .title { font-size: 12px; }
-      .cartridge .label { font-size: 8px; }
+      box-shadow:
+        0 0 0 3px rgba(255, 184, 122, 0.5),
+        0 14px 34px rgba(0,0,0,0.9);
     }
 
+    /* === CHROME === */
     #pdf-link {
       position: fixed;
       top: 16px; left: 16px;
@@ -151,7 +134,6 @@
       transition: opacity 0.6s;
     }
 
-    /* === NEW: VR button */
     #vr-button {
       position: fixed;
       bottom: 16px; left: 16px;
@@ -175,18 +157,6 @@
   <a id="pdf-link" href="/resume.pdf" target="_blank" rel="noopener">↓ Plain PDF resume</a>
   <button id="vr-button">Enter VR</button>
 
-  <div id="cartridge-list">
-    <button class="cartridge" data-id="rendering" style="background: linear-gradient(145deg,#7a1f17,#c0392b);">
-      <span class="label">Cartridge 01</span><span class="title">Senior Render Wrangler</span>
-    </button>
-    <button class="cartridge" data-id="pipeline" style="background: linear-gradient(145deg,#1e5c36,#27ae60);">
-      <span class="label">Cartridge 02</span><span class="title">Pipeline Engineer</span>
-    </button>
-    <button class="cartridge" data-id="lookdev" style="background: linear-gradient(145deg,#1a487a,#2980b9);">
-      <span class="label">Cartridge 03</span><span class="title">Look Development</span>
-    </button>
-  </div>
-
   <div id="loading">Loading cinema…</div>
 
   <script type="importmap">
@@ -202,10 +172,11 @@
   <script type="module">
     import * as THREE from 'three';
     import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
-    import { VRButton } from 'three/addons/webxr/VRButton.js';
     import html2canvas from 'html2canvas';
 
-    // === CONTENT (unchanged from v1) ===
+    // =========================================================
+    // CONTENT
+    // =========================================================
     const CONTENT = {
       rendering: `<div class="kicker">Lens 01 · Rendering &amp; Throughput</div>
         <h1>Senior Render Wrangler</h1>
@@ -246,7 +217,9 @@
         <h2>Tools</h2><p>Arnold · Katana · Houdini · Nuke · OpenColorIO</p>`,
     };
 
-    // === THREE SETUP ===
+    // =========================================================
+    // THREE SETUP
+    // =========================================================
     const canvas = document.getElementById('webgl-canvas');
     const css3dRoot = document.getElementById('css3d-root');
 
@@ -255,15 +228,9 @@
     camera.position.set(0, 0, 5);
     camera.lookAt(0, 0, 0);
 
-    const webglRenderer = new THREE.WebGLRenderer({
-      canvas, antialias: true, alpha: false,
-    });
+    const webglRenderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
     webglRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-    // === NEW: enable WebXR ===
     webglRenderer.xr.enabled = true;
-    // VRButton appends its own button — but we made our own #vr-button,
-    // so we'll wire it manually below. Do not call VRButton.createButton().
 
     const css3dRenderer = new CSS3DRenderer();
     css3dRenderer.domElement.style.position = 'absolute';
@@ -272,7 +239,9 @@
     css3dRenderer.domElement.style.pointerEvents = 'none';
     css3dRoot.appendChild(css3dRenderer.domElement);
 
-    // === PANORAMA ===
+    // =========================================================
+    // 360 PANORAMA
+    // =========================================================
     // ▼▼▼ DROP YOUR BLENDER RENDERS HERE ▼▼▼
     // const panoTextureLandscape = new THREE.TextureLoader().load('/panos/theater-landscape.jpg');
     // const panoTexturePortrait  = new THREE.TextureLoader().load('/panos/theater-portrait.jpg');
@@ -283,13 +252,13 @@
     // panoMaterial.needsUpdate = true;
     // ▲▲▲ END PANORAMA DROP ZONE ▲▲▲
 
-    const panoMaterial = new THREE.MeshBasicMaterial({
-      color: 0x0a0a0d, side: THREE.BackSide,
-    });
+    const panoMaterial = new THREE.MeshBasicMaterial({ color: 0x0a0a0d, side: THREE.BackSide });
     const pano = new THREE.Mesh(new THREE.SphereGeometry(50, 64, 40), panoMaterial);
     scene.add(pano);
 
-    // === PROJECTOR (CSS3D) ===
+    // =========================================================
+    // PROJECTOR SCREEN (CSS3D)
+    // =========================================================
     const screenWrapper = document.createElement('div');
     screenWrapper.id = 'screen-wrapper';
     const screenScroll = document.createElement('div');
@@ -299,9 +268,36 @@
     const screenObject = new CSS3DObject(screenWrapper);
     scene.add(screenObject);
 
-    // === NEW: VR SCREEN (WebGL plane with CanvasTexture) ===
-    // This mirrors the CSS3D screen's world position/size but renders as
-    // a texture, because CSS3D is not visible inside an immersive session.
+    // =========================================================
+    // CARTRIDGES (CSS3D objects, positioned in 3D)
+    // =========================================================
+    const CARTRIDGE_DEFS = [
+      { id: 'rendering', label: 'Cartridge 01', title: 'Senior Render Wrangler',
+        bg: 'linear-gradient(145deg,#7a1f17,#c0392b)' },
+      { id: 'pipeline',  label: 'Cartridge 02', title: 'Pipeline Engineer',
+        bg: 'linear-gradient(145deg,#1e5c36,#27ae60)' },
+      { id: 'lookdev',   label: 'Cartridge 03', title: 'Look Development',
+        bg: 'linear-gradient(145deg,#1a487a,#2980b9)' },
+    ];
+
+    const cartridgeObjects = [];
+
+    CARTRIDGE_DEFS.forEach(({ id, label, title, bg }) => {
+      const btn = document.createElement('button');
+      btn.className = 'cartridge';
+      btn.dataset.id = id;
+      btn.style.background = bg;
+      btn.innerHTML = `<span class="label">${label}</span><span class="title">${title}</span>`;
+      btn.addEventListener('click', () => selectCartridge(id));
+
+      const obj = new CSS3DObject(btn);
+      scene.add(obj);
+      cartridgeObjects.push({ id, el: btn, obj });
+    });
+
+    // =========================================================
+    // VR SCREEN (WebGL plane with CanvasTexture, shown in VR only)
+    // =========================================================
     const vrScreenCanvas = document.createElement('canvas');
     vrScreenCanvas.width = 1280;
     vrScreenCanvas.height = 720;
@@ -311,23 +307,21 @@
       map: vrScreenTexture, side: THREE.DoubleSide,
     });
     const vrScreenMesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), vrScreenMaterial);
-    vrScreenMesh.visible = false; // shown only in VR
+    vrScreenMesh.visible = false;
     scene.add(vrScreenMesh);
 
-    // === NEW: HEAD-LOOK STATE (flat mode) ===
-    let yaw = 0;             // current camera yaw
-    let pitch = 0;           // current camera pitch
-    let targetYaw = 0;
-    let targetPitch = 0;
+    // =========================================================
+    // HEAD-LOOK STATE (flat mode)
+    // =========================================================
+    let yaw = 0, pitch = 0, targetYaw = 0, targetPitch = 0;
     const YAW_LIMIT   = THREE.MathUtils.degToRad(70);
     const PITCH_LIMIT = THREE.MathUtils.degToRad(25);
 
-    let dragging = false;
-    let lastX = 0, lastY = 0;
+    let dragging = false, lastX = 0, lastY = 0;
     const DRAG_SENSITIVITY = 0.0035;
 
     canvas.addEventListener('pointerdown', (e) => {
-      if (isInVR()) return;          // in VR, the headset drives the camera
+      if (isInVR()) return;
       dragging = true;
       lastX = e.clientX;
       lastY = e.clientY;
@@ -353,24 +347,65 @@
     canvas.addEventListener('pointerup', endDrag);
     canvas.addEventListener('pointercancel', endDrag);
 
-    // === NEW: auto-rotate camera to face screen when cartridge selected ===
     function faceScreen() {
-      // Direction from camera to screen, flattened to horizontal plane
       const dir = new THREE.Vector3()
         .subVectors(screenObject.position, camera.position)
         .setY(0)
         .normalize();
-      // Camera looks down -Z by default; yaw around Y
       targetYaw   = THREE.MathUtils.clamp(Math.atan2(-dir.x, -dir.z), -YAW_LIMIT, YAW_LIMIT);
       targetPitch = 0;
     }
 
-    // === LAYOUT ===
+    // =========================================================
+    // LAYOUT
+    // =========================================================
     let currentOrientation = 'landscape';
     let currentCartridge = 'rendering';
 
+    function positionCartridges(visibleW, visibleH, screenWorldW, screenWorldH, orientation) {
+      // 1 CSS px = cssScale world units at screen plane (Z=0)
+      const cssScale = visibleW / window.innerWidth;
+
+      // Cartridge dimensions in world units (matches CSS 180x225)
+      const cartWorldW = 180 * cssScale;
+      const cartWorldH = 225 * cssScale;
+
+      // Right edge of the projector screen
+      const screenRightEdge = screenObject.position.x + screenWorldW / 2;
+
+      const gapBetweenCarts = 0.10;
+      const gapFromScreen    = 0.15;
+
+      if (orientation === 'landscape') {
+        // Horizontal row on the right
+        const startX = screenRightEdge + gapFromScreen + cartWorldW / 2;
+        cartridgeObjects.forEach((c, i) => {
+          c.obj.scale.set(cssScale, cssScale, 1);
+          c.obj.position.set(
+            startX + i * (cartWorldW + gapBetweenCarts),
+            screenObject.position.y,
+            0
+          );
+        });
+      } else {
+        // Vertical column on the right
+        const totalHeight =
+          cartridgeObjects.length * cartWorldH +
+          (cartridgeObjects.length - 1) * gapBetweenCarts;
+        const startY = screenObject.position.y + totalHeight / 2 - cartWorldH / 2;
+        cartridgeObjects.forEach((c, i) => {
+          c.obj.scale.set(cssScale, cssScale, 1);
+          c.obj.position.set(
+            screenRightEdge + gapFromScreen + cartWorldW / 2,
+            startY - i * (cartWorldH + gapBetweenCarts),
+            0
+          );
+        });
+      }
+    }
+
     function updateLayout() {
-      if (isInVR()) return;          // WebXR owns the projection matrix
+      if (isInVR()) return;
 
       const w = window.innerWidth;
       const h = window.innerHeight;
@@ -390,24 +425,28 @@
       const SCREEN_FRACTION = 0.6;
       const screenWorldW = visibleW * SCREEN_FRACTION;
       const screenWorldH = visibleH * SCREEN_FRACTION;
+
       const wrapperWpx = Math.round(w * SCREEN_FRACTION);
       const wrapperHpx = Math.round(h * SCREEN_FRACTION);
-
       screenWrapper.style.width  = wrapperWpx + 'px';
       screenWrapper.style.height = wrapperHpx + 'px';
 
       screenObject.scale.set(screenWorldW / wrapperWpx, screenWorldH / wrapperHpx, 1);
 
-      // Keep the VR screen mesh aligned with the CSS3D screen
-      vrScreenMesh.scale.set(screenWorldW, screenWorldH, 1);
-
+      // Shift screen to make room for the cartridge shelf
       if (orientation === 'landscape') {
-        screenObject.position.set(-visibleW * 0.10, 0, 0);
+        screenObject.position.set(-visibleW * 0.12, 0, 0);
       } else {
-        screenObject.position.set(0, visibleH * 0.10, 0);
+        screenObject.position.set(-visibleW * 0.10, visibleH * 0.05, 0);
       }
+
+      // Align VR screen mesh with CSS3D screen
+      vrScreenMesh.scale.set(screenWorldW, screenWorldH, 1);
       vrScreenMesh.position.copy(screenObject.position);
       vrScreenMesh.quaternion.copy(screenObject.quaternion);
+
+      // Position cartridges in 3D space to the right of the screen
+      positionCartridges(visibleW, visibleH, screenWorldW, screenWorldH, orientation);
 
       if (orientation !== currentOrientation) {
         currentOrientation = orientation;
@@ -421,27 +460,26 @@
       }
     }
 
-    // === CARTRIDGE INTERACTION ===
-    const cartridgeButtons = document.querySelectorAll('.cartridge');
-
+    // =========================================================
+    // CARTRIDGE INTERACTION
+    // =========================================================
     function selectCartridge(id) {
       currentCartridge = id;
       screenScroll.innerHTML = CONTENT[id] || '';
       screenScroll.scrollTop = 0;
-      cartridgeButtons.forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.id === id);
+      cartridgeObjects.forEach(c => {
+        c.el.classList.toggle('active', c.id === id);
       });
-      faceScreen();                       // === NEW: turn head toward projector ===
-      if (isInVR()) snapshotToVrScreen(); // === NEW: refresh VR texture ===
+      faceScreen();
+      if (isInVR()) snapshotToVrScreen();
     }
 
-    cartridgeButtons.forEach(btn => {
-      btn.addEventListener('click', () => selectCartridge(btn.dataset.id));
-    });
-
-    // === NEW: snapshot the HTML into a CanvasTexture for the VR screen ===
+    // =========================================================
+    // VR SNAPSHOT
+    // =========================================================
     async function snapshotToVrScreen() {
       try {
+        await document.fonts.ready;
         const rendered = await html2canvas(screenScroll, {
           backgroundColor: '#0b0b0d',
           scale: 1.5,
@@ -449,7 +487,6 @@
           width: screenScroll.scrollWidth,
           height: screenScroll.scrollHeight,
         });
-        // Fit the snapshot into the VR canvas
         const ctx = vrScreenCanvas.getContext('2d');
         ctx.fillStyle = '#0b0b0d';
         ctx.fillRect(0, 0, vrScreenCanvas.width, vrScreenCanvas.height);
@@ -460,31 +497,23 @@
         const w = rendered.width * scale;
         const h = rendered.height * scale;
         const x = (vrScreenCanvas.width - w) / 2;
-        const y = 0; // top-align so the title is visible
-        ctx.drawImage(rendered, x, y, w, h);
+        ctx.drawImage(rendered, x, 0, w, h);
         vrScreenTexture.needsUpdate = true;
       } catch (err) {
         console.warn('VR snapshot failed', err);
       }
     }
 
-    // === NEW: VR session wiring ===
+    // =========================================================
+    // VR SESSION
+    // =========================================================
     let xrSession = null;
-
-    function isInVR() {
-      return webglRenderer.xr.isPresenting;
-    }
+    function isInVR() { return webglRenderer.xr.isPresenting; }
 
     async function enterVR() {
-      if (!navigator.xr) {
-        alert('WebXR is not available in this browser.');
-        return;
-      }
+      if (!navigator.xr) { alert('WebXR is not available in this browser.'); return; }
       const supported = await navigator.xr.isSessionSupported('immersive-vr');
-      if (!supported) {
-        alert('This device does not support immersive VR.');
-        return;
-      }
+      if (!supported) { alert('This device does not support immersive VR.'); return; }
       xrSession = await navigator.xr.requestSession('immersive-vr', {
         optionalFeatures: ['local-floor', 'bounded-floor', 'hand-tracking'],
       });
@@ -494,9 +523,7 @@
     webglRenderer.xr.addEventListener('sessionstart', async () => {
       document.body.classList.add('vr-mode');
       vrScreenMesh.visible = true;
-      // Pull a fresh snapshot of the current cartridge
       await snapshotToVrScreen();
-      // Stop the flat render loop; setAnimationLoop takes over.
       startRenderLoop();
     });
 
@@ -507,42 +534,28 @@
     });
 
     document.getElementById('vr-button').addEventListener('click', () => {
-      if (isInVR()) {
-        xrSession?.end();
-      } else {
-        enterVR();
-      }
+      if (isInVR()) xrSession?.end(); else enterVR();
     });
 
-    // === RENDER LOOP ===
-    // In flat mode we run requestAnimationFrame + CSS3D.
-    // In VR, we must use renderer.setAnimationLoop so Three.js drives
-    // the XR frame timing and head pose updates.
+    // =========================================================
+    // RENDER LOOP
+    // =========================================================
     function flatAnimate() {
-      if (isInVR()) return;   // VR loop handles rendering
-
-      // Smooth damping toward target yaw/pitch
+      if (isInVR()) return;
       yaw   += (targetYaw   - yaw)   * 0.08;
       pitch += (targetPitch - pitch) * 0.08;
       camera.rotation.set(pitch, yaw, 0, 'YXZ');
-
       webglRenderer.render(scene, camera);
       css3dRenderer.render(scene, camera);
     }
 
     function startRenderLoop() {
-      // Cancel any prior loop
       webglRenderer.setAnimationLoop(null);
-
       if (isInVR()) {
-        // XR loop: the headset drives the camera automatically.
-        // We only render the WebGL scene; CSS3D is hidden.
         webglRenderer.setAnimationLoop(() => {
           webglRenderer.render(scene, camera);
         });
       } else {
-        // Flat loop: our own RAF, with head-look damping + CSS3D.
-        webglRenderer.setAnimationLoop(null); // ensure off
         const tick = () => {
           if (isInVR()) return;
           flatAnimate();
@@ -552,7 +565,9 @@
       }
     }
 
-    // === RESIZE ===
+    // =========================================================
+    // RESIZE
+    // =========================================================
     let resizeTimer;
     function onResize() {
       clearTimeout(resizeTimer);
@@ -561,7 +576,9 @@
     window.addEventListener('resize', onResize);
     window.addEventListener('orientationchange', onResize);
 
-    // === BOOT ===
+    // =========================================================
+    // BOOT
+    // =========================================================
     updateLayout();
     selectCartridge('rendering');
     startRenderLoop();
