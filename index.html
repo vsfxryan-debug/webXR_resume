@@ -3,36 +3,49 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Resume Cinema — Centered Pan + Smooth Damp</title>
+  <title>Jamie Chen — Rendering &amp; Pipeline Engineer</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body {
-      width: 100%; height: 100%;
-      overflow: hidden;
+
+    html {
+      scroll-behavior: smooth;
+    }
+    body {
+      min-height: 100vh;
       background: #000;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      overflow-x: hidden;
+      color: #fff;
+    }
+
+    /* === CINEMA SECTION — pinned to viewport === */
+    #cinema-section {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
       touch-action: none;
+      overflow: hidden;
     }
 
     #webgl-canvas {
-      position: fixed; inset: 0;
+      position: absolute; inset: 0;
       width: 100%; height: 100%;
       display: block;
-      z-index: 1;
       cursor: grab;
     }
     #webgl-canvas.dragging { cursor: grabbing; }
 
     #css3d-root {
-      position: fixed; inset: 0;
+      position: absolute; inset: 0;
       pointer-events: none;
       z-index: 2;
     }
 
     body.vr-mode #css3d-root,
-    body.vr-mode #pdf-link,
+    body.vr-mode #view-resume-btn,
     body.vr-mode #ar-button { display: none; }
 
+    /* === PROJECTOR SCREEN === */
     #screen-wrapper {
       position: relative;
       z-index: 10;
@@ -72,6 +85,7 @@
     }
     #screen-scroll .meta { color: #777; font-size: 0.85em; margin-top: 28px; }
 
+    /* === CARTRIDGES === */
     .cartridge {
       position: relative;
       z-index: 20;
@@ -113,20 +127,27 @@
         0 14px 34px rgba(0,0,0,0.9);
     }
 
-    #pdf-link {
-      position: fixed;
-      top: 16px; left: 16px;
+    /* === CINEMA CHROME === */
+    #view-resume-btn {
+      position: absolute;
+      top: 16px; right: 16px;
       z-index: 20;
-      color: #aaa; font-size: 13px;
-      text-decoration: none;
-      padding: 8px 12px;
-      border: 1px solid #333;
+      color: #ddd;
+      font-size: 13px;
+      padding: 8px 14px;
+      border: 1px solid #444;
       border-radius: 6px;
-      background: rgba(0,0,0,0.5);
+      background: rgba(0,0,0,0.55);
       backdrop-filter: blur(6px);
-      transition: color 0.15s, border-color 0.15s;
+      cursor: pointer;
+      font-family: inherit;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
     }
-    #pdf-link:hover { color: #fff; border-color: #666; }
+    #view-resume-btn:hover {
+      color: #fff;
+      border-color: #888;
+      background: rgba(0,0,0,0.75);
+    }
 
     #loading {
       position: fixed; inset: 0;
@@ -138,7 +159,7 @@
     }
 
     #ar-button {
-      position: fixed;
+      position: absolute;
       bottom: 16px; left: 16px;
       z-index: 20;
       background: #1c1c1f;
@@ -153,14 +174,249 @@
     }
     #ar-button:hover { color: #fff; border-color: #666; }
     #ar-button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* === SCROLL SPACER — holds cinema in place while resume scrolls over === */
+    #cinema-spacer {
+      height: 100vh;
+      pointer-events: none;
+    }
+
+    /* === RESUME SECTION — real, readable HTML === */
+    #resume-section {
+      position: relative;
+      z-index: 10;
+      background: #f8f6f1;
+      color: #1a1a1a;
+      min-height: 100vh;
+      padding: 80px 24px 120px;
+      touch-action: pan-y;
+      box-shadow: 0 -20px 60px rgba(0,0,0,0.35);
+    }
+
+    #back-to-cinema {
+      position: absolute;
+      top: 24px; left: 24px;
+      font-size: 13px;
+      color: #555;
+      text-decoration: none;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.7);
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+    #back-to-cinema:hover {
+      color: #000;
+      border-color: #999;
+      background: #fff;
+    }
+
+    .resume {
+      max-width: 760px;
+      margin: 0 auto;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    }
+
+    .resume-head {
+      border-bottom: 2px solid #1a1a1a;
+      padding-bottom: 24px;
+      margin-bottom: 36px;
+    }
+    .resume-head h1 {
+      font-size: 2.5em;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      margin-bottom: 6px;
+    }
+    .resume-role {
+      font-size: 1.1em;
+      color: #555;
+      margin-bottom: 12px;
+    }
+    .resume-contact {
+      font-size: 0.9em;
+      color: #666;
+      line-height: 1.6;
+    }
+    .resume-contact a { color: #1a4fa3; text-decoration: none; }
+    .resume-contact a:hover { text-decoration: underline; }
+
+    .resume section { margin-bottom: 40px; }
+    .resume h2 {
+      font-size: 0.8em;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: #888;
+      margin-bottom: 16px;
+    }
+    .resume p {
+      font-size: 1em;
+      line-height: 1.65;
+      color: #333;
+    }
+
+    .job { margin-bottom: 28px; }
+    .job-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 10px;
+      gap: 16px;
+    }
+    .job-head h3 {
+      font-size: 1.05em;
+      font-weight: 700;
+      margin: 0;
+      color: #1a1a1a;
+    }
+    .job-head .company {
+      font-weight: 400;
+      color: #666;
+    }
+    .job-head .dates {
+      font-size: 0.85em;
+      color: #888;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+    .job ul {
+      margin: 0;
+      padding-left: 20px;
+      color: #333;
+    }
+    .job li {
+      margin-bottom: 6px;
+      line-height: 1.6;
+    }
+
+    .skills {
+      display: grid;
+      grid-template-columns: 110px 1fr;
+      gap: 10px 24px;
+      margin: 0;
+    }
+    .skills dt {
+      font-weight: 700;
+      color: #555;
+      font-size: 0.9em;
+    }
+    .skills dd {
+      margin: 0;
+      color: #333;
+      font-size: 1em;
+      line-height: 1.5;
+    }
+
+    .resume-foot {
+      margin-top: 60px;
+      padding-top: 24px;
+      border-top: 1px solid #ddd;
+      font-size: 0.9em;
+      color: #666;
+    }
+    .resume-foot a { color: #1a4fa3; text-decoration: none; }
+    .resume-foot a:hover { text-decoration: underline; }
+
+    @media (max-width: 600px) {
+      #resume-section { padding: 80px 20px 100px; }
+      #back-to-cinema { top: 16px; left: 16px; font-size: 12px; }
+      .resume-head h1 { font-size: 2em; }
+      .job-head { flex-direction: column; gap: 4px; align-items: flex-start; }
+      .job-head .dates { font-size: 0.8em; }
+      .skills { grid-template-columns: 1fr; gap: 4px; }
+      .skills dt { margin-top: 10px; }
+    }
   </style>
 </head>
 <body>
-  <canvas id="webgl-canvas"></canvas>
-  <div id="css3d-root"></div>
+  <!-- ============ CINEMA (pinned) ============ -->
+  <section id="cinema-section">
+    <canvas id="webgl-canvas"></canvas>
+    <div id="css3d-root"></div>
 
-  <a id="pdf-link" href="/resume.pdf" target="_blank" rel="noopener">↓ Plain PDF resume</a>
-  <button id="ar-button">Step Into Cinema</button>
+    <button id="view-resume-btn">View Traditional Resume ↓</button>
+    <button id="ar-button">Step Into Cinema</button>
+  </section>
+
+  <!-- ============ RESUME (scrolls over cinema) ============ -->
+  <div id="cinema-spacer"></div>
+
+  <section id="resume-section">
+    <a href="#" id="back-to-cinema">← Back to Cinema</a>
+
+    <article class="resume">
+      <header class="resume-head">
+        <h1>Jamie Chen</h1>
+        <p class="resume-role">Senior Rendering &amp; Pipeline Engineer</p>
+        <p class="resume-contact">
+          Los Angeles, CA ·
+          <a href="mailto:jamie@example.com">jamie@example.com</a> ·
+          <a href="https://linkedin.com/in/jamiechen">linkedin.com/in/jamiechen</a>
+        </p>
+      </header>
+
+      <section>
+        <h2>Summary</h2>
+        <p>Senior rendering and pipeline engineer with 10+ years of production experience across boutique and large VFX studios. Specialized in render farm operations, submission pipeline design, and look development handoff. Known for building the tool the department didn't know it needed.</p>
+      </section>
+
+      <section>
+        <h2>Experience</h2>
+
+        <div class="job">
+          <div class="job-head">
+            <h3>Senior Pipeline Engineer <span class="company">— Studio B</span></h3>
+            <span class="dates">2020 – 2022</span>
+          </div>
+          <ul>
+            <li>Owned render submission pipeline across 3 concurrent shows; reduced average shot turnaround by 34%.</li>
+            <li>Built cloud-burst rendering pipeline scaling to 2,000 nodes during crunch; nightly queue never missed a delivery window across two seasons.</li>
+            <li>Designed asset QC automation that flagged 1,200+ issues before reaching lighting.</li>
+            <li>Shipped render submission tool adopted by 4 departments and 80+ artists.</li>
+          </ul>
+        </div>
+
+        <div class="job">
+          <div class="job-head">
+            <h3>Render Wrangler <span class="company">— Studio A</span></h3>
+            <span class="dates">2018 – 2020</span>
+          </div>
+          <ul>
+            <li>Ran overnight farm triage and shot prioritization for 40+ artists; cut morning triage from 90 minutes to 15.</li>
+            <li>Surfaced blocking renders before artists knew they were blocked.</li>
+            <li>Wrote the first automated farm health dashboard used across the department.</li>
+          </ul>
+        </div>
+
+        <div class="job">
+          <div class="job-head">
+            <h3>Look Development Artist <span class="company">— Studio D</span></h3>
+            <span class="dates">2015 – 2018</span>
+          </div>
+          <ul>
+            <li>Built shader library used across 3 shows and 200+ assets.</li>
+            <li>Designed lighting rigs adopted by two lighting teams as the default starting point.</li>
+            <li>Diagnosed color pipeline inconsistencies between render and comp; eliminated the recurring "why does the render look different" problem.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section>
+        <h2>Skills</h2>
+        <dl class="skills">
+          <dt>Pipeline</dt><dd>Python, Maya API, Nuke, ShotGrid, Deadline, OpenCue</dd>
+          <dt>Cloud</dt><dd>AWS, Docker, Kubernetes, Prometheus, Grafana</dd>
+          <dt>Look Dev</dt><dd>Arnold, Katana, Houdini, OpenColorIO</dd>
+        </dl>
+      </section>
+
+      <footer class="resume-foot">
+        <p>Prefer a PDF? <a href="/resume.pdf" download>Download the one-page version ↓</a></p>
+      </footer>
+    </article>
+  </section>
 
   <div id="loading">Loading cinema…</div>
 
@@ -247,13 +503,7 @@
     // =========================================================
     // LAYOUT STATE
     // =========================================================
-    const layoutState = {
-      visibleW: 1,
-      visibleH: 1,
-      screenWorldW: 1,
-      screenWorldH: 1,
-    };
-
+    const layoutState = { visibleW: 1, visibleH: 1, screenWorldW: 1, screenWorldH: 1 };
     const CART_W = 320;
     const CART_H = 180;
 
@@ -264,11 +514,7 @@
       'https://dl.polyhaven.org/file/ph-assets/HDRIs/extra/Tonemapped%20JPG/studio_small_03.jpg'
     );
     panoTexture.colorSpace = THREE.SRGBColorSpace;
-
-    const panoMaterial = new THREE.MeshBasicMaterial({
-      map: panoTexture,
-      side: THREE.BackSide,
-    });
+    const panoMaterial = new THREE.MeshBasicMaterial({ map: panoTexture, side: THREE.BackSide });
     const pano = new THREE.Mesh(new THREE.SphereGeometry(50, 64, 40), panoMaterial);
     scene.add(pano);
 
@@ -280,7 +526,6 @@
     const screenScroll = document.createElement('div');
     screenScroll.id = 'screen-scroll';
     screenWrapper.appendChild(screenScroll);
-
     const screenObject = new CSS3DObject(screenWrapper);
     scene.add(screenObject);
 
@@ -308,12 +553,10 @@
       btn.style.zIndex = '20';
       btn.innerHTML = `<span class="title">${title}</span><span class="label">${label}</span>`;
       btn.addEventListener('click', () => selectCartridge(id));
-
       const obj = new CSS3DObject(btn);
       obj.position.set(0, 0, 0);
       obj.scale.setScalar(1);
       scene.add(obj);
-
       cartridgeObjects.push({
         id, el: btn, obj,
         state: 'on_shelf',
@@ -331,9 +574,7 @@
     xrScreenCanvas.height = 720;
     const xrScreenTexture = new THREE.CanvasTexture(xrScreenCanvas);
     xrScreenTexture.colorSpace = THREE.SRGBColorSpace;
-    const xrScreenMaterial = new THREE.MeshBasicMaterial({
-      map: xrScreenTexture, side: THREE.DoubleSide,
-    });
+    const xrScreenMaterial = new THREE.MeshBasicMaterial({ map: xrScreenTexture, side: THREE.DoubleSide });
     const xrScreenMesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), xrScreenMaterial);
     xrScreenMesh.visible = false;
     scene.add(xrScreenMesh);
@@ -344,9 +585,6 @@
     let yaw = 0, pitch = 0, targetYaw = 0, targetPitch = 0;
     const YAW_LIMIT   = THREE.MathUtils.degToRad(70);
     const PITCH_LIMIT = THREE.MathUtils.degToRad(25);
-
-    // Smoothing constant for camera damping.
-    // Lower = slower/smoother. 2.5 settles in ~1.2s.
     const CAMERA_DAMP_LAMBDA = 2.5;
 
     let dragging = false, lastX = 0, lastY = 0;
@@ -379,19 +617,12 @@
     canvas.addEventListener('pointerup', endDrag);
     canvas.addEventListener('pointercancel', endDrag);
 
-    // Center on the projector ONLY. Uses screenObject.position exclusively.
-    // Correct Y-rotation math: camera faces -Z locally, so to look at a world
-    // direction (dx, 0, dz) from origin, we need yaw = atan2(-dx, -dz).
     function faceScreen() {
       const dir = new THREE.Vector3()
         .subVectors(screenObject.position, camera.position)
         .setY(0)
         .normalize();
-      targetYaw = THREE.MathUtils.clamp(
-        Math.atan2(-dir.x, -dir.z),
-        -YAW_LIMIT,
-        YAW_LIMIT
-      );
+      targetYaw = THREE.MathUtils.clamp(Math.atan2(-dir.x, -dir.z), -YAW_LIMIT, YAW_LIMIT);
       targetPitch = 0;
     }
 
@@ -399,7 +630,6 @@
     // TWEEN SYSTEM
     // =========================================================
     const sleep = ms => new Promise(r => setTimeout(r, ms));
-
     function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
     function easeInQuad(t)   { return t * t; }
     function easeInOutCubic(t) {
@@ -410,8 +640,7 @@
       return new Promise(resolve => {
         const currentOpacity = parseFloat(cart.el.style.opacity);
         cart.anim = {
-          t: 0,
-          duration: durationSec,
+          t: 0, duration: durationSec,
           from: {
             pos: cart.obj.position.clone(),
             scale: cart.obj.scale.x,
@@ -422,12 +651,9 @@
             pos: toPos.clone(),
             scale: toScale,
             opacity: toOpacity,
-            rotation: options.rotationTo !== undefined
-              ? options.rotationTo
-              : cart.obj.rotation.z,
+            rotation: options.rotationTo !== undefined ? options.rotationTo : cart.obj.rotation.z,
           },
-          easing,
-          resolve,
+          easing, resolve,
         };
       });
     }
@@ -443,30 +669,21 @@
         a.t += dt;
         const p = Math.min(a.t / a.duration, 1);
         const e = a.easing(p);
-
         cart.obj.position.lerpVectors(a.from.pos, a.to.pos, e);
         cart.obj.scale.setScalar(THREE.MathUtils.lerp(a.from.scale, a.to.scale, e));
         cart.el.style.opacity = String(THREE.MathUtils.lerp(a.from.opacity, a.to.opacity, e));
         cart.obj.rotation.z = THREE.MathUtils.lerp(a.from.rotation, a.to.rotation, e);
-
         updateCartZIndex(cart);
-
-        if (p >= 1) {
-          cart.anim.resolve();
-          cart.anim = null;
-        }
+        if (p >= 1) { cart.anim.resolve(); cart.anim = null; }
       }
     }
 
     function cancelTween(cart) {
-      if (cart.anim) {
-        cart.anim.resolve();
-        cart.anim = null;
-      }
+      if (cart.anim) { cart.anim.resolve(); cart.anim = null; }
     }
 
     // =========================================================
-    // CARTRIDGE POSITIONING
+    // POSITIONING
     // =========================================================
     function snapToHome(cart) {
       cart.obj.position.copy(cart.homePosition);
@@ -501,7 +718,7 @@
       const cartWorldH = CART_H * cssScale;
       const screenRightEdge = screenObject.position.x + screenWorldW / 2;
       const gapBetweenCarts = 0.10;
-      const gapFromScreen    = 0.15;
+      const gapFromScreen = 0.15;
 
       if (orientation === 'landscape') {
         const startX = screenRightEdge + gapFromScreen + cartWorldW / 2;
@@ -585,26 +802,19 @@
       for (const cart of cartridgeObjects) {
         if (!cart.anim) continue;
         cancelTween(cart);
-        if (cart.state === 'inserted') {
-          snapToSlot(cart);
-        } else {
-          snapToHome(cart);
-        }
+        if (cart.state === 'inserted') snapToSlot(cart);
+        else snapToHome(cart);
       }
 
       positionCartridges(visibleW, screenWorldW, orientation);
 
-      if (insertedCartridge && !insertedCartridge.anim) {
-        snapToSlot(insertedCartridge);
-      }
+      if (insertedCartridge && !insertedCartridge.anim) snapToSlot(insertedCartridge);
 
-      if (orientation !== currentOrientation) {
-        currentOrientation = orientation;
-      }
+      if (orientation !== currentOrientation) currentOrientation = orientation;
     }
 
     // =========================================================
-    // CARTRIDGE ANIMATIONS
+    // INSERT / EJECT
     // =========================================================
     function cancelInsert(cart) {
       cancelTween(cart);
@@ -617,16 +827,8 @@
       cart.state = 'moving_to_projector';
 
       const slotPos = getSlotPosition(cart);
-      const abovePos = new THREE.Vector3(
-        slotPos.x,
-        slotPos.y + layoutState.visibleH * 0.15,
-        0.01
-      );
-      const backPos = new THREE.Vector3(
-        slotPos.x,
-        abovePos.y,
-        -0.2
-      );
+      const abovePos = new THREE.Vector3(slotPos.x, slotPos.y + layoutState.visibleH * 0.15, 0.01);
+      const backPos  = new THREE.Vector3(slotPos.x, abovePos.y, -0.2);
 
       await tween(cart, abovePos, cart.homeScale * 0.85, 1, 0.4, easeOutCubic);
       if (cart.state !== 'moving_to_projector') return;
@@ -687,7 +889,7 @@
     }
 
     // =========================================================
-    // CARTRIDGE SELECTION
+    // SELECTION
     // =========================================================
     async function selectCartridge(id) {
       const newCart = cartridgeObjects.find(c => c.id === id);
@@ -698,9 +900,7 @@
         newCart.state === 'falling' ||
         newCart.state === 'waiting' ||
         newCart.state === 'respawning'
-      ) {
-        return;
-      }
+      ) return;
 
       screenScroll.innerHTML = CONTENT[id] || '';
       screenScroll.scrollTop = 0;
@@ -719,15 +919,22 @@
 
       const oldCart = insertedCartridge;
       insertedCartridge = null;
-      if (oldCart && oldCart !== newCart) {
-        ejectCartridge(oldCart);
-      }
+      if (oldCart && oldCart !== newCart) ejectCartridge(oldCart);
 
       await insertCartridge(newCart);
-      if (newCart.state === 'inserted') {
-        insertedCartridge = newCart;
-      }
+      if (newCart.state === 'inserted') insertedCartridge = newCart;
     }
+
+    // =========================================================
+    // SCROLL NAVIGATION
+    // =========================================================
+    document.getElementById('view-resume-btn').addEventListener('click', () => {
+      document.getElementById('resume-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    document.getElementById('back-to-cinema').addEventListener('click', (e) => {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
 
     // =========================================================
     // XR SNAPSHOT
@@ -764,10 +971,7 @@
     // =========================================================
     let xrSession = null;
     let usesDeviceOrientation = false;
-
-    function isInXR() {
-      return webglRenderer.xr.isPresenting || usesDeviceOrientation;
-    }
+    function isInXR() { return webglRenderer.xr.isPresenting || usesDeviceOrientation; }
 
     async function startXRSession() {
       const button = document.getElementById('ar-button');
@@ -821,20 +1025,16 @@
       snapshotToXrScreen();
       window.addEventListener('deviceorientation', onDeviceOrientation);
     }
-
     function disableDeviceOrientationFallback() {
       usesDeviceOrientation = false;
       document.body.classList.remove('vr-mode');
       xrScreenMesh.visible = false;
       window.removeEventListener('deviceorientation', onDeviceOrientation);
     }
-
     function onDeviceOrientation(event) {
       if (!usesDeviceOrientation) return;
-      const alpha = THREE.MathUtils.degToRad(event.alpha || 0);
-      const beta  = THREE.MathUtils.degToRad(event.beta  || 0);
-      targetYaw   = THREE.MathUtils.clamp(alpha, -YAW_LIMIT, YAW_LIMIT);
-      targetPitch = THREE.MathUtils.clamp(beta, -PITCH_LIMIT, PITCH_LIMIT);
+      targetYaw   = THREE.MathUtils.clamp(THREE.MathUtils.degToRad(event.alpha || 0), -YAW_LIMIT, YAW_LIMIT);
+      targetPitch = THREE.MathUtils.clamp(THREE.MathUtils.degToRad(event.beta  || 0), -PITCH_LIMIT, PITCH_LIMIT);
     }
 
     webglRenderer.xr.addEventListener('sessionstart', async () => {
@@ -876,8 +1076,11 @@
     // =========================================================
     let lastTime = performance.now();
 
+    function isCinemaVisible() {
+      return window.scrollY < window.innerHeight * 0.95;
+    }
+
     function updateCameraDamp(dt) {
-      // Frame-rate independent smoothing. Identical feel at any FPS.
       yaw   = THREE.MathUtils.damp(yaw,   targetYaw,   CAMERA_DAMP_LAMBDA, dt);
       pitch = THREE.MathUtils.damp(pitch, targetPitch, CAMERA_DAMP_LAMBDA, dt);
       camera.rotation.set(pitch, yaw, 0, 'YXZ');
@@ -890,8 +1093,11 @@
 
       updateCameraDamp(dt);
       updateAnimations(dt);
-      webglRenderer.render(scene, camera);
-      css3dRenderer.render(scene, camera);
+
+      if (isCinemaVisible()) {
+        webglRenderer.render(scene, camera);
+        css3dRenderer.render(scene, camera);
+      }
     }
 
     function startRenderLoop() {
