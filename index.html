@@ -6,7 +6,6 @@
   <title>Jamie Chen — Rendering &amp; Pipeline Engineer</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
     html { scroll-behavior: smooth; }
     body {
       min-height: 100vh;
@@ -470,7 +469,14 @@
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 1000);
-    camera.position.set(0, 0, 5);
+
+    // Camera distance from the screen plane. Matches the initial setup so
+    // screen size on screen doesn't change when we translate.
+    const CAMERA_SCREEN_DISTANCE = 5;
+
+    // Initial camera position: shelf view (between screen on left and cartridges on right).
+    const INITIAL_CAMERA_POS = new THREE.Vector3(0, 0, CAMERA_SCREEN_DISTANCE);
+    camera.position.copy(INITIAL_CAMERA_POS);
     camera.lookAt(0, 0, 0);
 
     const webglRenderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
@@ -548,8 +554,14 @@
     xrScreenMesh.visible = false;
     scene.add(xrScreenMesh);
 
+    // Camera damping state
     let yaw = 0, pitch = 0, targetYaw = 0, targetPitch = 0;
-    let screenYaw = 0, screenTargetYaw = 0;
+    // Camera position targets — set by faceScreen() to be directly in front of the screen.
+    let targetCameraX = INITIAL_CAMERA_POS.x;
+    let targetCameraY = INITIAL_CAMERA_POS.y;
+    let targetCameraZ = INITIAL_CAMERA_POS.z;
+    let hasVisitedScreen = false;
+
     const YAW_LIMIT   = THREE.MathUtils.degToRad(70);
     const PITCH_LIMIT = THREE.MathUtils.degToRad(25);
     const CAMERA_DAMP_LAMBDA = 2.5;
@@ -584,16 +596,17 @@
     canvas.addEventListener('pointerup', endDrag);
     canvas.addEventListener('pointercancel', endDrag);
 
-    // Pan camera to face the projector, AND rotate the screen to face the camera.
-    // Both damped with the same lambda so they arrive together, flat-on.
+    // Center on the screen: translate the camera to be directly in front of
+    // the screen's center and set yaw/pitch to 0 so the screen faces us flat-on.
+    // This eliminates the perspective foreshortening that made the screen look
+    // "at an angle" even when the camera was pointed at the screen center.
     function faceScreen() {
-      const dir = new THREE.Vector3()
-        .subVectors(screenObject.position, camera.position)
-        .setY(0)
-        .normalize();
-      targetYaw = THREE.MathUtils.clamp(Math.atan2(-dir.x, -dir.z), -YAW_LIMIT, YAW_LIMIT);
+      targetCameraX = screenObject.position.x;
+      targetCameraY = screenObject.position.y;
+      targetCameraZ = screenObject.position.z + CAMERA_SCREEN_DISTANCE;
+      targetYaw = 0;
       targetPitch = 0;
-      screenTargetYaw = targetYaw;
+      hasVisitedScreen = true;
     }
 
     const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -658,22 +671,11 @@
       cart.state = 'on_shelf';
     }
 
-    // Rotation-aware slot. As the screen rotates by screenYaw around its own
-    // origin, a point at local (0, localY, localZ) maps to world offset
-    // (localZ * sin(yaw), localY, localZ * cos(yaw)) from screen center.
     function getSlotPosition(cart) {
       const insertedScale = cart.homeScale * 0.65;
       const insertedCartH = CART_H * insertedScale;
-      const localY = layoutState.screenWorldH / 2 + insertedCartH * 0.3;
-      const localZ = -0.2;
-      const sy = screenObject.rotation.y;
-      const cos = Math.cos(sy);
-      const sin = Math.sin(sy);
-      return new THREE.Vector3(
-        screenObject.position.x + localZ * sin,
-        screenObject.position.y + localY,
-        screenObject.position.z + localZ * cos
-      );
+      const cartCenterY = screenObject.position.y + layoutState.screenWorldH / 2 + insertedCartH * 0.3;
+      return new THREE.Vector3(screenObject.position.x, cartCenterY, -0.2);
     }
 
     function snapToSlot(cart) {
@@ -737,7 +739,7 @@
       camera.aspect = aspect;
       camera.updateProjectionMatrix();
 
-      const distance = 5;
+      const distance = CAMERA_SCREEN_DISTANCE;
       const fovRad = (camera.fov * Math.PI) / 180;
       const visibleH = 2 * Math.tan(fovRad / 2) * distance;
       const visibleW = visibleH * aspect;
@@ -766,7 +768,7 @@
 
       xrScreenMesh.scale.set(screenWorldW, screenWorldH, 1);
       xrScreenMesh.position.copy(screenObject.position);
-      xrScreenMesh.rotation.set(0, screenYaw, 0);
+      xrScreenMesh.quaternion.copy(screenObject.quaternion);
 
       for (const cart of cartridgeObjects) {
         if (!cart.anim) continue;
@@ -778,6 +780,14 @@
       positionCartridges(visibleW, screenWorldW, orientation);
 
       if (insertedCartridge && !insertedCartridge.anim) snapToSlot(insertedCartridge);
+
+      // If the camera is currently at the screen (or has visited it), keep
+      // the target position in sync with the new screen position after resize.
+      if (hasVisitedScreen) {
+        targetCameraX = screenObject.position.x;
+        targetCameraY = screenObject.position.y;
+        targetCameraZ = screenObject.position.z + CAMERA_SCREEN_DISTANCE;
+      }
 
       if (orientation !== currentOrientation) currentOrientation = orientation;
     }
@@ -1036,16 +1046,9 @@
       pitch = THREE.MathUtils.damp(pitch, targetPitch, CAMERA_DAMP_LAMBDA, dt);
       camera.rotation.set(pitch, yaw, 0, 'YXZ');
 
-      // Rotate the projector screen to face the camera after the pan.
-      // Only changes when auto-panning (targetYaw changed via faceScreen).
-      screenYaw = THREE.MathUtils.damp(screenYaw, screenTargetYaw, CAMERA_DAMP_LAMBDA, dt);
-      screenObject.rotation.y = screenYaw;
-      xrScreenMesh.rotation.y = screenYaw;
-
-      // Keep inserted cart aligned with the (possibly rotating) slot.
-      if (insertedCartridge && insertedCartridge.state === 'inserted') {
-        snapToSlot(insertedCartridge);
-      }
+      camera.position.x = THREE.MathUtils.damp(camera.position.x, targetCameraX, CAMERA_DAMP_LAMBDA, dt);
+      camera.position.y = THREE.MathUtils.damp(camera.position.y, targetCameraY, CAMERA_DAMP_LAMBDA, dt);
+      camera.position.z = THREE.MathUtils.damp(camera.position.z, targetCameraZ, CAMERA_DAMP_LAMBDA, dt);
     }
 
     function flatAnimate(now) {
