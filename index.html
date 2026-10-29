@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Resume Cinema — Animated Cartridges</title>
+  <title>Resume Cinema — Slot Insert + Title-First Carts</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
@@ -33,8 +33,10 @@
     body.vr-mode #pdf-link,
     body.vr-mode #ar-button { display: none; }
 
-    /* === PROJECTOR SCREEN === */
+    /* === PROJECTOR SCREEN (z-index 10 — sits between inserted carts (1) and active carts (20)) === */
     #screen-wrapper {
+      position: relative;   /* required for z-index to apply */
+      z-index: 10;
       background: #0b0b0d;
       border: 10px solid #1c1c1f;
       border-radius: 8px;
@@ -73,6 +75,8 @@
 
     /* === CARTRIDGES === */
     .cartridge {
+      position: relative;   /* required for z-index to apply */
+      z-index: 20;          /* JS overrides this per-frame based on world Z */
       width: 180px;
       height: 225px;
       pointer-events: auto;
@@ -91,12 +95,13 @@
       background: #333;
       opacity: 1;
     }
+    /* Title on top, label on bottom — inner HTML is now <title/><label/> */
+    .cartridge .title {
+      font-size: 17px; font-weight: 700; line-height: 1.2;
+    }
     .cartridge .label {
       font-size: 11px; opacity: 0.75;
       text-transform: uppercase; letter-spacing: 1px;
-    }
-    .cartridge .title {
-      font-size: 17px; font-weight: 700; line-height: 1.2;
     }
     .cartridge:hover {
       border-color: #fff;
@@ -283,7 +288,8 @@
     scene.add(screenObject);
 
     // =========================================================
-    // CARTRIDGES (CSS3D objects with state machines)
+    // CARTRIDGES
+    // Note: title comes FIRST (top), label (cartridge #) comes SECOND (bottom).
     // =========================================================
     const CARTRIDGE_DEFS = [
       { id: 'rendering', label: 'Cartridge 01', title: 'Senior Render Wrangler',
@@ -303,7 +309,9 @@
       btn.dataset.id = id;
       btn.style.background = bg;
       btn.style.opacity = '1';
-      btn.innerHTML = `<span class="label">${label}</span><span class="title">${title}</span>`;
+      btn.style.zIndex = '20';
+      // Title first (top), label second (bottom)
+      btn.innerHTML = `<span class="title">${title}</span><span class="label">${label}</span>`;
       btn.addEventListener('click', () => selectCartridge(id));
 
       const obj = new CSS3DObject(btn);
@@ -392,8 +400,6 @@
       return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
     }
 
-    // Animate a cartridge toward a target. Returns a promise that resolves
-    // when the tween completes OR is externally resolved (cancellation).
     function tween(cart, toPos, toScale, toOpacity, durationSec, easing, options = {}) {
       return new Promise(resolve => {
         const currentOpacity = parseFloat(cart.el.style.opacity);
@@ -420,6 +426,12 @@
       });
     }
 
+    // z-index flip: cartridges go behind the screen once their world Z is negative.
+    // Screen plane is at Z = 0 (z-index 10). Carts at Z < -0.01 → z-index 1 (behind).
+    function updateCartZIndex(cart) {
+      cart.el.style.zIndex = cart.obj.position.z < -0.01 ? '1' : '20';
+    }
+
     function updateAnimations(dt) {
       for (const cart of cartridgeObjects) {
         if (!cart.anim) continue;
@@ -432,6 +444,8 @@
         cart.obj.scale.setScalar(THREE.MathUtils.lerp(a.from.scale, a.to.scale, e));
         cart.el.style.opacity = String(THREE.MathUtils.lerp(a.from.opacity, a.to.opacity, e));
         cart.obj.rotation.z = THREE.MathUtils.lerp(a.from.rotation, a.to.rotation, e);
+
+        updateCartZIndex(cart);
 
         if (p >= 1) {
           cart.anim.resolve();
@@ -455,21 +469,21 @@
       cart.obj.scale.setScalar(cart.homeScale);
       cart.obj.rotation.set(0, 0, 0);
       cart.el.style.opacity = '1';
+      cart.el.style.zIndex = '20';
       cart.state = 'on_shelf';
     }
 
     function getSlotPosition(cart) {
-      // Cartridge sits above the projector screen's top edge,
-      // 80% of it above the screen, 20% overlapping the top bezel.
+      // Cartridge sits above the projector's top edge, 30% of its height
+      // above the bezel, 70% tucked behind it.
+      // Z is NEGATIVE so it renders behind the screen (z-index 1).
       const sx = screenObject.position.x;
       const sy = screenObject.position.y;
       const screenTop = sy + layoutState.screenWorldH / 2;
       const insertedScale = cart.homeScale * 0.65;
       const insertedCartH = 225 * insertedScale;
-      // Center of the cart is 30% of its own height above the screen top
-      // → bottom 20% of the cart overlaps the top of the screen.
       const cartCenterY = screenTop + insertedCartH * 0.3;
-      return new THREE.Vector3(sx, cartCenterY, -0.02);
+      return new THREE.Vector3(sx, cartCenterY, -0.2);
     }
 
     function snapToSlot(cart) {
@@ -477,6 +491,7 @@
       cart.obj.scale.setScalar(cart.homeScale * 0.65);
       cart.obj.rotation.set(0, 0, 0);
       cart.el.style.opacity = '1';
+      cart.el.style.zIndex = '1';
     }
 
     function positionCartridges(visibleW, screenWorldW, orientation) {
@@ -512,7 +527,6 @@
         });
       }
 
-      // Snap any cartridges that are currently resting on the shelf.
       for (const c of cartridgeObjects) {
         if (c.state === 'on_shelf' && !c.anim) snapToHome(c);
       }
@@ -610,31 +624,28 @@
       if (cart.state !== 'on_shelf') return;
       cart.state = 'moving_to_projector';
 
-      const slotPos = getSlotPosition(cart);
-      // Rise over the screen and end above the slot
-      const abovePos = slotPos.clone();
-      abovePos.y += layoutState.visibleH * 0.15;
-
-      // Phase 1: rise and travel to above-slot
-      await tween(
-        cart,
-        abovePos,
-        cart.homeScale * 0.85,
-        1,
-        0.4,
-        easeOutCubic
+      const slotPos = getSlotPosition(cart);          // (sx, slotY, -0.2)
+      const abovePos = new THREE.Vector3(
+        slotPos.x,
+        slotPos.y + layoutState.visibleH * 0.15,
+        0.01                                         // still in front during rise
       );
+      const backPos = new THREE.Vector3(
+        slotPos.x,
+        abovePos.y,
+        -0.2                                         // slide back while above screen
+      );
+
+      // Phase 1: rise from shelf to above-projector, still in front
+      await tween(cart, abovePos, cart.homeScale * 0.85, 1, 0.4, easeOutCubic);
       if (cart.state !== 'moving_to_projector') return;
 
-      // Phase 2: slide down into the slot
-      await tween(
-        cart,
-        slotPos,
-        cart.homeScale * 0.65,
-        1,
-        0.25,
-        easeInQuad
-      );
+      // Phase 2a: slide back in Z (above screen, so no visible pop)
+      await tween(cart, backPos, cart.homeScale * 0.75, 1, 0.1, easeInOutCubic);
+      if (cart.state !== 'moving_to_projector') return;
+
+      // Phase 2b: descend into the slot at negative Z (cart goes behind screen)
+      await tween(cart, slotPos, cart.homeScale * 0.65, 1, 0.25, easeInQuad);
       if (cart.state !== 'moving_to_projector') return;
 
       cart.state = 'inserted';
@@ -644,39 +655,48 @@
       if (cart.state !== 'inserted') return;
       cart.state = 'ejecting';
 
-      // Phase 1: pop upward out of the slot
-      const popPos = cart.obj.position.clone();
-      popPos.y += cart.obj.scale.x * 30;
+      const startPos = cart.obj.position.clone();    // (sx, slotY, -0.2)
+      const popPos = startPos.clone();
+      popPos.y += cart.obj.scale.x * 30;             // pop straight up, still behind
+      const forwardPos = popPos.clone();
+      forwardPos.z = 0.05;                           // bring in front while above screen
+
+      // Phase 1: pop up (still behind)
       await tween(cart, popPos, cart.obj.scale.x * 1.05, 1, 0.15, easeOutCubic);
       if (cart.state !== 'ejecting') return;
 
-      // Phase 2: tumble down to the ground
+      // Phase 2: slide forward (above screen, no visible pop)
+      await tween(cart, forwardPos, cart.obj.scale.x * 1.05, 1, 0.1, easeOutCubic);
+      if (cart.state !== 'ejecting') return;
+
+      // Phase 3: fall to the ground, in front of the screen, tumbling
       cart.state = 'falling';
       const groundY = -layoutState.visibleH * 0.5;
       const fallPos = new THREE.Vector3(
         screenObject.position.x + layoutState.visibleW * 0.05,
         groundY,
-        0
+        forwardPos.z
       );
       await tween(cart, fallPos, cart.obj.scale.x * 0.7, 1, 0.7, easeInQuad, {
         rotationTo: Math.PI * 0.7,
       });
       if (cart.state !== 'falling') return;
 
-      // Phase 3: rest on the ground for a few seconds
+      // Phase 4: rest on the ground
       cart.state = 'waiting';
       await sleep(1500);
       if (cart.state !== 'waiting') return;
 
-      // Phase 4: fade out on the ground
+      // Phase 5: fade out on the ground
       cart.state = 'respawning';
       await tween(cart, cart.obj.position.clone(), cart.obj.scale.x, 0, 0.2, easeInQuad);
       if (cart.state !== 'respawning') return;
 
-      // Phase 5: snap to shelf and fade in
+      // Phase 6: fade back in on the shelf
       cart.obj.position.copy(cart.homePosition);
       cart.obj.scale.setScalar(cart.homeScale);
       cart.obj.rotation.set(0, 0, 0);
+      updateCartZIndex(cart);
       await tween(cart, cart.homePosition, cart.homeScale, 1, 0.3, easeOutCubic);
       if (cart.state !== 'respawning') return;
 
@@ -687,7 +707,6 @@
     // CARTRIDGE SELECTION
     // =========================================================
     async function selectCartridge(id) {
-      // Content update first (instant visual feedback)
       screenScroll.innerHTML = CONTENT[id] || '';
       screenScroll.scrollTop = 0;
       cartridgeObjects.forEach(c => {
@@ -699,23 +718,19 @@
       const newCart = cartridgeObjects.find(c => c.id === id);
       if (!newCart) return;
 
-      // Already animating or already inserted → ignore
       if (newCart.state === 'moving_to_projector' || newCart.state === 'inserted') return;
       if (newCart.state !== 'on_shelf') return;
 
-      // Cancel any other in-flight insert
       for (const c of cartridgeObjects) {
         if (c.state === 'moving_to_projector' && c !== newCart) cancelInsert(c);
       }
 
-      // Eject the currently inserted cartridge
       const oldCart = insertedCartridge;
       insertedCartridge = null;
       if (oldCart && oldCart !== newCart) {
         ejectCartridge(oldCart);  // fire and forget
       }
 
-      // Insert the new cartridge
       await insertCartridge(newCart);
       if (newCart.state === 'inserted') {
         insertedCartridge = newCart;
@@ -871,7 +886,7 @@
 
     function flatAnimate(now) {
       if (isInXR()) return;
-      const dt = Math.min((now - lastTime) / 1000, 0.1);  // clamp for tab-switch
+      const dt = Math.min((now - lastTime) / 1000, 0.1);
       lastTime = now;
 
       yaw   += (targetYaw   - yaw)   * 0.08;
@@ -933,7 +948,7 @@
     // BOOT
     // =========================================================
     updateLayout();
-    selectCartridge('rendering');  // plays the "insert" animation as intro
+    selectCartridge('rendering');
     startRenderLoop();
 
     const loading = document.getElementById('loading');
