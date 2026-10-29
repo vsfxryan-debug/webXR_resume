@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Resume Cinema — Centered Pan + 16:9 Carts + Studio Pano</title>
+  <title>Resume Cinema — Centered Pan + Smooth Damp</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
@@ -33,7 +33,6 @@
     body.vr-mode #pdf-link,
     body.vr-mode #ar-button { display: none; }
 
-    /* === PROJECTOR SCREEN === */
     #screen-wrapper {
       position: relative;
       z-index: 10;
@@ -73,7 +72,6 @@
     }
     #screen-scroll .meta { color: #777; font-size: 0.85em; margin-top: 28px; }
 
-    /* === CARTRIDGES — 16:9 aspect === */
     .cartridge {
       position: relative;
       z-index: 20;
@@ -115,7 +113,6 @@
         0 14px 34px rgba(0,0,0,0.9);
     }
 
-    /* === CHROME === */
     #pdf-link {
       position: fixed;
       top: 16px; left: 16px;
@@ -257,7 +254,6 @@
       screenWorldH: 1,
     };
 
-    // Cartridge physical dimensions (world units will be derived from these)
     const CART_W = 320;
     const CART_H = 180;
 
@@ -289,7 +285,7 @@
     scene.add(screenObject);
 
     // =========================================================
-    // CARTRIDGES — Title on top, number on bottom
+    // CARTRIDGES
     // =========================================================
     const CARTRIDGE_DEFS = [
       { id: 'rendering', label: 'Cartridge 01', title: 'Senior Render Wrangler',
@@ -349,6 +345,10 @@
     const YAW_LIMIT   = THREE.MathUtils.degToRad(70);
     const PITCH_LIMIT = THREE.MathUtils.degToRad(25);
 
+    // Smoothing constant for camera damping.
+    // Lower = slower/smoother. 2.5 settles in ~1.2s.
+    const CAMERA_DAMP_LAMBDA = 2.5;
+
     let dragging = false, lastX = 0, lastY = 0;
     const DRAG_SENSITIVITY = 0.0035;
 
@@ -379,13 +379,19 @@
     canvas.addEventListener('pointerup', endDrag);
     canvas.addEventListener('pointercancel', endDrag);
 
+    // Center on the projector ONLY. Uses screenObject.position exclusively.
+    // Correct Y-rotation math: camera faces -Z locally, so to look at a world
+    // direction (dx, 0, dz) from origin, we need yaw = atan2(-dx, -dz).
     function faceScreen() {
       const dir = new THREE.Vector3()
         .subVectors(screenObject.position, camera.position)
         .setY(0)
         .normalize();
-      // Corrected: was atan2(-dir.x, -dir.z) which overshot left.
-      targetYaw   = THREE.MathUtils.clamp(Math.atan2(dir.x, -dir.z), -YAW_LIMIT, YAW_LIMIT);
+      targetYaw = THREE.MathUtils.clamp(
+        Math.atan2(-dir.x, -dir.z),
+        -YAW_LIMIT,
+        YAW_LIMIT
+      );
       targetPitch = 0;
     }
 
@@ -681,13 +687,12 @@
     }
 
     // =========================================================
-    // CARTRIDGE SELECTION — blocked while ejecting/falling/waiting/respawning
+    // CARTRIDGE SELECTION
     // =========================================================
     async function selectCartridge(id) {
       const newCart = cartridgeObjects.find(c => c.id === id);
       if (!newCart) return;
 
-      // Block unselectable states
       if (
         newCart.state === 'ejecting' ||
         newCart.state === 'falling' ||
@@ -697,7 +702,6 @@
         return;
       }
 
-      // Instant content swap for immediate feedback
       screenScroll.innerHTML = CONTENT[id] || '';
       screenScroll.scrollTop = 0;
       cartridgeObjects.forEach(c => {
@@ -872,15 +876,19 @@
     // =========================================================
     let lastTime = performance.now();
 
+    function updateCameraDamp(dt) {
+      // Frame-rate independent smoothing. Identical feel at any FPS.
+      yaw   = THREE.MathUtils.damp(yaw,   targetYaw,   CAMERA_DAMP_LAMBDA, dt);
+      pitch = THREE.MathUtils.damp(pitch, targetPitch, CAMERA_DAMP_LAMBDA, dt);
+      camera.rotation.set(pitch, yaw, 0, 'YXZ');
+    }
+
     function flatAnimate(now) {
       if (isInXR()) return;
       const dt = Math.min((now - lastTime) / 1000, 0.1);
       lastTime = now;
 
-      yaw   += (targetYaw   - yaw)   * 0.08;
-      pitch += (targetPitch - pitch) * 0.08;
-      camera.rotation.set(pitch, yaw, 0, 'YXZ');
-
+      updateCameraDamp(dt);
       updateAnimations(dt);
       webglRenderer.render(scene, camera);
       css3dRenderer.render(scene, camera);
@@ -902,9 +910,7 @@
           if (!usesDeviceOrientation) return;
           const dt = Math.min((now - lastTime) / 1000, 0.1);
           lastTime = now;
-          yaw   += (targetYaw   - yaw)   * 0.08;
-          pitch += (targetPitch - pitch) * 0.08;
-          camera.rotation.set(pitch, yaw, 0, 'YXZ');
+          updateCameraDamp(dt);
           updateAnimations(dt);
           webglRenderer.render(scene, camera);
           requestAnimationFrame(tick);
