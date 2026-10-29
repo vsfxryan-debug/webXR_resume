@@ -80,6 +80,7 @@
     }
     #screen-scroll .meta { color: #777; font-size: 0.85em; margin-top: 28px; }
 
+    /* === CARTRIDGES === */
     .cartridge {
       position: relative;
       z-index: 20;
@@ -99,12 +100,28 @@
       transition: border-color 0.18s ease, box-shadow 0.18s ease;
       font-family: inherit;
       background: #333;
+      background-size: cover;
+      background-position: center;
       opacity: 1;
+      overflow: hidden;
     }
+    /* Image covers the text; text is beneath as fallback while loading or if 404. */
+    .cartridge .cart-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      pointer-events: none;
+      transition: filter 0.18s ease;
+    }
+    .cartridge:hover .cart-img { filter: brightness(1.08); }
     .cartridge .title {
+      position: relative;
       font-size: 17px; font-weight: 700; line-height: 1.2;
     }
     .cartridge .label {
+      position: relative;
       font-size: 11px; opacity: 0.75;
       text-transform: uppercase; letter-spacing: 1px;
     }
@@ -402,7 +419,7 @@
       </section>
 
       <footer class="resume-foot">
-        <p>Prefer a PDF? <a href="/resume.pdf" download>Download the one-page version ↓</a></p>
+        <p>Prefer a PDF? <a href="./resume.pdf" download>Download the one-page version ↓</a></p>
       </footer>
     </article>
   </section>
@@ -470,11 +487,7 @@
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 1000);
 
-    // Camera distance from the screen plane. Matches the initial setup so
-    // screen size on screen doesn't change when we translate.
     const CAMERA_SCREEN_DISTANCE = 5;
-
-    // Initial camera position: shelf view (between screen on left and cartridges on right).
     const INITIAL_CAMERA_POS = new THREE.Vector3(0, 0, CAMERA_SCREEN_DISTANCE);
     camera.position.copy(INITIAL_CAMERA_POS);
     camera.lookAt(0, 0, 0);
@@ -510,31 +523,52 @@
     const screenObject = new CSS3DObject(screenWrapper);
     scene.add(screenObject);
 
+    // Cartridge definitions. imgUrl is a RELATIVE path so it resolves
+    // correctly under GitHub Pages subpaths (username.github.io/repo/...).
     const CARTRIDGE_DEFS = [
-      { id: 'rendering', label: 'Cartridge 01', title: 'Senior Render Wrangler',
-        bg: 'linear-gradient(145deg,#7a1f17,#c0392b)' },
-      { id: 'pipeline',  label: 'Cartridge 02', title: 'Pipeline Engineer',
-        bg: 'linear-gradient(145deg,#1e5c36,#27ae60)' },
-      { id: 'lookdev',   label: 'Cartridge 03', title: 'Look Development',
-        bg: 'linear-gradient(145deg,#1a487a,#2980b9)' },
+      {
+        id: 'rendering', label: 'Cartridge 01', title: 'Senior Render Wrangler',
+        bg: 'linear-gradient(145deg,#7a1f17,#c0392b)',
+        imgUrl: './cartridges/rendering.webp',
+      },
+      {
+        id: 'pipeline', label: 'Cartridge 02', title: 'Pipeline Engineer',
+        bg: 'linear-gradient(145deg,#1e5c36,#27ae60)',
+        imgUrl: './cartridges/pipeline.webp',
+      },
+      {
+        id: 'lookdev', label: 'Cartridge 03', title: 'Look Development',
+        bg: 'linear-gradient(145deg,#1a487a,#2980b9)',
+        imgUrl: './cartridges/lookdev.webp',
+      },
     ];
 
     const cartridgeObjects = [];
     let insertedCartridge = null;
 
-    CARTRIDGE_DEFS.forEach(({ id, label, title, bg }) => {
+    CARTRIDGE_DEFS.forEach(({ id, label, title, bg, imgUrl }) => {
       const btn = document.createElement('button');
       btn.className = 'cartridge';
       btn.dataset.id = id;
       btn.style.background = bg;
+      btn.style.backgroundSize = 'cover';
+      btn.style.backgroundPosition = 'center';
       btn.style.opacity = '1';
       btn.style.zIndex = '20';
-      btn.innerHTML = `<span class="title">${title}</span><span class="label">${label}</span>`;
+      btn.setAttribute('aria-label', title);
+      // Image on top; title/label underneath as fallback if img fails to load.
+      btn.innerHTML = `
+        <img class="cart-img" src="${imgUrl}" alt="" aria-hidden="true" draggable="false" onerror="this.remove()">
+        <span class="title">${title}</span>
+        <span class="label">${label}</span>
+      `;
       btn.addEventListener('click', () => selectCartridge(id));
+
       const obj = new CSS3DObject(btn);
       obj.position.set(0, 0, 0);
       obj.scale.setScalar(1);
       scene.add(obj);
+
       cartridgeObjects.push({
         id, el: btn, obj,
         state: 'on_shelf',
@@ -554,9 +588,7 @@
     xrScreenMesh.visible = false;
     scene.add(xrScreenMesh);
 
-    // Camera damping state
     let yaw = 0, pitch = 0, targetYaw = 0, targetPitch = 0;
-    // Camera position targets — set by faceScreen() to be directly in front of the screen.
     let targetCameraX = INITIAL_CAMERA_POS.x;
     let targetCameraY = INITIAL_CAMERA_POS.y;
     let targetCameraZ = INITIAL_CAMERA_POS.z;
@@ -596,10 +628,6 @@
     canvas.addEventListener('pointerup', endDrag);
     canvas.addEventListener('pointercancel', endDrag);
 
-    // Center on the screen: translate the camera to be directly in front of
-    // the screen's center and set yaw/pitch to 0 so the screen faces us flat-on.
-    // This eliminates the perspective foreshortening that made the screen look
-    // "at an angle" even when the camera was pointed at the screen center.
     function faceScreen() {
       targetCameraX = screenObject.position.x;
       targetCameraY = screenObject.position.y;
@@ -781,8 +809,6 @@
 
       if (insertedCartridge && !insertedCartridge.anim) snapToSlot(insertedCartridge);
 
-      // If the camera is currently at the screen (or has visited it), keep
-      // the target position in sync with the new screen position after resize.
       if (hasVisitedScreen) {
         targetCameraX = screenObject.position.x;
         targetCameraY = screenObject.position.y;
