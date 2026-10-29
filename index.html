@@ -1248,6 +1248,17 @@ const CONTENT = {
     <h2>Tools</h2><p>Arnold · Katana · Houdini · Nuke · OpenColorIO</p>`,
 };
 
+// === NEW: Welcome content shown on page load (no auto-inserted cartridge) ===
+const WELCOME_CONTENT = `
+  <div class="kicker">Interactive Resume</div>
+  <h1>Pick a cartridge</h1>
+  <p>Three cartridges sit on the shelf. Each one tells the same career story through a different role lens — pick the one closest to the role you're hiring for, or drag to look around first.</p>
+  <h2>What you're looking at</h2>
+  <p>This is a 3D cinema built with Three.js. The cartridges are real DOM elements projected in 3D space. When you click one, it slides into the projector and the screen loads that role's resume.</p>
+  <h2>Short on time?</h2>
+  <p>Click <strong>View Traditional Resume</strong> in the top-right corner to skip the cinema entirely.</p>
+`;
+
 const canvas = document.getElementById('webgl-canvas');
 const css3dRoot = document.getElementById('css3d-root');
 
@@ -1338,7 +1349,8 @@ let yaw = 0, pitch = 0, targetYaw = 0, targetPitch = 0;
 let targetCameraX = INITIAL_CAMERA_POS.x;
 let targetCameraY = INITIAL_CAMERA_POS.y;
 let targetCameraZ = INITIAL_CAMERA_POS.z;
-let hasVisitedScreen = false;
+// === NEW: true until first cartridge is picked (drives shelf view vs screen view) ===
+let inShelfView = true;
 
 const YAW_LIMIT   = THREE.MathUtils.degToRad(70);
 const PITCH_LIMIT = THREE.MathUtils.degToRad(25);
@@ -1375,12 +1387,59 @@ canvas.addEventListener('pointerup', endDrag);
 canvas.addEventListener('pointercancel', endDrag);
 
 function faceScreen() {
+  inShelfView = false;   // === NEW: leave shelf view when a cartridge is chosen
   targetCameraX = screenObject.position.x;
   targetCameraY = screenObject.position.y;
   targetCameraZ = screenObject.position.z + CAMERA_SCREEN_DISTANCE;
   targetYaw = 0;
   targetPitch = 0;
-  hasVisitedScreen = true;
+}
+
+// === NEW: compute a camera pose that fits the screen + all cartridges on screen.
+// Only used in landscape; portrait preserves the existing z=5 zoom per user request.
+function computeShelfView() {
+  const fovRad = (camera.fov * Math.PI) / 180;
+  const aspect = camera.aspect;
+
+  const items = [
+    {
+      minX: screenObject.position.x - layoutState.screenWorldW / 2,
+      maxX: screenObject.position.x + layoutState.screenWorldW / 2,
+      minY: screenObject.position.y - layoutState.screenWorldH / 2,
+      maxY: screenObject.position.y + layoutState.screenWorldH / 2,
+    },
+  ];
+
+  for (const c of cartridgeObjects) {
+    const w = CART_W * c.homeScale;
+    const h = CART_H * c.homeScale;
+    items.push({
+      minX: c.homePosition.x - w / 2,
+      maxX: c.homePosition.x + w / 2,
+      minY: c.homePosition.y - h / 2,
+      maxY: c.homePosition.y + h / 2,
+    });
+  }
+
+  const minX = Math.min(...items.map(i => i.minX));
+  const maxX = Math.max(...items.map(i => i.maxX));
+  const minY = Math.min(...items.map(i => i.minY));
+  const maxY = Math.max(...items.map(i => i.maxY));
+
+  const boundsW = maxX - minX;
+  const boundsH = maxY - minY;
+
+  const PADDING = 1.15;
+  const halfFovTan = Math.tan(fovRad / 2);
+  const distForHeight = (boundsH * PADDING / 2) / halfFovTan;
+  const distForWidth = (boundsW * PADDING / 2) / (halfFovTan * aspect);
+  const distance = Math.max(distForHeight, distForWidth);
+
+  return {
+    x: (minX + maxX) / 2,
+    y: (minY + maxY) / 2,
+    z: screenObject.position.z + distance,
+  };
 }
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -1555,7 +1614,21 @@ function updateLayout() {
 
   if (insertedCartridge && !insertedCartridge.anim) snapToSlot(insertedCartridge);
 
-  if (hasVisitedScreen) {
+  // === Camera target: shelf view (landscape pulls back; portrait keeps z=5) or screen view ===
+  if (inShelfView) {
+    if (orientation === 'portrait') {
+      // Portrait: preserve current zoom (z=5, origin). Screen fills view; hint of cart on the right.
+      targetCameraX = INITIAL_CAMERA_POS.x;
+      targetCameraY = INITIAL_CAMERA_POS.y;
+      targetCameraZ = INITIAL_CAMERA_POS.z;
+    } else {
+      // Landscape: fit screen + all carts.
+      const shelf = computeShelfView();
+      targetCameraX = shelf.x;
+      targetCameraY = shelf.y;
+      targetCameraZ = shelf.z;
+    }
+  } else {
     targetCameraX = screenObject.position.x;
     targetCameraY = screenObject.position.y;
     targetCameraZ = screenObject.position.z + CAMERA_SCREEN_DISTANCE;
@@ -1887,8 +1960,19 @@ function onResize() {
 window.addEventListener('resize', onResize);
 window.addEventListener('orientationchange', onResize);
 
+// =========================================================
+// BOOT — show welcome message, snap to shelf view, start loop
+// =========================================================
 updateLayout();
-selectCartridge('pipeline');
+
+screenScroll.innerHTML = WELCOME_CONTENT;
+
+// Snap camera to the computed shelf pose (no pan animation on first frame)
+camera.position.set(targetCameraX, targetCameraY, targetCameraZ);
+yaw = targetYaw;
+pitch = targetPitch;
+camera.rotation.set(pitch, yaw, 0, 'YXZ');
+
 startRenderLoop();
 
 const loading = document.getElementById('loading');
