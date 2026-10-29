@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Resume Cinema — MVP 1: 3D Shelf Cartridges</title>
+  <title>Resume Cinema — Mobile AR + WebXR</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
@@ -30,7 +30,8 @@
     }
 
     body.vr-mode #css3d-root,
-    body.vr-mode #pdf-link { display: none; }
+    body.vr-mode #pdf-link,
+    body.vr-mode #ar-button { display: none; }
 
     /* === PROJECTOR SCREEN === */
     #screen-wrapper {
@@ -70,7 +71,7 @@
     }
     #screen-scroll .meta { color: #777; font-size: 0.85em; margin-top: 28px; }
 
-    /* === CARTRIDGES (now CSS3D objects, no fixed overlay) === */
+    /* === CARTRIDGES === */
     .cartridge {
       width: 180px;
       height: 225px;
@@ -134,7 +135,7 @@
       transition: opacity 0.6s;
     }
 
-    #vr-button {
+    #ar-button {
       position: fixed;
       bottom: 16px; left: 16px;
       z-index: 20;
@@ -146,8 +147,10 @@
       font: inherit;
       font-size: 13px;
       cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
     }
-    #vr-button:hover { color: #fff; border-color: #666; }
+    #ar-button:hover { color: #fff; border-color: #666; }
+    #ar-button:disabled { opacity: 0.5; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -155,7 +158,7 @@
   <div id="css3d-root"></div>
 
   <a id="pdf-link" href="/resume.pdf" target="_blank" rel="noopener">↓ Plain PDF resume</a>
-  <button id="vr-button">Enter VR</button>
+  <button id="ar-button">Step Into Cinema</button>
 
   <div id="loading">Loading cinema…</div>
 
@@ -228,9 +231,16 @@
     camera.position.set(0, 0, 5);
     camera.lookAt(0, 0, 0);
 
-    const webglRenderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+    const webglRenderer = new THREE.WebGLRenderer({
+      canvas, antialias: true, alpha: false,
+    });
     webglRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     webglRenderer.xr.enabled = true;
+
+    // AR requires the WebGL context to be XR-compatible.
+    // Three.js handles this automatically when renderer.xr.enabled = true,
+    // but the canvas itself must be created with xrCompatible if using raw WebGL.
+    // Using Three.js's WebGLRenderer with xr.enabled = true is sufficient.
 
     const css3dRenderer = new CSS3DRenderer();
     css3dRenderer.domElement.style.position = 'absolute';
@@ -269,7 +279,7 @@
     scene.add(screenObject);
 
     // =========================================================
-    // CARTRIDGES (CSS3D objects, positioned in 3D)
+    // CARTRIDGES (CSS3D objects)
     // =========================================================
     const CARTRIDGE_DEFS = [
       { id: 'rendering', label: 'Cartridge 01', title: 'Senior Render Wrangler',
@@ -296,22 +306,22 @@
     });
 
     // =========================================================
-    // VR SCREEN (WebGL plane with CanvasTexture, shown in VR only)
+    // XR SCREEN (WebGL plane for AR mode)
     // =========================================================
-    const vrScreenCanvas = document.createElement('canvas');
-    vrScreenCanvas.width = 1280;
-    vrScreenCanvas.height = 720;
-    const vrScreenTexture = new THREE.CanvasTexture(vrScreenCanvas);
-    vrScreenTexture.colorSpace = THREE.SRGBColorSpace;
-    const vrScreenMaterial = new THREE.MeshBasicMaterial({
-      map: vrScreenTexture, side: THREE.DoubleSide,
+    const xrScreenCanvas = document.createElement('canvas');
+    xrScreenCanvas.width = 1280;
+    xrScreenCanvas.height = 720;
+    const xrScreenTexture = new THREE.CanvasTexture(xrScreenCanvas);
+    xrScreenTexture.colorSpace = THREE.SRGBColorSpace;
+    const xrScreenMaterial = new THREE.MeshBasicMaterial({
+      map: xrScreenTexture, side: THREE.DoubleSide,
     });
-    const vrScreenMesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), vrScreenMaterial);
-    vrScreenMesh.visible = false;
-    scene.add(vrScreenMesh);
+    const xrScreenMesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), xrScreenMaterial);
+    xrScreenMesh.visible = false;
+    scene.add(xrScreenMesh);
 
     // =========================================================
-    // HEAD-LOOK STATE (flat mode)
+    // HEAD-LOOK STATE (flat mode / fallback)
     // =========================================================
     let yaw = 0, pitch = 0, targetYaw = 0, targetPitch = 0;
     const YAW_LIMIT   = THREE.MathUtils.degToRad(70);
@@ -321,7 +331,7 @@
     const DRAG_SENSITIVITY = 0.0035;
 
     canvas.addEventListener('pointerdown', (e) => {
-      if (isInVR()) return;
+      if (isInXR()) return;
       dragging = true;
       lastX = e.clientX;
       lastY = e.clientY;
@@ -329,7 +339,7 @@
       canvas.setPointerCapture(e.pointerId);
     });
     canvas.addEventListener('pointermove', (e) => {
-      if (!dragging || isInVR()) return;
+      if (!dragging || isInXR()) return;
       const dx = e.clientX - lastX;
       const dy = e.clientY - lastY;
       lastX = e.clientX;
@@ -363,21 +373,14 @@
     let currentCartridge = 'rendering';
 
     function positionCartridges(visibleW, visibleH, screenWorldW, screenWorldH, orientation) {
-      // 1 CSS px = cssScale world units at screen plane (Z=0)
       const cssScale = visibleW / window.innerWidth;
-
-      // Cartridge dimensions in world units (matches CSS 180x225)
       const cartWorldW = 180 * cssScale;
       const cartWorldH = 225 * cssScale;
-
-      // Right edge of the projector screen
       const screenRightEdge = screenObject.position.x + screenWorldW / 2;
-
       const gapBetweenCarts = 0.10;
       const gapFromScreen    = 0.15;
 
       if (orientation === 'landscape') {
-        // Horizontal row on the right
         const startX = screenRightEdge + gapFromScreen + cartWorldW / 2;
         cartridgeObjects.forEach((c, i) => {
           c.obj.scale.set(cssScale, cssScale, 1);
@@ -388,7 +391,6 @@
           );
         });
       } else {
-        // Vertical column on the right
         const totalHeight =
           cartridgeObjects.length * cartWorldH +
           (cartridgeObjects.length - 1) * gapBetweenCarts;
@@ -405,7 +407,7 @@
     }
 
     function updateLayout() {
-      if (isInVR()) return;
+      if (isInXR()) return;
 
       const w = window.innerWidth;
       const h = window.innerHeight;
@@ -433,19 +435,16 @@
 
       screenObject.scale.set(screenWorldW / wrapperWpx, screenWorldH / wrapperHpx, 1);
 
-      // Shift screen to make room for the cartridge shelf
       if (orientation === 'landscape') {
         screenObject.position.set(-visibleW * 0.12, 0, 0);
       } else {
         screenObject.position.set(-visibleW * 0.10, visibleH * 0.05, 0);
       }
 
-      // Align VR screen mesh with CSS3D screen
-      vrScreenMesh.scale.set(screenWorldW, screenWorldH, 1);
-      vrScreenMesh.position.copy(screenObject.position);
-      vrScreenMesh.quaternion.copy(screenObject.quaternion);
+      xrScreenMesh.scale.set(screenWorldW, screenWorldH, 1);
+      xrScreenMesh.position.copy(screenObject.position);
+      xrScreenMesh.quaternion.copy(screenObject.quaternion);
 
-      // Position cartridges in 3D space to the right of the screen
       positionCartridges(visibleW, visibleH, screenWorldW, screenWorldH, orientation);
 
       if (orientation !== currentOrientation) {
@@ -471,13 +470,13 @@
         c.el.classList.toggle('active', c.id === id);
       });
       faceScreen();
-      if (isInVR()) snapshotToVrScreen();
+      if (isInXR()) snapshotToXrScreen();
     }
 
     // =========================================================
-    // VR SNAPSHOT
+    // XR SNAPSHOT
     // =========================================================
-    async function snapshotToVrScreen() {
+    async function snapshotToXrScreen() {
       try {
         await document.fonts.ready;
         const rendered = await html2canvas(screenScroll, {
@@ -487,61 +486,161 @@
           width: screenScroll.scrollWidth,
           height: screenScroll.scrollHeight,
         });
-        const ctx = vrScreenCanvas.getContext('2d');
+        const ctx = xrScreenCanvas.getContext('2d');
         ctx.fillStyle = '#0b0b0d';
-        ctx.fillRect(0, 0, vrScreenCanvas.width, vrScreenCanvas.height);
+        ctx.fillRect(0, 0, xrScreenCanvas.width, xrScreenCanvas.height);
         const scale = Math.min(
-          vrScreenCanvas.width / rendered.width,
-          vrScreenCanvas.height / rendered.height
+          xrScreenCanvas.width / rendered.width,
+          xrScreenCanvas.height / rendered.height
         );
         const w = rendered.width * scale;
         const h = rendered.height * scale;
-        const x = (vrScreenCanvas.width - w) / 2;
+        const x = (xrScreenCanvas.width - w) / 2;
         ctx.drawImage(rendered, x, 0, w, h);
-        vrScreenTexture.needsUpdate = true;
+        xrScreenTexture.needsUpdate = true;
       } catch (err) {
-        console.warn('VR snapshot failed', err);
+        console.warn('XR snapshot failed', err);
       }
     }
 
     // =========================================================
-    // VR SESSION
+    // XR SESSION MANAGEMENT
     // =========================================================
     let xrSession = null;
-    function isInVR() { return webglRenderer.xr.isPresenting; }
+    let usesDeviceOrientation = false;
 
-    async function enterVR() {
-      if (!navigator.xr) { alert('WebXR is not available in this browser.'); return; }
-      const supported = await navigator.xr.isSessionSupported('immersive-vr');
-      if (!supported) { alert('This device does not support immersive VR.'); return; }
-      xrSession = await navigator.xr.requestSession('immersive-vr', {
-        optionalFeatures: ['local-floor', 'bounded-floor', 'hand-tracking'],
-      });
-      await webglRenderer.xr.setSession(xrSession);
+    function isInXR() {
+      return webglRenderer.xr.isPresenting || usesDeviceOrientation;
     }
 
+    async function startXRSession() {
+      const button = document.getElementById('ar-button');
+      button.disabled = true;
+
+      // --- 1. Try immersive-ar (Android / WebXR) ---
+      if (navigator.xr) {
+        try {
+          const supported = await navigator.xr.isSessionSupported('immersive-ar');
+          if (supported) {
+            // Request the session. 'local' gives us the phone's
+            // position and rotation in a local reference space.
+            // 'hit-test' is optional but useful if we later want
+            // to place objects on the floor.
+            xrSession = await navigator.xr.requestSession('immersive-ar', {
+              requiredFeatures: ['local'],
+              optionalFeatures: ['hit-test', 'dom-overlay'],
+              domOverlay: { root: document.body },
+            });
+            await webglRenderer.xr.setSession(xrSession);
+            // The sessionstart event listener will handle the UI switch.
+            return;
+          }
+        } catch (err) {
+          console.warn('immersive-ar failed, falling back to deviceorientation', err);
+        }
+      }
+
+      // --- 2. Fallback: deviceorientation (iOS / no WebXR) ---
+      if (window.DeviceOrientationEvent) {
+        // iOS 13+ requires permission for device orientation
+        if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+          try {
+            const permission = await DeviceOrientationEvent.requestPermission();
+            if (permission !== 'granted') {
+              alert('Motion permission was denied. The cinema will stay in flat mode.');
+              button.disabled = false;
+              return;
+            }
+          } catch (err) {
+            console.warn('DeviceOrientation permission request failed', err);
+            button.disabled = false;
+            return;
+          }
+        }
+        enableDeviceOrientationFallback();
+        button.textContent = 'Exit Cinema';
+        button.disabled = false;
+      } else {
+        alert('This device does not support motion tracking.');
+        button.disabled = false;
+      }
+    }
+
+    function enableDeviceOrientationFallback() {
+      usesDeviceOrientation = true;
+      document.body.classList.add('vr-mode'); // reuse the same CSS class to hide flat UI
+      xrScreenMesh.visible = true;
+      snapshotToXrScreen();
+      window.addEventListener('deviceorientation', onDeviceOrientation);
+    }
+
+    function disableDeviceOrientationFallback() {
+      usesDeviceOrientation = false;
+      document.body.classList.remove('vr-mode');
+      xrScreenMesh.visible = false;
+      window.removeEventListener('deviceorientation', onDeviceOrientation);
+    }
+
+    function onDeviceOrientation(event) {
+      if (!usesDeviceOrientation) return;
+      // alpha: z-axis (compass), beta: x-axis (front/back tilt), gamma: y-axis (left/right tilt)
+      const alpha = THREE.MathUtils.degToRad(event.alpha || 0);
+      const beta  = THREE.MathUtils.degToRad(event.beta  || 0);
+      const gamma = THREE.MathUtils.degToRad(event.gamma || 0);
+
+      // Map device orientation to camera yaw/pitch.
+      // This is a simplified mapping; for a production app you would
+      // use a quaternion-based approach with Euler order 'YXZ'.
+      targetYaw   = THREE.MathUtils.clamp(alpha, -YAW_LIMIT, YAW_LIMIT);
+      targetPitch = THREE.MathUtils.clamp(beta, -PITCH_LIMIT, PITCH_LIMIT);
+    }
+
+    // =========================================================
+    // XR EVENT LISTENERS
+    // =========================================================
     webglRenderer.xr.addEventListener('sessionstart', async () => {
       document.body.classList.add('vr-mode');
-      vrScreenMesh.visible = true;
-      await snapshotToVrScreen();
+      xrScreenMesh.visible = true;
+      // In AR, the phone's camera feed replaces the background.
+      // We hide the panorama sphere and let the real world show through.
+      pano.visible = false;
+      await snapshotToXrScreen();
       startRenderLoop();
+      const button = document.getElementById('ar-button');
+      button.textContent = 'Exit Cinema';
+      button.disabled = false;
     });
 
     webglRenderer.xr.addEventListener('sessionend', () => {
       document.body.classList.remove('vr-mode');
-      vrScreenMesh.visible = false;
+      xrScreenMesh.visible = false;
+      pano.visible = true;
+      xrSession = null;
       startRenderLoop();
+      const button = document.getElementById('ar-button');
+      button.textContent = 'Step Into Cinema';
+      button.disabled = false;
     });
 
-    document.getElementById('vr-button').addEventListener('click', () => {
-      if (isInVR()) xrSession?.end(); else enterVR();
+    // Button click handler
+    document.getElementById('ar-button').addEventListener('click', () => {
+      if (isInXR()) {
+        if (xrSession) {
+          xrSession.end();
+        } else if (usesDeviceOrientation) {
+          disableDeviceOrientationFallback();
+          document.getElementById('ar-button').textContent = 'Step Into Cinema';
+        }
+      } else {
+        startXRSession();
+      }
     });
 
     // =========================================================
     // RENDER LOOP
     // =========================================================
     function flatAnimate() {
-      if (isInVR()) return;
+      if (isInXR()) return;
       yaw   += (targetYaw   - yaw)   * 0.08;
       pitch += (targetPitch - pitch) * 0.08;
       camera.rotation.set(pitch, yaw, 0, 'YXZ');
@@ -551,13 +650,29 @@
 
     function startRenderLoop() {
       webglRenderer.setAnimationLoop(null);
-      if (isInVR()) {
+
+      if (webglRenderer.xr.isPresenting) {
+        // XR mode: the XR session drives the camera.
+        // Three.js's setAnimationLoop is required for XR.
         webglRenderer.setAnimationLoop(() => {
           webglRenderer.render(scene, camera);
         });
-      } else {
+      } else if (usesDeviceOrientation) {
+        // Device orientation fallback: we still use RAF,
+        // but the camera is driven by targetYaw/targetPitch.
         const tick = () => {
-          if (isInVR()) return;
+          if (!usesDeviceOrientation) return;
+          yaw   += (targetYaw   - yaw)   * 0.08;
+          pitch += (targetPitch - pitch) * 0.08;
+          camera.rotation.set(pitch, yaw, 0, 'YXZ');
+          webglRenderer.render(scene, camera);
+          requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      } else {
+        // Flat mode
+        const tick = () => {
+          if (isInXR()) return;
           flatAnimate();
           requestAnimationFrame(tick);
         };
