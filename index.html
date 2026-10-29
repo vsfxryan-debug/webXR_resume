@@ -72,6 +72,22 @@ img{max-width:100%}
 
 body.vr-mode #css3d-root,
 body.vr-mode #view-resume-btn,
+@keyframes resumeFlash {
+  0%, 100% {
+    background: rgba(33,24,21,0.75);
+    color: var(--text);
+    border-color: var(--line);
+  }
+  50% {
+    background: #d4b844;
+    color: #211815;
+    border-color: #d4b844;
+  }
+}
+
+#view-resume-btn {
+  animation: resumeFlash 1s ease-in-out 5;
+}
 body.vr-mode #ar-button{display:none}
 
 #screen-wrapper{
