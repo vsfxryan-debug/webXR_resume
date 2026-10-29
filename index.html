@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Resume Cinema — Slot Insert + Title-First Carts</title>
+  <title>Resume Cinema — Centered Pan + 16:9 Carts + Studio Pano</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
@@ -33,9 +33,9 @@
     body.vr-mode #pdf-link,
     body.vr-mode #ar-button { display: none; }
 
-    /* === PROJECTOR SCREEN (z-index 10 — sits between inserted carts (1) and active carts (20)) === */
+    /* === PROJECTOR SCREEN === */
     #screen-wrapper {
-      position: relative;   /* required for z-index to apply */
+      position: relative;
       z-index: 10;
       background: #0b0b0d;
       border: 10px solid #1c1c1f;
@@ -73,18 +73,18 @@
     }
     #screen-scroll .meta { color: #777; font-size: 0.85em; margin-top: 28px; }
 
-    /* === CARTRIDGES === */
+    /* === CARTRIDGES — 16:9 aspect === */
     .cartridge {
-      position: relative;   /* required for z-index to apply */
-      z-index: 20;          /* JS overrides this per-frame based on world Z */
-      width: 180px;
-      height: 225px;
+      position: relative;
+      z-index: 20;
+      width: 320px;
+      height: 180px;
       pointer-events: auto;
       border: 3px solid rgba(255,255,255,0.55);
       border-radius: 6px;
       color: #fff;
       cursor: pointer;
-      padding: 14px 16px;
+      padding: 12px 16px;
       text-align: left;
       display: flex;
       flex-direction: column;
@@ -95,7 +95,6 @@
       background: #333;
       opacity: 1;
     }
-    /* Title on top, label on bottom — inner HTML is now <title/><label/> */
     .cartridge .title {
       font-size: 17px; font-weight: 700; line-height: 1.2;
     }
@@ -258,25 +257,27 @@
       screenWorldH: 1,
     };
 
-    // =========================================================
-    // 360 PANORAMA
-    // =========================================================
-    // ▼▼▼ DROP YOUR BLENDER RENDERS HERE ▼▼▼
-    // const panoTextureLandscape = new THREE.TextureLoader().load('/panos/theater-landscape.jpg');
-    // const panoTexturePortrait  = new THREE.TextureLoader().load('/panos/theater-portrait.jpg');
-    // panoTextureLandscape.colorSpace = THREE.SRGBColorSpace;
-    // panoTexturePortrait.colorSpace  = THREE.SRGBColorSpace;
-    // panoMaterial.map = panoTextureLandscape;
-    // panoMaterial.color.set(0xffffff);
-    // panoMaterial.needsUpdate = true;
-    // ▲▲▲ END PANORAMA DROP ZONE ▲▲▲
+    // Cartridge physical dimensions (world units will be derived from these)
+    const CART_W = 320;
+    const CART_H = 180;
 
-    const panoMaterial = new THREE.MeshBasicMaterial({ color: 0x0a0a0d, side: THREE.BackSide });
+    // =========================================================
+    // 360 PANORAMA — Poly Haven studio, CC0
+    // =========================================================
+    const panoTexture = new THREE.TextureLoader().load(
+      'https://dl.polyhaven.org/file/ph-assets/HDRIs/extra/Tonemapped%20JPG/studio_small_03.jpg'
+    );
+    panoTexture.colorSpace = THREE.SRGBColorSpace;
+
+    const panoMaterial = new THREE.MeshBasicMaterial({
+      map: panoTexture,
+      side: THREE.BackSide,
+    });
     const pano = new THREE.Mesh(new THREE.SphereGeometry(50, 64, 40), panoMaterial);
     scene.add(pano);
 
     // =========================================================
-    // PROJECTOR SCREEN (CSS3D)
+    // PROJECTOR SCREEN
     // =========================================================
     const screenWrapper = document.createElement('div');
     screenWrapper.id = 'screen-wrapper';
@@ -288,8 +289,7 @@
     scene.add(screenObject);
 
     // =========================================================
-    // CARTRIDGES
-    // Note: title comes FIRST (top), label (cartridge #) comes SECOND (bottom).
+    // CARTRIDGES — Title on top, number on bottom
     // =========================================================
     const CARTRIDGE_DEFS = [
       { id: 'rendering', label: 'Cartridge 01', title: 'Senior Render Wrangler',
@@ -310,7 +310,6 @@
       btn.style.background = bg;
       btn.style.opacity = '1';
       btn.style.zIndex = '20';
-      // Title first (top), label second (bottom)
       btn.innerHTML = `<span class="title">${title}</span><span class="label">${label}</span>`;
       btn.addEventListener('click', () => selectCartridge(id));
 
@@ -385,7 +384,8 @@
         .subVectors(screenObject.position, camera.position)
         .setY(0)
         .normalize();
-      targetYaw   = THREE.MathUtils.clamp(Math.atan2(-dir.x, -dir.z), -YAW_LIMIT, YAW_LIMIT);
+      // Corrected: was atan2(-dir.x, -dir.z) which overshot left.
+      targetYaw   = THREE.MathUtils.clamp(Math.atan2(dir.x, -dir.z), -YAW_LIMIT, YAW_LIMIT);
       targetPitch = 0;
     }
 
@@ -426,8 +426,6 @@
       });
     }
 
-    // z-index flip: cartridges go behind the screen once their world Z is negative.
-    // Screen plane is at Z = 0 (z-index 10). Carts at Z < -0.01 → z-index 1 (behind).
     function updateCartZIndex(cart) {
       cart.el.style.zIndex = cart.obj.position.z < -0.01 ? '1' : '20';
     }
@@ -474,14 +472,11 @@
     }
 
     function getSlotPosition(cart) {
-      // Cartridge sits above the projector's top edge, 30% of its height
-      // above the bezel, 70% tucked behind it.
-      // Z is NEGATIVE so it renders behind the screen (z-index 1).
       const sx = screenObject.position.x;
       const sy = screenObject.position.y;
       const screenTop = sy + layoutState.screenWorldH / 2;
       const insertedScale = cart.homeScale * 0.65;
-      const insertedCartH = 225 * insertedScale;
+      const insertedCartH = CART_H * insertedScale;
       const cartCenterY = screenTop + insertedCartH * 0.3;
       return new THREE.Vector3(sx, cartCenterY, -0.2);
     }
@@ -496,8 +491,8 @@
 
     function positionCartridges(visibleW, screenWorldW, orientation) {
       const cssScale = visibleW / window.innerWidth;
-      const cartWorldW = 180 * cssScale;
-      const cartWorldH = 225 * cssScale;
+      const cartWorldW = CART_W * cssScale;
+      const cartWorldH = CART_H * cssScale;
       const screenRightEdge = screenObject.position.x + screenWorldW / 2;
       const gapBetweenCarts = 0.10;
       const gapFromScreen    = 0.15;
@@ -581,7 +576,6 @@
       xrScreenMesh.position.copy(screenObject.position);
       xrScreenMesh.quaternion.copy(screenObject.quaternion);
 
-      // Cancel in-flight animations before recomputing layout.
       for (const cart of cartridgeObjects) {
         if (!cart.anim) continue;
         cancelTween(cart);
@@ -594,20 +588,12 @@
 
       positionCartridges(visibleW, screenWorldW, orientation);
 
-      // Re-snap inserted cartridge to new slot position.
       if (insertedCartridge && !insertedCartridge.anim) {
         snapToSlot(insertedCartridge);
       }
 
       if (orientation !== currentOrientation) {
         currentOrientation = orientation;
-        // ▼▼▼ Uncomment when you have real panorama textures ▼▼▼
-        // panoMaterial.map = orientation === 'portrait'
-        //   ? panoTexturePortrait
-        //   : panoTextureLandscape;
-        // panoMaterial.color.set(0xffffff);
-        // panoMaterial.needsUpdate = true;
-        // ▲▲▲
       }
     }
 
@@ -624,27 +610,24 @@
       if (cart.state !== 'on_shelf') return;
       cart.state = 'moving_to_projector';
 
-      const slotPos = getSlotPosition(cart);          // (sx, slotY, -0.2)
+      const slotPos = getSlotPosition(cart);
       const abovePos = new THREE.Vector3(
         slotPos.x,
         slotPos.y + layoutState.visibleH * 0.15,
-        0.01                                         // still in front during rise
+        0.01
       );
       const backPos = new THREE.Vector3(
         slotPos.x,
         abovePos.y,
-        -0.2                                         // slide back while above screen
+        -0.2
       );
 
-      // Phase 1: rise from shelf to above-projector, still in front
       await tween(cart, abovePos, cart.homeScale * 0.85, 1, 0.4, easeOutCubic);
       if (cart.state !== 'moving_to_projector') return;
 
-      // Phase 2a: slide back in Z (above screen, so no visible pop)
       await tween(cart, backPos, cart.homeScale * 0.75, 1, 0.1, easeInOutCubic);
       if (cart.state !== 'moving_to_projector') return;
 
-      // Phase 2b: descend into the slot at negative Z (cart goes behind screen)
       await tween(cart, slotPos, cart.homeScale * 0.65, 1, 0.25, easeInQuad);
       if (cart.state !== 'moving_to_projector') return;
 
@@ -655,21 +638,18 @@
       if (cart.state !== 'inserted') return;
       cart.state = 'ejecting';
 
-      const startPos = cart.obj.position.clone();    // (sx, slotY, -0.2)
+      const startPos = cart.obj.position.clone();
       const popPos = startPos.clone();
-      popPos.y += cart.obj.scale.x * 30;             // pop straight up, still behind
+      popPos.y += cart.obj.scale.x * 30;
       const forwardPos = popPos.clone();
-      forwardPos.z = 0.05;                           // bring in front while above screen
+      forwardPos.z = 0.05;
 
-      // Phase 1: pop up (still behind)
       await tween(cart, popPos, cart.obj.scale.x * 1.05, 1, 0.15, easeOutCubic);
       if (cart.state !== 'ejecting') return;
 
-      // Phase 2: slide forward (above screen, no visible pop)
       await tween(cart, forwardPos, cart.obj.scale.x * 1.05, 1, 0.1, easeOutCubic);
       if (cart.state !== 'ejecting') return;
 
-      // Phase 3: fall to the ground, in front of the screen, tumbling
       cart.state = 'falling';
       const groundY = -layoutState.visibleH * 0.5;
       const fallPos = new THREE.Vector3(
@@ -682,17 +662,14 @@
       });
       if (cart.state !== 'falling') return;
 
-      // Phase 4: rest on the ground
       cart.state = 'waiting';
       await sleep(1500);
       if (cart.state !== 'waiting') return;
 
-      // Phase 5: fade out on the ground
       cart.state = 'respawning';
       await tween(cart, cart.obj.position.clone(), cart.obj.scale.x, 0, 0.2, easeInQuad);
       if (cart.state !== 'respawning') return;
 
-      // Phase 6: fade back in on the shelf
       cart.obj.position.copy(cart.homePosition);
       cart.obj.scale.setScalar(cart.homeScale);
       cart.obj.rotation.set(0, 0, 0);
@@ -704,9 +681,23 @@
     }
 
     // =========================================================
-    // CARTRIDGE SELECTION
+    // CARTRIDGE SELECTION — blocked while ejecting/falling/waiting/respawning
     // =========================================================
     async function selectCartridge(id) {
+      const newCart = cartridgeObjects.find(c => c.id === id);
+      if (!newCart) return;
+
+      // Block unselectable states
+      if (
+        newCart.state === 'ejecting' ||
+        newCart.state === 'falling' ||
+        newCart.state === 'waiting' ||
+        newCart.state === 'respawning'
+      ) {
+        return;
+      }
+
+      // Instant content swap for immediate feedback
       screenScroll.innerHTML = CONTENT[id] || '';
       screenScroll.scrollTop = 0;
       cartridgeObjects.forEach(c => {
@@ -714,9 +705,6 @@
       });
       faceScreen();
       if (isInXR()) snapshotToXrScreen();
-
-      const newCart = cartridgeObjects.find(c => c.id === id);
-      if (!newCart) return;
 
       if (newCart.state === 'moving_to_projector' || newCart.state === 'inserted') return;
       if (newCart.state !== 'on_shelf') return;
@@ -728,7 +716,7 @@
       const oldCart = insertedCartridge;
       insertedCartridge = null;
       if (oldCart && oldCart !== newCart) {
-        ejectCartridge(oldCart);  // fire and forget
+        ejectCartridge(oldCart);
       }
 
       await insertCartridge(newCart);
