@@ -469,7 +469,7 @@
       // Center of the cart is 30% of its own height above the screen top
       // → bottom 20% of the cart overlaps the top of the screen.
       const cartCenterY = screenTop + insertedCartH * 0.3;
-      return new THREE.Vector3(sx, cartCenterY, 0.01);
+      return new THREE.Vector3(sx, cartCenterY, -0.02);
     }
 
     function snapToSlot(cart) {
