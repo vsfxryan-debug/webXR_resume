@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Resume Cinema — Mobile AR + WebXR</title>
+  <title>Resume Cinema — Animated Cartridges</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
@@ -86,9 +86,10 @@
       flex-direction: column;
       justify-content: space-between;
       box-shadow: 0 8px 24px rgba(0,0,0,0.7);
-      transition: box-shadow 0.18s ease, border-color 0.18s ease;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease;
       font-family: inherit;
       background: #333;
+      opacity: 1;
     }
     .cartridge .label {
       font-size: 11px; opacity: 0.75;
@@ -231,16 +232,9 @@
     camera.position.set(0, 0, 5);
     camera.lookAt(0, 0, 0);
 
-    const webglRenderer = new THREE.WebGLRenderer({
-      canvas, antialias: true, alpha: false,
-    });
+    const webglRenderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
     webglRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     webglRenderer.xr.enabled = true;
-
-    // AR requires the WebGL context to be XR-compatible.
-    // Three.js handles this automatically when renderer.xr.enabled = true,
-    // but the canvas itself must be created with xrCompatible if using raw WebGL.
-    // Using Three.js's WebGLRenderer with xr.enabled = true is sufficient.
 
     const css3dRenderer = new CSS3DRenderer();
     css3dRenderer.domElement.style.position = 'absolute';
@@ -248,6 +242,16 @@
     css3dRenderer.domElement.style.left = '0';
     css3dRenderer.domElement.style.pointerEvents = 'none';
     css3dRoot.appendChild(css3dRenderer.domElement);
+
+    // =========================================================
+    // LAYOUT STATE
+    // =========================================================
+    const layoutState = {
+      visibleW: 1,
+      visibleH: 1,
+      screenWorldW: 1,
+      screenWorldH: 1,
+    };
 
     // =========================================================
     // 360 PANORAMA
@@ -279,7 +283,7 @@
     scene.add(screenObject);
 
     // =========================================================
-    // CARTRIDGES (CSS3D objects)
+    // CARTRIDGES (CSS3D objects with state machines)
     // =========================================================
     const CARTRIDGE_DEFS = [
       { id: 'rendering', label: 'Cartridge 01', title: 'Senior Render Wrangler',
@@ -291,22 +295,33 @@
     ];
 
     const cartridgeObjects = [];
+    let insertedCartridge = null;
 
     CARTRIDGE_DEFS.forEach(({ id, label, title, bg }) => {
       const btn = document.createElement('button');
       btn.className = 'cartridge';
       btn.dataset.id = id;
       btn.style.background = bg;
+      btn.style.opacity = '1';
       btn.innerHTML = `<span class="label">${label}</span><span class="title">${title}</span>`;
       btn.addEventListener('click', () => selectCartridge(id));
 
       const obj = new CSS3DObject(btn);
+      obj.position.set(0, 0, 0);
+      obj.scale.setScalar(1);
       scene.add(obj);
-      cartridgeObjects.push({ id, el: btn, obj });
+
+      cartridgeObjects.push({
+        id, el: btn, obj,
+        state: 'on_shelf',
+        homePosition: new THREE.Vector3(),
+        homeScale: 1,
+        anim: null,
+      });
     });
 
     // =========================================================
-    // XR SCREEN (WebGL plane for AR mode)
+    // XR SCREEN
     // =========================================================
     const xrScreenCanvas = document.createElement('canvas');
     xrScreenCanvas.width = 1280;
@@ -321,7 +336,7 @@
     scene.add(xrScreenMesh);
 
     // =========================================================
-    // HEAD-LOOK STATE (flat mode / fallback)
+    // HEAD-LOOK STATE
     // =========================================================
     let yaw = 0, pitch = 0, targetYaw = 0, targetPitch = 0;
     const YAW_LIMIT   = THREE.MathUtils.degToRad(70);
@@ -367,12 +382,104 @@
     }
 
     // =========================================================
-    // LAYOUT
+    // TWEEN SYSTEM
     // =========================================================
-    let currentOrientation = 'landscape';
-    let currentCartridge = 'rendering';
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-    function positionCartridges(visibleW, visibleH, screenWorldW, screenWorldH, orientation) {
+    function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+    function easeInQuad(t)   { return t * t; }
+    function easeInOutCubic(t) {
+      return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    }
+
+    // Animate a cartridge toward a target. Returns a promise that resolves
+    // when the tween completes OR is externally resolved (cancellation).
+    function tween(cart, toPos, toScale, toOpacity, durationSec, easing, options = {}) {
+      return new Promise(resolve => {
+        const currentOpacity = parseFloat(cart.el.style.opacity);
+        cart.anim = {
+          t: 0,
+          duration: durationSec,
+          from: {
+            pos: cart.obj.position.clone(),
+            scale: cart.obj.scale.x,
+            opacity: isNaN(currentOpacity) ? 1 : currentOpacity,
+            rotation: cart.obj.rotation.z,
+          },
+          to: {
+            pos: toPos.clone(),
+            scale: toScale,
+            opacity: toOpacity,
+            rotation: options.rotationTo !== undefined
+              ? options.rotationTo
+              : cart.obj.rotation.z,
+          },
+          easing,
+          resolve,
+        };
+      });
+    }
+
+    function updateAnimations(dt) {
+      for (const cart of cartridgeObjects) {
+        if (!cart.anim) continue;
+        const a = cart.anim;
+        a.t += dt;
+        const p = Math.min(a.t / a.duration, 1);
+        const e = a.easing(p);
+
+        cart.obj.position.lerpVectors(a.from.pos, a.to.pos, e);
+        cart.obj.scale.setScalar(THREE.MathUtils.lerp(a.from.scale, a.to.scale, e));
+        cart.el.style.opacity = String(THREE.MathUtils.lerp(a.from.opacity, a.to.opacity, e));
+        cart.obj.rotation.z = THREE.MathUtils.lerp(a.from.rotation, a.to.rotation, e);
+
+        if (p >= 1) {
+          cart.anim.resolve();
+          cart.anim = null;
+        }
+      }
+    }
+
+    function cancelTween(cart) {
+      if (cart.anim) {
+        cart.anim.resolve();
+        cart.anim = null;
+      }
+    }
+
+    // =========================================================
+    // CARTRIDGE POSITIONING
+    // =========================================================
+    function snapToHome(cart) {
+      cart.obj.position.copy(cart.homePosition);
+      cart.obj.scale.setScalar(cart.homeScale);
+      cart.obj.rotation.set(0, 0, 0);
+      cart.el.style.opacity = '1';
+      cart.state = 'on_shelf';
+    }
+
+    function getSlotPosition(cart) {
+      // Cartridge sits above the projector screen's top edge,
+      // 80% of it above the screen, 20% overlapping the top bezel.
+      const sx = screenObject.position.x;
+      const sy = screenObject.position.y;
+      const screenTop = sy + layoutState.screenWorldH / 2;
+      const insertedScale = cart.homeScale * 0.65;
+      const insertedCartH = 225 * insertedScale;
+      // Center of the cart is 30% of its own height above the screen top
+      // → bottom 20% of the cart overlaps the top of the screen.
+      const cartCenterY = screenTop + insertedCartH * 0.3;
+      return new THREE.Vector3(sx, cartCenterY, 0.01);
+    }
+
+    function snapToSlot(cart) {
+      cart.obj.position.copy(getSlotPosition(cart));
+      cart.obj.scale.setScalar(cart.homeScale * 0.65);
+      cart.obj.rotation.set(0, 0, 0);
+      cart.el.style.opacity = '1';
+    }
+
+    function positionCartridges(visibleW, screenWorldW, orientation) {
       const cssScale = visibleW / window.innerWidth;
       const cartWorldW = 180 * cssScale;
       const cartWorldH = 225 * cssScale;
@@ -383,8 +490,8 @@
       if (orientation === 'landscape') {
         const startX = screenRightEdge + gapFromScreen + cartWorldW / 2;
         cartridgeObjects.forEach((c, i) => {
-          c.obj.scale.set(cssScale, cssScale, 1);
-          c.obj.position.set(
+          c.homeScale = cssScale;
+          c.homePosition = new THREE.Vector3(
             startX + i * (cartWorldW + gapBetweenCarts),
             screenObject.position.y,
             0
@@ -396,15 +503,25 @@
           (cartridgeObjects.length - 1) * gapBetweenCarts;
         const startY = screenObject.position.y + totalHeight / 2 - cartWorldH / 2;
         cartridgeObjects.forEach((c, i) => {
-          c.obj.scale.set(cssScale, cssScale, 1);
-          c.obj.position.set(
+          c.homeScale = cssScale;
+          c.homePosition = new THREE.Vector3(
             screenRightEdge + gapFromScreen + cartWorldW / 2,
             startY - i * (cartWorldH + gapBetweenCarts),
             0
           );
         });
       }
+
+      // Snap any cartridges that are currently resting on the shelf.
+      for (const c of cartridgeObjects) {
+        if (c.state === 'on_shelf' && !c.anim) snapToHome(c);
+      }
     }
+
+    // =========================================================
+    // LAYOUT
+    // =========================================================
+    let currentOrientation = 'landscape';
 
     function updateLayout() {
       if (isInXR()) return;
@@ -424,9 +541,14 @@
       const visibleH = 2 * Math.tan(fovRad / 2) * distance;
       const visibleW = visibleH * aspect;
 
+      layoutState.visibleW = visibleW;
+      layoutState.visibleH = visibleH;
+
       const SCREEN_FRACTION = 0.6;
       const screenWorldW = visibleW * SCREEN_FRACTION;
       const screenWorldH = visibleH * SCREEN_FRACTION;
+      layoutState.screenWorldW = screenWorldW;
+      layoutState.screenWorldH = screenWorldH;
 
       const wrapperWpx = Math.round(w * SCREEN_FRACTION);
       const wrapperHpx = Math.round(h * SCREEN_FRACTION);
@@ -445,7 +567,23 @@
       xrScreenMesh.position.copy(screenObject.position);
       xrScreenMesh.quaternion.copy(screenObject.quaternion);
 
-      positionCartridges(visibleW, visibleH, screenWorldW, screenWorldH, orientation);
+      // Cancel in-flight animations before recomputing layout.
+      for (const cart of cartridgeObjects) {
+        if (!cart.anim) continue;
+        cancelTween(cart);
+        if (cart.state === 'inserted') {
+          snapToSlot(cart);
+        } else {
+          snapToHome(cart);
+        }
+      }
+
+      positionCartridges(visibleW, screenWorldW, orientation);
+
+      // Re-snap inserted cartridge to new slot position.
+      if (insertedCartridge && !insertedCartridge.anim) {
+        snapToSlot(insertedCartridge);
+      }
 
       if (orientation !== currentOrientation) {
         currentOrientation = orientation;
@@ -460,10 +598,96 @@
     }
 
     // =========================================================
-    // CARTRIDGE INTERACTION
+    // CARTRIDGE ANIMATIONS
     // =========================================================
-    function selectCartridge(id) {
-      currentCartridge = id;
+    function cancelInsert(cart) {
+      cancelTween(cart);
+      cart.state = 'on_shelf';
+      snapToHome(cart);
+    }
+
+    async function insertCartridge(cart) {
+      if (cart.state !== 'on_shelf') return;
+      cart.state = 'moving_to_projector';
+
+      const slotPos = getSlotPosition(cart);
+      // Rise over the screen and end above the slot
+      const abovePos = slotPos.clone();
+      abovePos.y += layoutState.visibleH * 0.15;
+
+      // Phase 1: rise and travel to above-slot
+      await tween(
+        cart,
+        abovePos,
+        cart.homeScale * 0.85,
+        1,
+        0.4,
+        easeOutCubic
+      );
+      if (cart.state !== 'moving_to_projector') return;
+
+      // Phase 2: slide down into the slot
+      await tween(
+        cart,
+        slotPos,
+        cart.homeScale * 0.65,
+        1,
+        0.25,
+        easeInQuad
+      );
+      if (cart.state !== 'moving_to_projector') return;
+
+      cart.state = 'inserted';
+    }
+
+    async function ejectCartridge(cart) {
+      if (cart.state !== 'inserted') return;
+      cart.state = 'ejecting';
+
+      // Phase 1: pop upward out of the slot
+      const popPos = cart.obj.position.clone();
+      popPos.y += cart.obj.scale.x * 30;
+      await tween(cart, popPos, cart.obj.scale.x * 1.05, 1, 0.15, easeOutCubic);
+      if (cart.state !== 'ejecting') return;
+
+      // Phase 2: tumble down to the ground
+      cart.state = 'falling';
+      const groundY = -layoutState.visibleH * 0.5;
+      const fallPos = new THREE.Vector3(
+        screenObject.position.x + layoutState.visibleW * 0.05,
+        groundY,
+        0
+      );
+      await tween(cart, fallPos, cart.obj.scale.x * 0.7, 1, 0.7, easeInQuad, {
+        rotationTo: Math.PI * 0.7,
+      });
+      if (cart.state !== 'falling') return;
+
+      // Phase 3: rest on the ground for a few seconds
+      cart.state = 'waiting';
+      await sleep(1500);
+      if (cart.state !== 'waiting') return;
+
+      // Phase 4: fade out on the ground
+      cart.state = 'respawning';
+      await tween(cart, cart.obj.position.clone(), cart.obj.scale.x, 0, 0.2, easeInQuad);
+      if (cart.state !== 'respawning') return;
+
+      // Phase 5: snap to shelf and fade in
+      cart.obj.position.copy(cart.homePosition);
+      cart.obj.scale.setScalar(cart.homeScale);
+      cart.obj.rotation.set(0, 0, 0);
+      await tween(cart, cart.homePosition, cart.homeScale, 1, 0.3, easeOutCubic);
+      if (cart.state !== 'respawning') return;
+
+      cart.state = 'on_shelf';
+    }
+
+    // =========================================================
+    // CARTRIDGE SELECTION
+    // =========================================================
+    async function selectCartridge(id) {
+      // Content update first (instant visual feedback)
       screenScroll.innerHTML = CONTENT[id] || '';
       screenScroll.scrollTop = 0;
       cartridgeObjects.forEach(c => {
@@ -471,6 +695,31 @@
       });
       faceScreen();
       if (isInXR()) snapshotToXrScreen();
+
+      const newCart = cartridgeObjects.find(c => c.id === id);
+      if (!newCart) return;
+
+      // Already animating or already inserted → ignore
+      if (newCart.state === 'moving_to_projector' || newCart.state === 'inserted') return;
+      if (newCart.state !== 'on_shelf') return;
+
+      // Cancel any other in-flight insert
+      for (const c of cartridgeObjects) {
+        if (c.state === 'moving_to_projector' && c !== newCart) cancelInsert(c);
+      }
+
+      // Eject the currently inserted cartridge
+      const oldCart = insertedCartridge;
+      insertedCartridge = null;
+      if (oldCart && oldCart !== newCart) {
+        ejectCartridge(oldCart);  // fire and forget
+      }
+
+      // Insert the new cartridge
+      await insertCartridge(newCart);
+      if (newCart.state === 'inserted') {
+        insertedCartridge = newCart;
+      }
     }
 
     // =========================================================
@@ -504,7 +753,7 @@
     }
 
     // =========================================================
-    // XR SESSION MANAGEMENT
+    // XR SESSION
     // =========================================================
     let xrSession = null;
     let usesDeviceOrientation = false;
@@ -517,32 +766,24 @@
       const button = document.getElementById('ar-button');
       button.disabled = true;
 
-      // --- 1. Try immersive-ar (Android / WebXR) ---
       if (navigator.xr) {
         try {
           const supported = await navigator.xr.isSessionSupported('immersive-ar');
           if (supported) {
-            // Request the session. 'local' gives us the phone's
-            // position and rotation in a local reference space.
-            // 'hit-test' is optional but useful if we later want
-            // to place objects on the floor.
             xrSession = await navigator.xr.requestSession('immersive-ar', {
               requiredFeatures: ['local'],
               optionalFeatures: ['hit-test', 'dom-overlay'],
               domOverlay: { root: document.body },
             });
             await webglRenderer.xr.setSession(xrSession);
-            // The sessionstart event listener will handle the UI switch.
             return;
           }
         } catch (err) {
-          console.warn('immersive-ar failed, falling back to deviceorientation', err);
+          console.warn('immersive-ar failed, falling back', err);
         }
       }
 
-      // --- 2. Fallback: deviceorientation (iOS / no WebXR) ---
       if (window.DeviceOrientationEvent) {
-        // iOS 13+ requires permission for device orientation
         if (typeof DeviceOrientationEvent.requestPermission === 'function') {
           try {
             const permission = await DeviceOrientationEvent.requestPermission();
@@ -552,7 +793,7 @@
               return;
             }
           } catch (err) {
-            console.warn('DeviceOrientation permission request failed', err);
+            console.warn('DeviceOrientation permission failed', err);
             button.disabled = false;
             return;
           }
@@ -568,7 +809,7 @@
 
     function enableDeviceOrientationFallback() {
       usesDeviceOrientation = true;
-      document.body.classList.add('vr-mode'); // reuse the same CSS class to hide flat UI
+      document.body.classList.add('vr-mode');
       xrScreenMesh.visible = true;
       snapshotToXrScreen();
       window.addEventListener('deviceorientation', onDeviceOrientation);
@@ -583,26 +824,15 @@
 
     function onDeviceOrientation(event) {
       if (!usesDeviceOrientation) return;
-      // alpha: z-axis (compass), beta: x-axis (front/back tilt), gamma: y-axis (left/right tilt)
       const alpha = THREE.MathUtils.degToRad(event.alpha || 0);
       const beta  = THREE.MathUtils.degToRad(event.beta  || 0);
-      const gamma = THREE.MathUtils.degToRad(event.gamma || 0);
-
-      // Map device orientation to camera yaw/pitch.
-      // This is a simplified mapping; for a production app you would
-      // use a quaternion-based approach with Euler order 'YXZ'.
       targetYaw   = THREE.MathUtils.clamp(alpha, -YAW_LIMIT, YAW_LIMIT);
       targetPitch = THREE.MathUtils.clamp(beta, -PITCH_LIMIT, PITCH_LIMIT);
     }
 
-    // =========================================================
-    // XR EVENT LISTENERS
-    // =========================================================
     webglRenderer.xr.addEventListener('sessionstart', async () => {
       document.body.classList.add('vr-mode');
       xrScreenMesh.visible = true;
-      // In AR, the phone's camera feed replaces the background.
-      // We hide the panorama sphere and let the real world show through.
       pano.visible = false;
       await snapshotToXrScreen();
       startRenderLoop();
@@ -622,12 +852,10 @@
       button.disabled = false;
     });
 
-    // Button click handler
     document.getElementById('ar-button').addEventListener('click', () => {
       if (isInXR()) {
-        if (xrSession) {
-          xrSession.end();
-        } else if (usesDeviceOrientation) {
+        if (xrSession) xrSession.end();
+        else if (usesDeviceOrientation) {
           disableDeviceOrientationFallback();
           document.getElementById('ar-button').textContent = 'Step Into Cinema';
         }
@@ -639,11 +867,18 @@
     // =========================================================
     // RENDER LOOP
     // =========================================================
-    function flatAnimate() {
+    let lastTime = performance.now();
+
+    function flatAnimate(now) {
       if (isInXR()) return;
+      const dt = Math.min((now - lastTime) / 1000, 0.1);  // clamp for tab-switch
+      lastTime = now;
+
       yaw   += (targetYaw   - yaw)   * 0.08;
       pitch += (targetPitch - pitch) * 0.08;
       camera.rotation.set(pitch, yaw, 0, 'YXZ');
+
+      updateAnimations(dt);
       webglRenderer.render(scene, camera);
       css3dRenderer.render(scene, camera);
     }
@@ -652,28 +887,31 @@
       webglRenderer.setAnimationLoop(null);
 
       if (webglRenderer.xr.isPresenting) {
-        // XR mode: the XR session drives the camera.
-        // Three.js's setAnimationLoop is required for XR.
-        webglRenderer.setAnimationLoop(() => {
+        webglRenderer.setAnimationLoop((time) => {
+          const dt = Math.min((time - lastTime) / 1000, 0.1);
+          lastTime = time;
+          updateAnimations(dt);
           webglRenderer.render(scene, camera);
         });
       } else if (usesDeviceOrientation) {
-        // Device orientation fallback: we still use RAF,
-        // but the camera is driven by targetYaw/targetPitch.
-        const tick = () => {
+        lastTime = performance.now();
+        const tick = (now) => {
           if (!usesDeviceOrientation) return;
+          const dt = Math.min((now - lastTime) / 1000, 0.1);
+          lastTime = now;
           yaw   += (targetYaw   - yaw)   * 0.08;
           pitch += (targetPitch - pitch) * 0.08;
           camera.rotation.set(pitch, yaw, 0, 'YXZ');
+          updateAnimations(dt);
           webglRenderer.render(scene, camera);
           requestAnimationFrame(tick);
         };
         requestAnimationFrame(tick);
       } else {
-        // Flat mode
-        const tick = () => {
+        lastTime = performance.now();
+        const tick = (now) => {
           if (isInXR()) return;
-          flatAnimate();
+          flatAnimate(now);
           requestAnimationFrame(tick);
         };
         requestAnimationFrame(tick);
@@ -695,7 +933,7 @@
     // BOOT
     // =========================================================
     updateLayout();
-    selectCartridge('rendering');
+    selectCartridge('rendering');  // plays the "insert" animation as intro
     startRenderLoop();
 
     const loading = document.getElementById('loading');
