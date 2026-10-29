@@ -118,61 +118,71 @@ body.vr-mode #ar-button{display:none}
 }
 #screen-scroll .meta{color:#777;font-size:0.85em;margin-top:28px}
 
-/* === CARTRIDGES — glow follows the webp's alpha outline === */
+/* === CARTRIDGES — shape-following glow, no rectangles ever === */
 .cartridge{
   position:relative;
   z-index:20;
   width:320px;
   height:180px;
   pointer-events:auto;
-  border:0;
+  border:0 none;
   border-radius:0;
   padding:0;
   margin:0;
   background:transparent;
   -webkit-appearance:none;
   appearance:none;
-  outline:none;
+  outline:0 none;
+  box-shadow:none;
   cursor:pointer;
-  overflow:visible;                /* ← was `hidden`; needs `visible` so the drop-shadow can extend past the 320×180 box */
+  overflow:visible;
   font-family:inherit;
   opacity:1;
   -webkit-tap-highlight-color:transparent;
 }
+
+/* Nuke every browser-drawn rectangle on any interaction state */
+.cartridge:focus,
+.cartridge:focus-visible,
+.cartridge:active,
+.cartridge:focus:not(:focus-visible){
+  outline:0 none;
+  border:0 none;
+  box-shadow:none;
+}
+
 .cartridge .cart-img{
   position:absolute;
   inset:0;
   width:100%;
   height:100%;
-  object-fit:contain;              /* ← `contain` so the whole shape is visible; switch back to `cover` only if the webp is exactly 16:9 with no bleed */
+  object-fit:contain;
   pointer-events:none;
   display:block;
   transition:filter 0.2s ease;
 }
-.cartridge:hover .cart-img{
+
+/* ── HOVER on a NON-plugged cartridge: dull green glow ── */
+.cartridge:not(.active):hover .cart-img{
   filter:
-    drop-shadow(0 0 6px var(--accent))
-    drop-shadow(0 0 12px rgba(232,114,42,0.45))
-    brightness(1.06);
+    drop-shadow(0 0 5px rgba(106,140,76,0.75))
+    drop-shadow(0 0 12px rgba(106,140,76,0.40))
+    brightness(1.04);
 }
+
+/* ── PLUGGED-IN cartridge: orange glow, always on, no hover change ── */
 .cartridge.active .cart-img{
   filter:
     drop-shadow(0 0 10px var(--accent))
     drop-shadow(0 0 22px rgba(232,114,42,0.65))
     brightness(1.12) saturate(1.08);
 }
-.cartridge:hover .cart-img{filter:brightness(1.08)}
-.cartridge:hover{
-  border-color:#fff;
-  box-shadow:
-    0 0 0 2px rgba(255,255,255,0.35),
-    0 14px 34px rgba(0,0,0,0.9);
-}
-.cartridge.active{
-  border-color:#ffb87a;
-  box-shadow:
-    0 0 0 3px rgba(255,184,122,0.5),
-    0 14px 34px rgba(0,0,0,0.9);
+/* Pin the active glow so hovering the plugged cart doesn't alter it */
+.cartridge.active:hover .cart-img{
+  filter:
+    drop-shadow(0 0 10px var(--accent))
+    drop-shadow(0 0 22px rgba(232,114,42,0.65))
+    brightness(1.12) saturate(1.08);
 }
 
 #view-resume-btn{
