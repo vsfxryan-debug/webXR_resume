@@ -51,33 +51,6 @@ body.vr-mode #css3d-root,body.vr-mode #view-resume-btn,body.vr-mode #ar-button{d
 #screen-scroll .kicker{font-size:.75em;letter-spacing:.12em;text-transform:uppercase;color:#ff9d5c;margin-bottom:14px;font-weight:700}
 #screen-scroll .meta{color:#777;font-size:.85em;margin-top:28px}
 
-.cartridge{
-  position:relative;z-index:20;width:320px;height:180px;pointer-events:auto;
-  border:0 none;border-radius:0;padding:0;margin:0;background:transparent;
-  -webkit-appearance:none;appearance:none;outline:0 none;box-shadow:none;
-  cursor:grab;overflow:visible;font-family:inherit;opacity:1;
-  -webkit-tap-highlight-color:transparent;touch-action:none;
-}
-.cartridge.grabbed{cursor:grabbing}
-.cartridge:focus,.cartridge:focus-visible,.cartridge:active{outline:0 none;border:0 none;box-shadow:none}
-.cartridge .cart-img{
-  position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
-  pointer-events:none;display:block;transition:filter .2s ease;
-}
-.cartridge .cart-fallback{
-  display:none;position:absolute;inset:0;align-items:center;justify-content:center;
-  background:#382822;color:#fff;font-size:16px;font-weight:700;
-  padding:20px;text-align:center;border-radius:6px;line-height:1.3;
-}
-.cartridge.cart-noimg .cart-fallback{display:flex}
-.cartridge.cart-noimg .cart-img{display:none}
-.cartridge:not(.active):hover .cart-img{
-  filter:drop-shadow(0 0 15px rgba(106,140,76,.75)) drop-shadow(0 0 30px rgba(106,140,76,.4)) brightness(1.04);
-}
-.cartridge.active .cart-img,.cartridge.active:hover .cart-img{
-  filter:drop-shadow(0 0 10px var(--accent)) drop-shadow(0 0 22px rgba(232,114,42,.65)) brightness(1.12) saturate(1.08);
-}
-
 #view-resume-btn{
   position:absolute;top:16px;right:16px;z-index:20;color:#ddd;font-size:13px;padding:8px 14px;
   border:1px solid #444;border-radius:6px;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);
@@ -397,7 +370,6 @@ import * as CANNON from 'cannon-es';
 
 const PROJECTS = {
   rendering: {
-    palette:['#7a1f17','#c0392b','#ff9d5c','#e8722a','#211815'],
     videos:{}, tools:['Deadline','OpenCue','AWS','Python','Prometheus','Grafana'],
     content:`<div class="kicker">Lens 01 · Rendering &amp; Throughput</div>
       <h1>Senior Render Wrangler</h1>
@@ -409,7 +381,6 @@ const PROJECTS = {
       <ul><li>Automated overnight farm triage — 90 → 15 min.</li><li>Shot prioritization surfacing blocking renders.</li><li>Cloud burst rendering to 2,000 nodes.</li></ul>`
   },
   pipeline: {
-    palette:['#1e5c36','#27ae60','#a8d5a2','#5cab7d','#211815'],
     videos:{}, tools:['Python','Maya','Nuke','ShotGrid','Docker','Kubernetes'],
     content:`<div class="kicker">Lens 02 · Pipeline &amp; Tooling</div>
       <h1>Pipeline Engineer</h1>
@@ -420,7 +391,6 @@ const PROJECTS = {
       <ul><li>Naming and versioning overhaul — eliminated 90% of mis-delivery.</li><li>Asset QC automation — flagged 1,200 issues.</li><li>Render submission tool adopted by 4 departments, 80+ artists.</li></ul>`
   },
   lookdev: {
-    palette:['#1a487a','#2980b9','#6cb5e8','#3f7dc9','#211815'],
     videos:{}, tools:['Arnold','Katana','Houdini','Nuke','OpenColorIO'],
     content:`<div class="kicker">Lens 03 · Look &amp; Lighting</div>
       <h1>Look Development</h1>
@@ -429,7 +399,6 @@ const PROJECTS = {
       <ul><li>Shader library across 3 shows and 200+ assets.</li><li>Lighting rigs adopted by two lighting teams.</li><li>Color pipeline that killed "render vs comp" drift.</li></ul>`
   },
   virtualprod: {
-    palette:['#5c1f4a','#8e3c78','#d484bb','#7a2e60','#211815'],
     videos:{}, tools:['Unreal Engine','Maya','Python','Perforce','nDisplay'],
     content:`<div class="kicker">Lens 04 · Virtual Production</div>
       <h1>Virtual Production Engineer</h1>
@@ -440,7 +409,6 @@ const PROJECTS = {
       <ul><li>Offline tooling for The Mandalorian creative team.</li><li>LED volume camera tracking pipeline for Maya↔Unreal.</li><li>Documentation kit that cut repetitive support requests.</li></ul>`
   },
   engineering: {
-    palette:['#1f4a5c','#3c7a8e','#84c4d4','#2e607a','#211815'],
     videos:{}, tools:['Node.js','WebRTC','Docker','AWS','TypeScript','nginx'],
     content:`<div class="kicker">Lens 05 · Systems &amp; Scale</div>
       <h1>Lead Software Engineer</h1>
@@ -451,7 +419,6 @@ const PROJECTS = {
       <ul><li>LL-HLS + adaptive bitrate delivery.</li><li>Real-time peer contribution metrics.</li><li>WebRTC, libp2p, WebGPU integration.</li></ul>`
   }
 };
-const DEFAULT_PALETTE = ['#382822','#3d2c24','#2b1f1a','#e8722a','#211815'];
 const WELCOME_CONTENT = `
   <div class="kicker">Interactive Cinema</div>
   <h1>Pick a cartridge</h1>
@@ -488,7 +455,11 @@ css3dRenderer.domElement.style.pointerEvents = 'none';
 css3dRoot.appendChild(css3dRenderer.domElement);
 
 const layoutState = { visibleW: 1, visibleH: 1, screenWorldW: 1, screenWorldH: 1 };
-const CART_W = 320, CART_H = 180;
+
+// Cartridge physical dimensions (world units before scale)
+const CART_W_WORLD = 0.9;   // width
+const CART_H_WORLD = 0.5;   // height
+const CART_D_WORLD = 0.15;  // depth (front-to-back thickness)
 
 const panoTexture = new THREE.TextureLoader().load(
   'https://dl.polyhaven.org/file/ph-assets/HDRIs/extra/Tonemapped%20JPG/studio_small_03.jpg'
@@ -517,7 +488,6 @@ physicsWorld.addContactMaterial(new CANNON.ContactMaterial(cartPhysMat, cartPhys
 
 const physicsBounds = { w: 12, h: 8, d: 3 };
 const staticWalls = [];
-const perchBodies = [];
 
 function rebuildWalls() {
   staticWalls.forEach(b => physicsWorld.removeBody(b));
@@ -530,19 +500,176 @@ function rebuildWalls() {
     physicsWorld.addBody(b);
     staticWalls.push(b);
   }
-  addWall(0, -hh * 0.65, 0, hw + 1, 0.5, hd + 1);   // floor (raised so falls are visible)
-  addWall(-hw - 0.5, 0, 0, 0.5, hh + 1, hd + 1);    // left
-  addWall(hw + 0.5, 0, 0, 0.5, hh + 1, hd + 1);     // right
-  addWall(0, 0, -hd - 0.5, hw + 1, hh + 1, 0.5);    // back
-  addWall(0, 0, hd + 0.5, hw + 1, hh + 1, 0.5);     // front
+  addWall(0, -hh * 0.65, 0, hw + 1, 0.5, hd + 1);
+  addWall(-hw - 0.5, 0, 0, 0.5, hh + 1, hd + 1);
+  addWall(hw + 0.5, 0, 0, 0.5, hh + 1, hd + 1);
+  addWall(0, 0, -hd - 0.5, hw + 1, hh + 1, 0.5);
+  addWall(0, 0, hd + 0.5, hw + 1, hh + 1, 0.5);
 }
 
-// Perches removed — they overlapped between adjacent carts and caused the solver
-// to jitter parked carts. Carts are now parked KINEMATIC until something wakes them.
-function rebuildPerches() {
-  perchBodies.forEach(b => physicsWorld.removeBody(b));
-  perchBodies.length = 0;
+// =========================================================
+// TOOL COLUMN — invisible container to viewer-left where
+// cubes stack. One static floor + 4 tall walls. No top.
+// =========================================================
+const toolColumnBodies = [];
+const toolColumn = {
+  x: -4,               // center X of the column (updated by layout)
+  y: 0,                // center Y
+  z: 0,                // center Z
+  w: 1.6,              // inner width
+  d: 1.6,              // inner depth
+  top: 6,              // top Y (spawn point just below this)
+  floorY: -2.0,        // floor Y
+};
+
+function rebuildToolColumn() {
+  toolColumnBodies.forEach(b => physicsWorld.removeBody(b));
+  toolColumnBodies.length = 0;
+
+  const { x, y, z, w, d, top, floorY } = toolColumn;
+  const wallT = 0.15;
+  const hw = w / 2, hd = d / 2;
+  const height = top - floorY;
+  const cy = floorY + height / 2;
+
+  function add(x2, y2, z2, hx, hy, hz) {
+    const b = new CANNON.Body({ mass: 0, material: wallPhysMat });
+    b.addShape(new CANNON.Box(new CANNON.Vec3(hx, hy, hz)));
+    b.position.set(x2, y2, z2);
+    physicsWorld.addBody(b);
+    toolColumnBodies.push(b);
+  }
+  // Floor
+  add(x, floorY - wallT, z, hw + wallT, wallT, hd + wallT);
+  // Left wall
+  add(x - hw - wallT, cy, z, wallT, height / 2, hd + wallT);
+  // Right wall
+  add(x + hw + wallT, cy, z, wallT, height / 2, hd + wallT);
+  // Front wall (facing camera)
+  add(x, cy, z + hd + wallT, hw + wallT, height / 2, wallT);
+  // Back wall
+  add(x, cy, z - hd - wallT, hw + wallT, height / 2, wallT);
 }
+
+// =========================================================
+// CARTRIDGES as WebGL meshes (front/back share texture, sides grey)
+// =========================================================
+const CARTRIDGE_DEFS = [
+  { id: 'rendering',   title: 'Senior Render Wrangler',  imgUrl: './cartridges/rendering.webp'  },
+  { id: 'pipeline',    title: 'Pipeline Engineer',       imgUrl: './cartridges/pipeline.webp'   },
+  { id: 'lookdev',     title: 'Look Development',        imgUrl: './cartridges/lookdev.webp'    },
+  { id: 'virtualprod', title: 'Virtual Production',      imgUrl: './cartridges/virtualprod.webp'},
+  { id: 'engineering', title: 'Lead Software Engineer',  imgUrl: './cartridges/engineering.webp'}
+];
+
+const cartridgeObjects = [];
+let insertedCartridge = null;
+const SIDE_GREY = 0x7f7f7f;
+
+// Given a texture (or null) build 6 materials in BoxGeometry order:
+// [+X, -X, +Y, -Y, +Z, -Z]. Front is +Z, back is -Z.
+function buildCartMaterials(tex) {
+  const grey = new THREE.MeshStandardMaterial({
+    color: SIDE_GREY, roughness: 0.75, metalness: 0.1
+  });
+  const front = new THREE.MeshStandardMaterial({
+    map: tex || null,
+    color: tex ? 0xffffff : 0x382822,
+    roughness: 0.7, metalness: 0.1,
+    emissive: new THREE.Color(0x000000),
+    emissiveIntensity: 0
+  });
+  // Front and back are separate material instances so we can tint front only.
+  const back = new THREE.MeshStandardMaterial({
+    map: tex || null,
+    color: tex ? 0xffffff : 0x382822,
+    roughness: 0.7, metalness: 0.1
+  });
+  return [grey, grey.clone(), grey.clone(), grey.clone(), front, back];
+}
+
+CARTRIDGE_DEFS.forEach(({ id, title, imgUrl }) => {
+  const loader = new THREE.TextureLoader();
+  loader.setCrossOrigin('anonymous');
+
+  const materials = buildCartMaterials(null);
+  const mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(CART_W_WORLD, CART_H_WORLD, CART_D_WORLD),
+    materials
+  );
+  mesh.userData.cartridgeId = id;
+  scene.add(mesh);
+
+  // Load texture async; swap into front + back when ready
+  loader.load(
+    imgUrl,
+    (tex) => {
+      tex.colorSpace = THREE.SRGBColorSpace;
+      materials[4].map = tex;
+      materials[4].color.set(0xffffff);
+      materials[4].needsUpdate = true;
+      materials[5].map = tex;
+      materials[5].color.set(0xffffff);
+      materials[5].needsUpdate = true;
+    },
+    undefined,
+    () => {
+      // Fallback: draw text on a canvas so the cart reads
+      const c = document.createElement('canvas');
+      c.width = 512; c.height = 288;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#382822';
+      ctx.fillRect(0, 0, 512, 288);
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 34px "Courier New", monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const words = title.split(' ');
+      const mid = Math.floor(words.length / 2);
+      const line1 = words.slice(0, mid).join(' ');
+      const line2 = words.slice(mid).join(' ');
+      if (line2) {
+        ctx.fillText(line1, 256, 122);
+        ctx.fillText(line2, 256, 166);
+      } else {
+        ctx.fillText(line1, 256, 144);
+      }
+      const tex = new THREE.CanvasTexture(c);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      materials[4].map = tex;
+      materials[4].color.set(0xffffff);
+      materials[4].needsUpdate = true;
+      materials[5].map = tex;
+      materials[5].color.set(0xffffff);
+      materials[5].needsUpdate = true;
+    }
+  );
+
+  const body = new CANNON.Body({
+    mass: 1,
+    material: cartPhysMat,
+    shape: new CANNON.Box(new CANNON.Vec3(CART_W_WORLD / 2, CART_H_WORLD / 2, CART_D_WORLD / 2))
+  });
+  body.linearDamping = 0.4;
+  body.angularDamping = 0.7;
+  body.type = CANNON.Body.KINEMATIC;
+  body.allowSleep = true;
+  physicsWorld.addBody(body);
+
+  const cart = {
+    id, title, mesh, materials, body,
+    state: 'on_shelf',
+    homePosition: new THREE.Vector3(),
+    homeScale: 1,
+    anim: null,
+    grabbed: false,
+    bodyInWorld: true,
+    hovered: false,
+  };
+
+  mesh.userData.cart = cart;
+  cartridgeObjects.push(cart);
+});
 
 function setCartPhysics(cart, enabled) {
   if (enabled && !cart.bodyInWorld) { physicsWorld.addBody(cart.body); cart.bodyInWorld = true; }
@@ -550,13 +677,12 @@ function setCartPhysics(cart, enabled) {
 }
 
 function resizeCartShape(cart) {
-  const w = CART_W * cart.homeScale;
-  const h = CART_H * cart.homeScale;
-  cart.body.shapes[0].halfExtents.set(w / 2, h / 2, 0.25);
+  const w = CART_W_WORLD * cart.homeScale;
+  const h = CART_H_WORLD * cart.homeScale;
+  const d = CART_D_WORLD * cart.homeScale;
+  cart.body.shapes[0].halfExtents.set(w / 2, h / 2, d / 2);
   cart.body.updateBoundingRadius();
   cart.body.updateMassProperties();
-  cart.shapeW = w / 2;
-  cart.shapeH = h / 2;
 }
 
 function homePhysicsBody(cart, randomize = false) {
@@ -592,65 +718,11 @@ function wakeCart(cart) {
   }
 }
 
-const CARTRIDGE_DEFS = [
-  { id: 'rendering',   title: 'Senior Render Wrangler',  imgUrl: './cartridges/rendering.webp'  },
-  { id: 'pipeline',    title: 'Pipeline Engineer',       imgUrl: './cartridges/pipeline.webp'   },
-  { id: 'lookdev',     title: 'Look Development',        imgUrl: './cartridges/lookdev.webp'    },
-  { id: 'virtualprod', title: 'Virtual Production',      imgUrl: './cartridges/virtualprod.webp'},
-  { id: 'engineering', title: 'Lead Software Engineer',  imgUrl: './cartridges/engineering.webp'}
-];
-
-const cartridgeObjects = [];
-let insertedCartridge = null;
-
-CARTRIDGE_DEFS.forEach(({ id, title, imgUrl }) => {
-  const btn = document.createElement('button');
-  btn.className = 'cartridge';
-  btn.dataset.id = id;
-  btn.style.opacity = '1';
-  btn.style.zIndex = '20';
-  btn.setAttribute('aria-label', title);
-  btn.innerHTML = `
-    <img class="cart-img" src="${imgUrl}" alt="" draggable="false"
-         onerror="this.parentNode.classList.add('cart-noimg')">
-    <span class="cart-fallback">${title}</span>`;
-
-  const obj = new CSS3DObject(btn);
-  obj.position.set(0, 0, 0);
-  obj.scale.setScalar(1);
-  scene.add(obj);
-
-  const body = new CANNON.Body({
-    mass: 1,
-    material: cartPhysMat,
-    shape: new CANNON.Box(new CANNON.Vec3(0.5, 0.5, 0.25))
-  });
-  body.linearDamping = 0.4;
-  body.angularDamping = 0.7;
-  body.type = CANNON.Body.KINEMATIC;
-  body.allowSleep = true;
-  physicsWorld.addBody(body);
-
-  const cart = {
-    id, el: btn, obj, body,
-    state: 'on_shelf',
-    homePosition: new THREE.Vector3(),
-    homeScale: 1,
-    anim: null,
-    grabbed: false,
-    bodyInWorld: true,
-    shapeW: 0.5, shapeH: 0.5,
-  };
-
-  btn.addEventListener('pointerdown', (e) => handleCartPointerDown(e, cart));
-  btn.addEventListener('pointermove', (e) => handleCartPointerMove(e, cart));
-  btn.addEventListener('pointerup',   (e) => handleCartPointerUp(e, cart));
-  btn.addEventListener('pointercancel', (e) => handleCartPointerUp(e, cart));
-
-  cartridgeObjects.push(cart);
-});
-
-const grabRaycaster = new THREE.Raycaster();
+// =========================================================
+// HOVER + GRAB (raycaster against cartridge meshes)
+// =========================================================
+const cartRaycaster = new THREE.Raycaster();
+const cartPointer = new THREE.Vector2();
 const grabPlane = new THREE.Plane();
 const grabWorld = new THREE.Vector3();
 let grabbedCart = null;
@@ -661,36 +733,97 @@ let grabStartX = 0, grabStartY = 0, grabStartT = 0;
 const GRAB_CLICK_PX = 10;
 const GRAB_CLICK_MS = 220;
 
+function updatePointerNDC(sx, sy) {
+  cartPointer.x = (sx / window.innerWidth) * 2 - 1;
+  cartPointer.y = -(sy / window.innerHeight) * 2 + 1;
+}
+
+function pickCart(sx, sy) {
+  updatePointerNDC(sx, sy);
+  cartRaycaster.setFromCamera(cartPointer, camera);
+  const meshes = cartridgeObjects.map(c => c.mesh);
+  const hits = cartRaycaster.intersectObjects(meshes, false);
+  return hits.length ? hits[0].object.userData.cart : null;
+}
+
 function screenToWorldZ(sx, sy, worldZ) {
-  const ndcX = (sx / window.innerWidth) * 2 - 1;
-  const ndcY = -(sy / window.innerHeight) * 2 + 1;
-  grabRaycaster.setFromCamera({ x: ndcX, y: ndcY }, camera);
+  updatePointerNDC(sx, sy);
+  cartRaycaster.setFromCamera(cartPointer, camera);
   grabPlane.set(new THREE.Vector3(0, 0, 1), -worldZ);
-  if (grabRaycaster.ray.intersectPlane(grabPlane, grabWorld)) return grabWorld.clone();
+  if (cartRaycaster.ray.intersectPlane(grabPlane, grabWorld)) return grabWorld.clone();
   return null;
 }
 
-function handleCartPointerDown(e, cart) {
-  if (cart.state !== 'on_shelf' || cart.anim || grabbedCart) return;
-  e.preventDefault();
-  e.stopPropagation();
-  grabbedCart = cart;
-  cart.grabbed = true;
-  cart.el.classList.add('grabbed');
-  grabStartX = e.clientX; grabStartY = e.clientY; grabStartT = performance.now();
-  grabLastT = grabStartT;
-  grabVelX = 0; grabVelY = 0;
-  const world = screenToWorldZ(e.clientX, e.clientY, cart.body.position.z);
-  if (world) { grabOffsetX = cart.body.position.x - world.x; grabOffsetY = cart.body.position.y - world.y; }
-  else { grabOffsetX = 0; grabOffsetY = 0; }
-  cart.body.type = CANNON.Body.KINEMATIC;
-  cart.body.velocity.set(0, 0, 0);
-  cart.body.angularVelocity.set(0, 0, 0);
-  cart.el.setPointerCapture?.(e.pointerId);
+function setCartHover(cart, on) {
+  if (!cart) return;
+  cart.hovered = on;
+  if (cart.state === 'on_shelf') {
+    const frontMat = cart.materials[4];
+    if (on) {
+      frontMat.emissive = new THREE.Color(0x6a8c4c);
+      frontMat.emissiveIntensity = 0.55;
+    } else if (cart.id !== (insertedCartridge && insertedCartridge.id)) {
+      frontMat.emissive = new THREE.Color(0x000000);
+      frontMat.emissiveIntensity = 0;
+    }
+  }
 }
 
-function handleCartPointerMove(e, cart) {
-  if (grabbedCart !== cart) return;
+function setCartActive(cart, on) {
+  if (!cart) return;
+  const frontMat = cart.materials[4];
+  if (on) {
+    frontMat.emissive = new THREE.Color(0xe8722a);
+    frontMat.emissiveIntensity = 0.65;
+  } else {
+    frontMat.emissive = new THREE.Color(0x000000);
+    frontMat.emissiveIntensity = 0;
+  }
+}
+
+canvas.addEventListener('pointermove', (e) => {
+  if (grabbedCart) {
+    handleCartPointerMove(e);
+    return;
+  }
+  if (dragging || isInXR()) return;
+  const cart = pickCart(e.clientX, e.clientY);
+  for (const c of cartridgeObjects) {
+    if (c !== cart && c.hovered) setCartHover(c, false);
+  }
+  if (cart && !cart.hovered) setCartHover(cart, true);
+});
+
+canvas.addEventListener('pointerdown', (e) => {
+  if (isInXR()) return;
+  const cart = pickCart(e.clientX, e.clientY);
+  if (cart && cart.state === 'on_shelf' && !cart.anim) {
+    e.preventDefault();
+    e.stopPropagation();
+    grabbedCart = cart;
+    cart.grabbed = true;
+    grabStartX = e.clientX; grabStartY = e.clientY; grabStartT = performance.now();
+    grabLastT = grabStartT;
+    grabVelX = 0; grabVelY = 0;
+    const world = screenToWorldZ(e.clientX, e.clientY, cart.body.position.z);
+    if (world) { grabOffsetX = cart.body.position.x - world.x; grabOffsetY = cart.body.position.y - world.y; }
+    else { grabOffsetX = 0; grabOffsetY = 0; }
+    cart.body.type = CANNON.Body.KINEMATIC;
+    cart.body.velocity.set(0, 0, 0);
+    cart.body.angularVelocity.set(0, 0, 0);
+    canvas.setPointerCapture?.(e.pointerId);
+    canvas.style.cursor = 'grabbing';
+    return;
+  }
+  // Empty space — orbit the camera
+  dragging = true; lastX = e.clientX; lastY = e.clientY;
+  canvas.classList.add('dragging');
+  canvas.setPointerCapture(e.pointerId);
+});
+
+function handleCartPointerMove(e) {
+  if (!grabbedCart) return;
+  const cart = grabbedCart;
   const now = performance.now();
   const dt = Math.max(1, now - grabLastT) / 1000;
   const world = screenToWorldZ(e.clientX, e.clientY, cart.body.position.z);
@@ -705,16 +838,17 @@ function handleCartPointerMove(e, cart) {
   grabLastT = now;
 }
 
-function handleCartPointerUp(e, cart) {
-  if (grabbedCart !== cart) return;
+function handleCartPointerUp(e) {
+  if (!grabbedCart) return;
+  const cart = grabbedCart;
   const moved = Math.hypot(e.clientX - grabStartX, e.clientY - grabStartY);
   const dur = performance.now() - grabStartT;
   grabbedCart = null;
   cart.grabbed = false;
-  cart.el.classList.remove('grabbed');
-  cart.el.releasePointerCapture?.(e.pointerId);
   cart.body.type = CANNON.Body.DYNAMIC;
   cart.body.wakeUp();
+  canvas.releasePointerCapture?.(e.pointerId);
+  canvas.style.cursor = 'grab';
   if (moved < GRAB_CLICK_PX && dur < GRAB_CLICK_MS) {
     selectCartridge(cart.id);
   } else {
@@ -723,6 +857,22 @@ function handleCartPointerUp(e, cart) {
   }
 }
 
+canvas.addEventListener('pointerup', (e) => {
+  if (grabbedCart) { handleCartPointerUp(e); return; }
+  if (dragging) {
+    dragging = false; canvas.classList.remove('dragging');
+    if (e.pointerId !== undefined && canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
+  }
+});
+canvas.addEventListener('pointercancel', (e) => {
+  if (grabbedCart) { handleCartPointerUp(e); return; }
+  dragging = false; canvas.classList.remove('dragging');
+  if (e.pointerId !== undefined && canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
+});
+
+// =========================================================
+// TOOL CUBES
+// =========================================================
 const activeToolCubes = [];
 const TOOL_COLORS = {
   'Deadline':'#c0392b','OpenCue':'#7a1f17','AWS':'#e8722a',
@@ -773,18 +923,12 @@ function makeToolTexture(name, color) {
   return tex;
 }
 
-// Spawn region: viewer's LEFT of the projector screen — between the left wall
-// and the screen's left edge. Keeps the right side clear for shelf cartridges.
 function spawnToolCubes(tools) {
   if (!tools || tools.length === 0) return;
 
-  const screenLeftEdge = screenObject.position.x - (layoutState.screenWorldW / 2);
-  const leftWall = -physicsBounds.w / 2;
-  const spawnMinX = leftWall + 11.2;
-  const spawnMaxX = screenLeftEdge - 15.0;
-  const spawnRange = Math.max(0.4, spawnMaxX - spawnMinX);
-  const cols = Math.min(tools.length, 2);
-  const colW = spawnRange / cols;
+  const { x: colX, z: colZ, top: colTop } = toolColumn;
+  const jitterX = 0.25;
+  const jitterZ = 0.25;
 
   tools.forEach((name, i) => {
     const color = TOOL_COLORS[name] || '#382822';
@@ -796,26 +940,34 @@ function spawnToolCubes(tools) {
       roughness: 0.7,
       metalness: 0.1
     });
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.9, 0.9), mat);
-    const col = i % cols;
-    const x = spawnMinX + colW * (col + 0.5) + (Math.random() - 0.5) * 0.3;
-    const y = physicsBounds.h * 0.4 + Math.random() * 0.6;
-    const z = (Math.random() - 0.5) * 0.8;
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), mat);
+
+    const x = colX + (Math.random() - 0.5) * jitterX;
+    const y = colTop - 0.6 - i * 0.4 - Math.random() * 0.2;   // stack near the top
+    const z = colZ + (Math.random() - 0.5) * jitterZ;
     mesh.position.set(x, y, z);
-    mesh.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI);
+    mesh.rotation.set(
+      (Math.random() - 0.5) * 0.3,
+      (Math.random() - 0.5) * 0.3,
+      (Math.random() - 0.5) * 0.3
+    );
     scene.add(mesh);
 
     const body = new CANNON.Body({
-      mass: 0.8,
+      mass: 0.6,
       material: cartPhysMat,
-      shape: new CANNON.Box(new CANNON.Vec3(0.45, 0.45, 0.45))
+      shape: new CANNON.Box(new CANNON.Vec3(0.3, 0.3, 0.3))
     });
     body.position.set(x, y, z);
     body.quaternion.setFromEuler(mesh.rotation.x, mesh.rotation.y, mesh.rotation.z);
-    body.velocity.set((Math.random()-0.5)*2.5, 0, (Math.random()-0.5)*1.5);
-    body.angularVelocity.set((Math.random()-0.5)*5, (Math.random()-0.5)*5, (Math.random()-0.5)*5);
-    body.linearDamping = 0.1;
-    body.angularDamping = 0.35;
+    body.velocity.set(0, 0, 0);
+    body.angularVelocity.set(
+      (Math.random() - 0.5) * 1.5,
+      (Math.random() - 0.5) * 1.5,
+      (Math.random() - 0.5) * 1.5
+    );
+    body.linearDamping = 0.15;
+    body.angularDamping = 0.5;
     physicsWorld.addBody(body);
 
     activeToolCubes.push({ mesh, body, state: 'live', fallVelY: 0 });
@@ -840,8 +992,10 @@ function updateToolCubes(dt) {
         cube.body.quaternion.x, cube.body.quaternion.y,
         cube.body.quaternion.z, cube.body.quaternion.w
       );
-      if (cube.body.position.y < -physicsBounds.h * 0.75) {
-        cube.body.position.y = physicsBounds.h * 0.5;
+      // Only rescue if it slips BELOW the column floor (should never happen now,
+      // but a safety net so the loop can't run forever)
+      if (cube.body.position.y < toolColumn.floorY - 2) {
+        cube.body.position.set(toolColumn.x, toolColumn.top - 0.5, toolColumn.z);
         cube.body.velocity.set(0, 0, 0);
         cube.body.angularVelocity.set(0, 0, 0);
       }
@@ -850,7 +1004,7 @@ function updateToolCubes(dt) {
       cube.mesh.position.y += cube.fallVelY * dt;
       cube.mesh.rotation.x += dt * 5;
       cube.mesh.rotation.y += dt * 3;
-      if (cube.mesh.position.y < -physicsBounds.h * 1.5) {
+      if (cube.mesh.position.y < toolColumn.floorY - 10) {
         scene.remove(cube.mesh);
         cube.mesh.geometry.dispose();
         cube.mesh.material.map?.dispose();
@@ -861,6 +1015,7 @@ function updateToolCubes(dt) {
   }
 }
 
+// XR screen
 const xrScreenCanvas = document.createElement('canvas');
 xrScreenCanvas.width = 1280; xrScreenCanvas.height = 720;
 const xrScreenTexture = new THREE.CanvasTexture(xrScreenCanvas);
@@ -883,25 +1038,6 @@ const CAMERA_DAMP_LAMBDA = 2.5;
 
 let dragging = false, lastX = 0, lastY = 0;
 const DRAG_SENSITIVITY = 0.0035;
-canvas.addEventListener('pointerdown', (e) => {
-  if (isInXR()) return;
-  dragging = true; lastX = e.clientX; lastY = e.clientY;
-  canvas.classList.add('dragging');
-  canvas.setPointerCapture(e.pointerId);
-});
-canvas.addEventListener('pointermove', (e) => {
-  if (!dragging || isInXR()) return;
-  const dx = e.clientX - lastX, dy = e.clientY - lastY;
-  lastX = e.clientX; lastY = e.clientY;
-  targetYaw   = THREE.MathUtils.clamp(targetYaw   - dx * DRAG_SENSITIVITY, -YAW_LIMIT, YAW_LIMIT);
-  targetPitch = THREE.MathUtils.clamp(targetPitch - dy * DRAG_SENSITIVITY, -PITCH_LIMIT, PITCH_LIMIT);
-});
-const endDrag = (e) => {
-  dragging = false; canvas.classList.remove('dragging');
-  if (e.pointerId !== undefined && canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
-};
-canvas.addEventListener('pointerup', endDrag);
-canvas.addEventListener('pointercancel', endDrag);
 
 function faceScreen() {
   inShelfView = false;
@@ -921,7 +1057,7 @@ function computeShelfView() {
     maxY: screenObject.position.y + layoutState.screenWorldH / 2,
   }];
   for (const c of cartridgeObjects) {
-    const w = CART_W * c.homeScale, h = CART_H * c.homeScale;
+    const w = CART_W_WORLD * c.homeScale, h = CART_H_WORLD * c.homeScale;
     items.push({
       minX: c.homePosition.x - w / 2, maxX: c.homePosition.x + w / 2,
       minY: c.homePosition.y - h / 2, maxY: c.homePosition.y + h / 2,
@@ -942,66 +1078,74 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
 const easeInQuad   = t => t * t;
 const easeInOutCubic = t => t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3) / 2;
+
 function tween(cart, toPos, toScale, toOpacity, durationSec, easing, options = {}) {
   return new Promise(resolve => {
-    const curOp = parseFloat(cart.el.style.opacity);
+    const curOp = cart.mesh.material[4].opacity ?? 1;
     cart.anim = {
       t: 0, duration: durationSec,
-      from: { pos: cart.obj.position.clone(), scale: cart.obj.scale.x, opacity: isNaN(curOp)?1:curOp, rotation: cart.obj.rotation.z },
-      to:   { pos: toPos.clone(), scale: toScale, opacity: toOpacity, rotation: options.rotationTo !== undefined ? options.rotationTo : cart.obj.rotation.z },
+      from: {
+        pos: cart.mesh.position.clone(),
+        scale: cart.mesh.scale.x,
+        opacity: 1,
+        rotation: cart.mesh.rotation.z
+      },
+      to: {
+        pos: toPos.clone(),
+        scale: toScale,
+        opacity: toOpacity,
+        rotation: options.rotationTo !== undefined ? options.rotationTo : cart.mesh.rotation.z
+      },
       easing, resolve,
     };
   });
 }
-function updateCartZIndex(cart) { cart.el.style.zIndex = cart.obj.position.z < -0.01 ? '1' : '20'; }
+
 function updateAnimations(dt) {
   for (const cart of cartridgeObjects) {
     if (!cart.anim) continue;
     const a = cart.anim; a.t += dt;
     const p = Math.min(a.t / a.duration, 1);
     const e = a.easing(p);
-    cart.obj.position.lerpVectors(a.from.pos, a.to.pos, e);
-    cart.obj.scale.setScalar(THREE.MathUtils.lerp(a.from.scale, a.to.scale, e));
-    cart.el.style.opacity = String(THREE.MathUtils.lerp(a.from.opacity, a.to.opacity, e));
-    cart.obj.rotation.z = THREE.MathUtils.lerp(a.from.rotation, a.to.rotation, e);
-    updateCartZIndex(cart);
+    cart.mesh.position.lerpVectors(a.from.pos, a.to.pos, e);
+    cart.mesh.scale.setScalar(THREE.MathUtils.lerp(a.from.scale, a.to.scale, e));
+    cart.mesh.rotation.z = THREE.MathUtils.lerp(a.from.rotation, a.to.rotation, e);
     if (p >= 1) { cart.anim.resolve(); cart.anim = null; }
   }
 }
+
 function cancelTween(cart) { if (cart.anim) { cart.anim.resolve(); cart.anim = null; } }
 
 function snapToHome(cart) {
-  cart.obj.position.copy(cart.homePosition);
-  cart.obj.scale.setScalar(cart.homeScale);
-  cart.obj.rotation.set(0, 0, 0);
-  cart.el.style.opacity = '1';
-  cart.el.style.zIndex = '20';
+  cart.mesh.position.copy(cart.homePosition);
+  cart.mesh.scale.setScalar(cart.homeScale);
+  cart.mesh.rotation.set(0, 0, 0);
   cart.state = 'on_shelf';
   setCartPhysics(cart, true);
   homePhysicsBody(cart);
 }
 
 function getSlotPosition(cart) {
-  const insertedScale = cart.homeScale * 0.65;
-  const insertedCartH = CART_H * insertedScale;
+  const insertedScale = cart.homeScale * 0.75;
+  const insertedCartH = CART_H_WORLD * insertedScale;
   const cartCenterY = screenObject.position.y + layoutState.screenWorldH / 2 + insertedCartH * 0.3;
-  return new THREE.Vector3(screenObject.position.x, cartCenterY, -0.2);
+  return new THREE.Vector3(screenObject.position.x, cartCenterY, 0.4);
 }
+
 function snapToSlot(cart) {
-  cart.obj.position.copy(getSlotPosition(cart));
-  cart.obj.scale.setScalar(cart.homeScale * 0.65);
-  cart.obj.rotation.set(0, 0, 0);
-  cart.el.style.opacity = '1';
-  cart.el.style.zIndex = '1';
+  cart.mesh.position.copy(getSlotPosition(cart));
+  cart.mesh.scale.setScalar(cart.homeScale * 0.75);
+  cart.mesh.rotation.set(0, 0, 0);
 }
 
 function positionCartridges(visibleW, screenWorldW, orientation) {
   const cssScale = visibleW / window.innerWidth;
-  const cartWorldW = CART_W * cssScale;
-  const cartWorldH = CART_H * cssScale;
+  const scale = cssScale * 0.6;    // 60% of old CSS3D size — WebGL meshes read larger
+  const cartWorldW = CART_W_WORLD * scale;
+  const cartWorldH = CART_H_WORLD * scale;
   const screenRightEdge = screenObject.position.x + screenWorldW / 2;
-  const gapBetweenCarts = 0.10;
-  const gapFromScreen = 0.15;
+  const gapBetweenCarts = 0.10 * scale;
+  const gapFromScreen = 0.20;
   const colX = screenRightEdge + gapFromScreen + cartWorldW / 2;
 
   if (orientation === 'landscape') {
@@ -1012,7 +1156,7 @@ function positionCartridges(visibleW, screenWorldW, orientation) {
     cartridgeObjects.forEach((c, i) => {
       const row = Math.floor(i / COLS);
       const col = i % COLS;
-      c.homeScale = cssScale;
+      c.homeScale = scale;
       c.homePosition = new THREE.Vector3(
         colX + col * (cartWorldW + gapBetweenCarts),
         startY - row * (cartWorldH + gapBetweenCarts),
@@ -1024,7 +1168,7 @@ function positionCartridges(visibleW, screenWorldW, orientation) {
       (cartridgeObjects.length - 1) * gapBetweenCarts;
     const startY = screenObject.position.y + totalHeight / 2 - cartWorldH / 2;
     cartridgeObjects.forEach((c, i) => {
-      c.homeScale = cssScale;
+      c.homeScale = scale;
       c.homePosition = new THREE.Vector3(
         colX,
         startY - i * (cartWorldH + gapBetweenCarts),
@@ -1037,10 +1181,10 @@ function positionCartridges(visibleW, screenWorldW, orientation) {
   for (const c of cartridgeObjects) {
     if (c.state === 'on_shelf' && !c.anim) snapToHome(c);
   }
-  rebuildPerches();
 }
 
 let currentOrientation = 'landscape';
+
 function updateLayout() {
   if (isInXR()) return;
   const w = window.innerWidth, h = window.innerHeight;
@@ -1088,11 +1232,20 @@ function updateLayout() {
 
   if (insertedCartridge && !insertedCartridge.anim) snapToSlot(insertedCartridge);
 
-  // Wider box for the tool cube spawn region to the left of the screen
   physicsBounds.w = Math.max(visibleW * 1.6, 10);
   physicsBounds.h = Math.max(visibleH * 1.15, 6);
   physicsBounds.d = Math.max(2.5, visibleH * 0.4);
   rebuildWalls();
+
+  // Position the invisible tool column to viewer-left of the screen
+  const screenLeftEdge = screenObject.position.x - sW / 2;
+  toolColumn.x = screenLeftEdge - 1.6;
+  toolColumn.z = 0;
+  toolColumn.floorY = -visibleH * 0.55;
+  toolColumn.top = visibleH * 0.6;
+  toolColumn.w = 1.6;
+  toolColumn.d = 1.6;
+  rebuildToolColumn();
 
   if (inShelfView) {
     if (orientation === 'portrait') {
@@ -1122,17 +1275,14 @@ async function insertCartridge(cart) {
   if (cart.state !== 'on_shelf') return;
   cart.state = 'moving_to_projector';
   setCartPhysics(cart, false);
-  cart.obj.rotation.set(0, 0, 0);
+  cart.mesh.rotation.set(0, 0, 0);
 
   const slotPos = getSlotPosition(cart);
-  const abovePos = new THREE.Vector3(slotPos.x, slotPos.y + layoutState.visibleH * 0.15, 0.01);
-  const backPos  = new THREE.Vector3(slotPos.x, abovePos.y, -0.2);
+  const abovePos = new THREE.Vector3(slotPos.x, slotPos.y + layoutState.visibleH * 0.15, 0.4);
 
-  await tween(cart, abovePos, cart.homeScale * 0.85, 1, 0.4, easeOutCubic);
+  await tween(cart, abovePos, cart.homeScale * 1.1, 1, 0.4, easeOutCubic);
   if (cart.state !== 'moving_to_projector') return;
-  await tween(cart, backPos, cart.homeScale * 0.75, 1, 0.1, easeInOutCubic);
-  if (cart.state !== 'moving_to_projector') return;
-  await tween(cart, slotPos, cart.homeScale * 0.65, 1, 0.25, easeInQuad);
+  await tween(cart, slotPos, cart.homeScale * 0.75, 1, 0.35, easeInOutCubic);
   if (cart.state !== 'moving_to_projector') return;
   cart.state = 'inserted';
 }
@@ -1141,21 +1291,21 @@ async function ejectCartridge(cart) {
   if (cart.state !== 'inserted') return;
   cart.state = 'ejecting';
 
-  const startPos = cart.obj.position.clone();
-  const popPos = startPos.clone(); popPos.y += cart.obj.scale.x * 30;
-  const forwardPos = popPos.clone(); forwardPos.z = 0.05;
+  const startPos = cart.mesh.position.clone();
+  const popPos = startPos.clone(); popPos.y += 0.6;
+  const forwardPos = popPos.clone(); forwardPos.z = 1.2;
 
-  await tween(cart, popPos, cart.obj.scale.x * 1.05, 1, 0.15, easeOutCubic);
+  await tween(cart, popPos, cart.mesh.scale.x * 1.05, 1, 0.15, easeOutCubic);
   if (cart.state !== 'ejecting') return;
-  await tween(cart, forwardPos, cart.obj.scale.x * 1.05, 1, 0.1, easeOutCubic);
+  await tween(cart, forwardPos, cart.mesh.scale.x * 1.05, 1, 0.1, easeOutCubic);
   if (cart.state !== 'ejecting') return;
 
   cart.state = 'falling';
-  const groundY = -layoutState.visibleH * 0.5;
+  const groundY = -layoutState.visibleH * 0.55;
   const fallPos = new THREE.Vector3(
     screenObject.position.x + layoutState.visibleW * 0.05, groundY, forwardPos.z
   );
-  await tween(cart, fallPos, cart.obj.scale.x * 0.7, 1, 0.7, easeInQuad, { rotationTo: Math.PI * 0.7 });
+  await tween(cart, fallPos, cart.mesh.scale.x * 0.7, 1, 0.7, easeInQuad, { rotationTo: Math.PI * 0.7 });
   if (cart.state !== 'falling') return;
 
   cart.state = 'waiting';
@@ -1163,13 +1313,12 @@ async function ejectCartridge(cart) {
   if (cart.state !== 'waiting') return;
 
   cart.state = 'respawning';
-  await tween(cart, cart.obj.position.clone(), cart.obj.scale.x, 0, 0.2, easeInQuad);
+  await tween(cart, cart.mesh.position.clone(), cart.mesh.scale.x, 0, 0.2, easeInQuad);
   if (cart.state !== 'respawning') return;
 
-  cart.obj.position.copy(cart.homePosition);
-  cart.obj.scale.setScalar(cart.homeScale);
-  cart.obj.rotation.set(0, 0, 0);
-  updateCartZIndex(cart);
+  cart.mesh.position.copy(cart.homePosition);
+  cart.mesh.scale.setScalar(cart.homeScale);
+  cart.mesh.rotation.set(0, 0, 0);
   await tween(cart, cart.homePosition, cart.homeScale, 1, 0.3, easeOutCubic);
   if (cart.state !== 'respawning') return;
 
@@ -1186,13 +1335,12 @@ async function selectCartridge(id) {
   const project = PROJECTS[id];
   screenScroll.innerHTML = project ? project.content : WELCOME_CONTENT;
   screenScroll.scrollTop = 0;
-  cartridgeObjects.forEach(c => c.el.classList.toggle('active', c.id === id));
 
-  // Tool cubes: old ones fall to oblivion, new ones fall from above (viewer-left)
+  cartridgeObjects.forEach(c => setCartActive(c, c.id === id));
+
   despawnToolCubes();
   spawnToolCubes(project ? project.tools : []);
 
-  // Kick other carts into chaos
   for (const c of cartridgeObjects) {
     if (c.id === id || c.state !== 'on_shelf' || c.grabbed || !c.bodyInWorld) continue;
     wakeCart(c);
@@ -1222,11 +1370,10 @@ async function selectCartridge(id) {
   }
 
   const oldCart = insertedCartridge;
-  insertedCartridge = null;
+  insertedCartridge = newCart;
   if (oldCart && oldCart !== newCart) ejectCartridge(oldCart);
 
   await insertCartridge(newCart);
-  if (newCart.state === 'inserted') insertedCartridge = newCart;
 }
 
 const PHYSICS_DT = 1 / 60;
@@ -1235,16 +1382,14 @@ function stepPhysics(dt) {
   physicsWorld.step(PHYSICS_DT, dt, 3);
   for (const cart of cartridgeObjects) {
     if (cart.state !== 'on_shelf' || cart.grabbed) continue;
-    cart.obj.position.set(cart.body.position.x, cart.body.position.y, cart.body.position.z);
-    cart.obj.quaternion.set(cart.body.quaternion.x, cart.body.quaternion.y, cart.body.quaternion.z, cart.body.quaternion.w);
-    updateCartZIndex(cart);
+    cart.mesh.position.set(cart.body.position.x, cart.body.position.y, cart.body.position.z);
+    cart.mesh.quaternion.set(cart.body.quaternion.x, cart.body.quaternion.y, cart.body.quaternion.z, cart.body.quaternion.w);
     if (
       cart.body.position.y < -physicsBounds.h ||
       Math.abs(cart.body.position.x) > physicsBounds.w * 0.95 ||
       Math.abs(cart.body.position.z) > physicsBounds.d * 1.5
     ) { respawnCart(cart); continue; }
 
-    // Park cart once it has nearly stopped. Kinematic bodies don't jitter.
     if (cart.body.type === CANNON.Body.DYNAMIC) {
       const spd = cart.body.velocity.length();
       const angSpd = cart.body.angularVelocity.length();
