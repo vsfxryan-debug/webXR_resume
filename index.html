@@ -780,8 +780,8 @@ function spawnToolCubes(tools) {
 
   const screenLeftEdge = screenObject.position.x - (layoutState.screenWorldW / 2);
   const leftWall = -physicsBounds.w / 2;
-  const spawnMinX = leftWall + 1.2;
-  const spawnMaxX = screenLeftEdge - 1.0;
+  const spawnMinX = leftWall + 11.2;
+  const spawnMaxX = screenLeftEdge - 15.0;
   const spawnRange = Math.max(0.4, spawnMaxX - spawnMinX);
   const cols = Math.min(tools.length, 2);
   const colW = spawnRange / cols;
