@@ -395,9 +395,6 @@ import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer
 import html2canvas from 'html2canvas';
 import * as CANNON from 'cannon-es';
 
-// =========================================================
-// PROJECTS (5 total)
-// =========================================================
 const PROJECTS = {
   rendering: {
     palette:['#7a1f17','#c0392b','#ff9d5c','#e8722a','#211815'],
@@ -460,14 +457,10 @@ const WELCOME_CONTENT = `
   <h1>Pick a cartridge</h1>
   <p>Five cartridges float in the shelf. Click one to load a role lens, grab and throw them if you want chaos, or tap <strong>View Traditional Resume</strong> to skip the cinema.</p>`;
 
-// =========================================================
-// RENDERER SETUP + LIGHTS
-// =========================================================
 const canvas = document.getElementById('webgl-canvas');
 const css3dRoot = document.getElementById('css3d-root');
 const scene = new THREE.Scene();
 
-// Lights — needed for 3D tool cubes (MeshStandardMaterial). CSS3D/pano stay unlit.
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.55);
 scene.add(ambientLight);
 const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
@@ -497,9 +490,6 @@ css3dRoot.appendChild(css3dRenderer.domElement);
 const layoutState = { visibleW: 1, visibleH: 1, screenWorldW: 1, screenWorldH: 1 };
 const CART_W = 320, CART_H = 180;
 
-// =========================================================
-// PANO BACKDROP
-// =========================================================
 const panoTexture = new THREE.TextureLoader().load(
   'https://dl.polyhaven.org/file/ph-assets/HDRIs/extra/Tonemapped%20JPG/studio_small_03.jpg'
 );
@@ -509,9 +499,6 @@ const pano = new THREE.Mesh(new THREE.SphereGeometry(50, 64, 40), panoMaterial);
 pano.visible = true;
 scene.add(pano);
 
-// =========================================================
-// SCREEN (CSS3D)
-// =========================================================
 const screenWrapper = document.createElement('div');
 screenWrapper.id = 'screen-wrapper';
 const screenScroll = document.createElement('div');
@@ -520,9 +507,6 @@ screenWrapper.appendChild(screenScroll);
 const screenObject = new CSS3DObject(screenWrapper);
 scene.add(screenObject);
 
-// =========================================================
-// PHYSICS WORLD (thick bodies, high friction)
-// =========================================================
 const physicsWorld = new CANNON.World({ gravity: new CANNON.Vec3(0, -8, 0) });
 physicsWorld.broadphase = new CANNON.NaiveBroadphase();
 physicsWorld.solver.iterations = 10;
@@ -553,18 +537,11 @@ function rebuildWalls() {
   addWall(0, 0, hd + 0.5, hw + 1, hh + 1, 0.5);     // front
 }
 
+// Perches removed — they overlapped between adjacent carts and caused the solver
+// to jitter parked carts. Carts are now parked KINEMATIC until something wakes them.
 function rebuildPerches() {
   perchBodies.forEach(b => physicsWorld.removeBody(b));
   perchBodies.length = 0;
-  for (const cart of cartridgeObjects) {
-    const w = CART_W * cart.homeScale;
-    const h = CART_H * cart.homeScale;
-    const b = new CANNON.Body({ mass: 0, material: wallPhysMat });
-    b.addShape(new CANNON.Box(new CANNON.Vec3(w * 0.55, 0.10, 0.35)));
-    b.position.set(cart.homePosition.x, cart.homePosition.y - h / 2 - 0.10, cart.homePosition.z);
-    physicsWorld.addBody(b);
-    perchBodies.push(b);
-  }
 }
 
 function setCartPhysics(cart, enabled) {
@@ -583,6 +560,7 @@ function resizeCartShape(cart) {
 }
 
 function homePhysicsBody(cart, randomize = false) {
+  if (randomize) cart.body.type = CANNON.Body.DYNAMIC;
   cart.body.position.set(cart.homePosition.x, cart.homePosition.y, cart.homePosition.z + 0.1);
   cart.body.quaternion.set(0, 0, 0, 1);
   cart.body.velocity.set(0, 0, 0);
@@ -590,10 +568,12 @@ function homePhysicsBody(cart, randomize = false) {
   if (randomize) {
     cart.body.velocity.set((Math.random()-0.5)*2, Math.random()*2+1, (Math.random()-0.5)*2);
     cart.body.angularVelocity.set((Math.random()-0.5)*4, (Math.random()-0.5)*4, (Math.random()-0.5)*4);
+    cart.body.wakeUp();
   }
 }
 
 function respawnCart(cart) {
+  cart.body.type = CANNON.Body.DYNAMIC;
   cart.body.position.set(
     cart.homePosition.x + (Math.random()-0.5)*2,
     physicsBounds.h * 0.4,
@@ -602,11 +582,16 @@ function respawnCart(cart) {
   cart.body.velocity.set(0, -1, 0);
   cart.body.angularVelocity.set((Math.random()-0.5)*4, (Math.random()-0.5)*4, (Math.random()-0.5)*4);
   cart.body.quaternion.set(0, 0, 0, 1);
+  cart.body.wakeUp();
 }
 
-// =========================================================
-// CARTRIDGES
-// =========================================================
+function wakeCart(cart) {
+  if (cart.body.type !== CANNON.Body.DYNAMIC) {
+    cart.body.type = CANNON.Body.DYNAMIC;
+    cart.body.wakeUp();
+  }
+}
+
 const CARTRIDGE_DEFS = [
   { id: 'rendering',   title: 'Senior Render Wrangler',  imgUrl: './cartridges/rendering.webp'  },
   { id: 'pipeline',    title: 'Pipeline Engineer',       imgUrl: './cartridges/pipeline.webp'   },
@@ -642,6 +627,8 @@ CARTRIDGE_DEFS.forEach(({ id, title, imgUrl }) => {
   });
   body.linearDamping = 0.4;
   body.angularDamping = 0.7;
+  body.type = CANNON.Body.KINEMATIC;
+  body.allowSleep = true;
   physicsWorld.addBody(body);
 
   const cart = {
@@ -663,9 +650,6 @@ CARTRIDGE_DEFS.forEach(({ id, title, imgUrl }) => {
   cartridgeObjects.push(cart);
 });
 
-// =========================================================
-// GRAB & THROW
-// =========================================================
 const grabRaycaster = new THREE.Raycaster();
 const grabPlane = new THREE.Plane();
 const grabWorld = new THREE.Vector3();
@@ -730,6 +714,7 @@ function handleCartPointerUp(e, cart) {
   cart.el.classList.remove('grabbed');
   cart.el.releasePointerCapture?.(e.pointerId);
   cart.body.type = CANNON.Body.DYNAMIC;
+  cart.body.wakeUp();
   if (moved < GRAB_CLICK_PX && dur < GRAB_CLICK_MS) {
     selectCartridge(cart.id);
   } else {
@@ -738,9 +723,6 @@ function handleCartPointerUp(e, cart) {
   }
 }
 
-// =========================================================
-// 3D TOOL LOGO CUBES
-// =========================================================
 const activeToolCubes = [];
 const TOOL_COLORS = {
   'Deadline':'#c0392b','OpenCue':'#7a1f17','AWS':'#e8722a',
@@ -791,11 +773,19 @@ function makeToolTexture(name, color) {
   return tex;
 }
 
+// Spawn region: viewer's LEFT of the projector screen — between the left wall
+// and the screen's left edge. Keeps the right side clear for shelf cartridges.
 function spawnToolCubes(tools) {
   if (!tools || tools.length === 0) return;
-  const xRange = physicsBounds.w * 0.7;
-  const xStep = tools.length > 1 ? xRange / (tools.length - 1) : 0;
-  const startX = -xRange / 2;
+
+  const screenLeftEdge = screenObject.position.x - (layoutState.screenWorldW / 2);
+  const leftWall = -physicsBounds.w / 2;
+  const spawnMinX = leftWall + 1.2;
+  const spawnMaxX = screenLeftEdge - 1.0;
+  const spawnRange = Math.max(0.4, spawnMaxX - spawnMinX);
+  const cols = Math.min(tools.length, 2);
+  const colW = spawnRange / cols;
+
   tools.forEach((name, i) => {
     const color = TOOL_COLORS[name] || '#382822';
     const tex = makeToolTexture(name, color);
@@ -807,9 +797,10 @@ function spawnToolCubes(tools) {
       metalness: 0.1
     });
     const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.9, 0.9), mat);
-    const x = startX + i * xStep + (Math.random() - 0.5) * 0.4;
-    const y = physicsBounds.h * 0.65 + i * 0.35 + Math.random() * 0.8;
-    const z = (Math.random() - 0.5) * 1.0;
+    const col = i % cols;
+    const x = spawnMinX + colW * (col + 0.5) + (Math.random() - 0.5) * 0.3;
+    const y = physicsBounds.h * 0.4 + Math.random() * 0.6;
+    const z = (Math.random() - 0.5) * 0.8;
     mesh.position.set(x, y, z);
     mesh.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI);
     scene.add(mesh);
@@ -870,9 +861,6 @@ function updateToolCubes(dt) {
   }
 }
 
-// =========================================================
-// XR SCREEN
-// =========================================================
 const xrScreenCanvas = document.createElement('canvas');
 xrScreenCanvas.width = 1280; xrScreenCanvas.height = 720;
 const xrScreenTexture = new THREE.CanvasTexture(xrScreenCanvas);
@@ -884,9 +872,6 @@ const xrScreenMesh = new THREE.Mesh(
 xrScreenMesh.visible = false;
 scene.add(xrScreenMesh);
 
-// =========================================================
-// CAMERA STATE
-// =========================================================
 let yaw = 0, pitch = 0, targetYaw = 0, targetPitch = 0;
 let targetCameraX = INITIAL_CAMERA_POS.x;
 let targetCameraY = INITIAL_CAMERA_POS.y;
@@ -953,9 +938,6 @@ function computeShelfView() {
   return { x: (minX + maxX) / 2, y: (minY + maxY) / 2, z: screenObject.position.z + distance };
 }
 
-// =========================================================
-// TWEEN SYSTEM
-// =========================================================
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
 const easeInQuad   = t => t * t;
@@ -988,9 +970,6 @@ function updateAnimations(dt) {
 }
 function cancelTween(cart) { if (cart.anim) { cart.anim.resolve(); cart.anim = null; } }
 
-// =========================================================
-// CARTRIDGE POSITIONING (5 carts: 2 cols landscape, 1 col portrait)
-// =========================================================
 function snapToHome(cart) {
   cart.obj.position.copy(cart.homePosition);
   cart.obj.scale.setScalar(cart.homeScale);
@@ -1061,9 +1040,6 @@ function positionCartridges(visibleW, screenWorldW, orientation) {
   rebuildPerches();
 }
 
-// =========================================================
-// LAYOUT
-// =========================================================
 let currentOrientation = 'landscape';
 function updateLayout() {
   if (isInXR()) return;
@@ -1112,7 +1088,8 @@ function updateLayout() {
 
   if (insertedCartridge && !insertedCartridge.anim) snapToSlot(insertedCartridge);
 
-  physicsBounds.w = Math.max(visibleW * 1.15, 8);
+  // Wider box for the tool cube spawn region to the left of the screen
+  physicsBounds.w = Math.max(visibleW * 1.6, 10);
   physicsBounds.h = Math.max(visibleH * 1.15, 6);
   physicsBounds.d = Math.max(2.5, visibleH * 0.4);
   rebuildWalls();
@@ -1135,9 +1112,6 @@ function updateLayout() {
   currentOrientation = orientation;
 }
 
-// =========================================================
-// INSERT / EJECT
-// =========================================================
 function cancelInsert(cart) {
   cancelTween(cart);
   cart.state = 'on_shelf';
@@ -1204,9 +1178,6 @@ async function ejectCartridge(cart) {
   homePhysicsBody(cart, true);
 }
 
-// =========================================================
-// SELECTION (now spawns/despawns tool cubes)
-// =========================================================
 async function selectCartridge(id) {
   const newCart = cartridgeObjects.find(c => c.id === id);
   if (!newCart) return;
@@ -1217,13 +1188,14 @@ async function selectCartridge(id) {
   screenScroll.scrollTop = 0;
   cartridgeObjects.forEach(c => c.el.classList.toggle('active', c.id === id));
 
-  // Tool cubes: old ones fall to oblivion, new ones fall from above
+  // Tool cubes: old ones fall to oblivion, new ones fall from above (viewer-left)
   despawnToolCubes();
   spawnToolCubes(project ? project.tools : []);
 
   // Kick other carts into chaos
   for (const c of cartridgeObjects) {
     if (c.id === id || c.state !== 'on_shelf' || c.grabbed || !c.bodyInWorld) continue;
+    wakeCart(c);
     const dx = c.body.position.x - screenObject.position.x;
     const dy = c.body.position.y - screenObject.position.y;
     const dist = Math.max(0.5, Math.hypot(dx, dy));
@@ -1257,9 +1229,6 @@ async function selectCartridge(id) {
   if (newCart.state === 'inserted') insertedCartridge = newCart;
 }
 
-// =========================================================
-// PHYSICS STEP + TOOL CUBE UPDATE
-// =========================================================
 const PHYSICS_DT = 1 / 60;
 function stepPhysics(dt) {
   if (!isCinemaVisible()) return;
@@ -1273,14 +1242,28 @@ function stepPhysics(dt) {
       cart.body.position.y < -physicsBounds.h ||
       Math.abs(cart.body.position.x) > physicsBounds.w * 0.95 ||
       Math.abs(cart.body.position.z) > physicsBounds.d * 1.5
-    ) respawnCart(cart);
+    ) { respawnCart(cart); continue; }
+
+    // Park cart once it has nearly stopped. Kinematic bodies don't jitter.
+    if (cart.body.type === CANNON.Body.DYNAMIC) {
+      const spd = cart.body.velocity.length();
+      const angSpd = cart.body.angularVelocity.length();
+      if (spd < 0.15 && angSpd < 0.3) {
+        cart._parkT = (cart._parkT || 0) + dt;
+        if (cart._parkT > 0.4) {
+          cart.body.type = CANNON.Body.KINEMATIC;
+          cart.body.velocity.set(0, 0, 0);
+          cart.body.angularVelocity.set(0, 0, 0);
+          cart._parkT = 0;
+        }
+      } else {
+        cart._parkT = 0;
+      }
+    }
   }
   updateToolCubes(dt);
 }
 
-// =========================================================
-// SCROLL / UI
-// =========================================================
 document.getElementById('view-resume-btn').addEventListener('click', () => {
   document.getElementById('resume-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
@@ -1296,9 +1279,6 @@ if (backFab) {
   }, { passive: true });
 }
 
-// =========================================================
-// XR
-// =========================================================
 async function snapshotToXrScreen() {
   try {
     await document.fonts.ready;
@@ -1389,9 +1369,6 @@ document.getElementById('ar-button').addEventListener('click', () => {
   } else startXRSession();
 });
 
-// =========================================================
-// RENDER LOOP
-// =========================================================
 let lastTime = performance.now();
 const isCinemaVisible = () => window.scrollY < window.innerHeight * 0.95;
 function updateCameraDamp(dt) {
@@ -1456,9 +1433,6 @@ function onResize() {
 window.addEventListener('resize', onResize);
 window.addEventListener('orientationchange', onResize);
 
-// =========================================================
-// BOOT
-// =========================================================
 updateLayout();
 screenScroll.innerHTML = WELCOME_CONTENT;
 camera.position.set(targetCameraX, targetCameraY, targetCameraZ);
@@ -1474,7 +1448,6 @@ requestAnimationFrame(() => {
 </script>
 
 <script>
-/* ============ RYAN'S SITE JS (arcade + lightbox + footer) ============ */
 (function(){
   var canvas = document.getElementById('g-canvas'); if (!canvas) return;
   var ctx = canvas.getContext('2d'); var W = canvas.width, H = canvas.height;
