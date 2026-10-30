@@ -5,836 +5,266 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Ryan Neal — Pipeline Technical Director</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
-<meta name="description" content="Pipeline Technical Director with 13 years of experience in VFX and Real-Time: tools, pipeline, and production engineering." />
-
-<link rel="preconnect" href="https://ai-stream-mvp.onrender.com/" />
-<link rel="dns-prefetch" href="https://ai-stream-mvp.onrender.com/" />
-
 <style>
-/* ============================================================
-   THEME VARIABLES
-   ============================================================ */
 :root{
-  --bg:      #211815;
-  --surface: #2b1f1a;
-  --raised:  #382822;
-  --text:    #f0e8dd;
-  --muted:   #a89889;
-  --line:    #3d2c24;
-  --accent:  #e8722a;
-  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --maxw: 860px;
+  --bg:#211815;--surface:#2b1f1a;--raised:#382822;--text:#f0e8dd;
+  --muted:#a89889;--line:#3d2c24;--accent:#e8722a;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --maxw:860px;
 }
-
 *{box-sizing:border-box}
 html{scroll-behavior:smooth;scroll-padding-top:80px}
-body{
-  margin:0;
-  background:#000;
-  color:#ddd;
-  font-family:var(--sans);
-  overflow-x:hidden;
-  min-height:100vh;
-}
-a{color:inherit}
-img{max-width:100%}
+body{margin:0;background:#000;color:#ddd;font-family:var(--sans);overflow-x:hidden;min-height:100vh}
+a{color:inherit}img{max-width:100%}
 
-/* ============================================================
-   CINEMA SECTION (pinned to viewport)
-   ============================================================ */
-#cinema-section{
-  position:fixed;
-  inset:0;
-  z-index:1;
-  padding:0;
-  border-bottom:0;
-  touch-action:none;
-  overflow:hidden;
-}
-
-#webgl-canvas{
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  display:block;
-  cursor:grab;
-}
+#cinema-section{position:fixed;inset:0;z-index:1;padding:0;border-bottom:0;touch-action:none;overflow:hidden}
+#webgl-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab}
 #webgl-canvas.dragging{cursor:grabbing}
+#css3d-root{position:absolute;inset:0;pointer-events:none;z-index:2}
+body.vr-mode #css3d-root,body.vr-mode #view-resume-btn,body.vr-mode #ar-button{display:none}
 
-#css3d-root{
-  position:absolute;
-  inset:0;
-  pointer-events:none;
-  z-index:2;
+@keyframes resumeFlash{
+  0%,100%{background-color:rgba(33,24,21,.75);color:var(--text);border-color:var(--line);box-shadow:0 0 0 0 rgba(212,184,68,0)}
+  50%{background-color:#d4b844;color:#211815;border-color:#d4b844;box-shadow:0 0 0 14px rgba(212,184,68,.35)}
 }
-/* Hide flat UI when in VR / AR mode */
-body.vr-mode #css3d-root,
-body.vr-mode #view-resume-btn,
-body.vr-mode #ar-button {
-  display: none;
-}
+#view-resume-btn{animation:resumeFlash 1s ease-in-out 5;will-change:background-color,box-shadow}
 
-/* Button flash animation — must be top-level, not inside a selector list */
-@keyframes resumeFlash {
-  0%, 100% {
-    background-color: rgba(33,24,21,0.75);
-    color: var(--text);
-    border-color: var(--line);
-    box-shadow: 0 0 0 0 rgba(212,184,68,0);
-  }
-  50% {
-    background-color: #d4b844;
-    color: #211815;
-    border-color: #d4b844;
-    box-shadow: 0 0 0 14px rgba(212,184,68,0.35);
-  }
-}
-
-#view-resume-btn {
-  animation: resumeFlash 1s ease-in-out 5;
-  will-change: background-color, box-shadow;
-}
-   
 #screen-wrapper{
-  position:relative;
-  z-index:10;
-  background:#0b0b0d;
-  border:10px solid #1c1c1f;
-  border-radius:8px;
-  overflow:hidden;
-  box-shadow:
-    0 0 0 2px #2a2a2e,
-    0 30px 80px rgba(0,0,0,0.9),
-    0 0 120px rgba(80,120,255,0.06);
+  position:relative;z-index:10;background:#0b0b0d;border:10px solid #1c1c1f;border-radius:8px;
+  overflow:hidden;box-shadow:0 0 0 2px #2a2a2e,0 30px 80px rgba(0,0,0,.9),0 0 120px rgba(80,120,255,.06);
   pointer-events:none;
 }
-
 #screen-scroll{
-  width:100%;
-  height:100%;
-  overflow-y:auto;
-  overflow-x:hidden;
-  pointer-events:auto;
-  color:#e8e8ec;
-  font-size:clamp(14px,1.4vw,20px);
-  line-height:1.55;
-  padding:40px 44px;
+  width:100%;height:100%;overflow-y:auto;overflow-x:hidden;pointer-events:auto;
+  color:#e8e8ec;font-size:clamp(14px,1.4vw,20px);line-height:1.55;padding:40px 44px;
   -webkit-overflow-scrolling:touch;
 }
 #screen-scroll::-webkit-scrollbar{width:8px}
 #screen-scroll::-webkit-scrollbar-track{background:#141417}
 #screen-scroll::-webkit-scrollbar-thumb{background:#3a3a40;border-radius:4px}
-#screen-scroll h1{font-size:2em;margin-bottom:6px;color:#fff;letter-spacing:-0.01em}
+#screen-scroll h1{font-size:2em;margin-bottom:6px;color:#fff;letter-spacing:-.01em}
 #screen-scroll h2{font-size:1.3em;margin:28px 0 10px;color:#b9c4ff}
 #screen-scroll p{margin-bottom:14px;color:#c8c8cf}
 #screen-scroll ul{margin-left:22px;margin-bottom:16px;color:#c8c8cf}
 #screen-scroll li{margin-bottom:6px}
-#screen-scroll .kicker{
-  font-size:0.75em;
-  letter-spacing:0.12em;
-  text-transform:uppercase;
-  color:#ff9d5c;
-  margin-bottom:14px;
-  font-weight:700;
-}
-#screen-scroll .meta{color:#777;font-size:0.85em;margin-top:28px}
+#screen-scroll .kicker{font-size:.75em;letter-spacing:.12em;text-transform:uppercase;color:#ff9d5c;margin-bottom:14px;font-weight:700}
+#screen-scroll .meta{color:#777;font-size:.85em;margin-top:28px}
 
-/* === CARTRIDGES — shape-following glow, no rectangles ever === */
 .cartridge{
-  position:relative;
-  z-index:20;
-  width:320px;
-  height:180px;
-  pointer-events:auto;
-  border:0 none;
-  border-radius:0;
-  padding:0;
-  margin:0;
-  background:transparent;
-  -webkit-appearance:none;
-  appearance:none;
-  outline:0 none;
-  box-shadow:none;
-  cursor:pointer;
-  overflow:visible;
-  font-family:inherit;
-  opacity:1;
-  -webkit-tap-highlight-color:transparent;
+  position:relative;z-index:20;width:320px;height:180px;pointer-events:auto;
+  border:0 none;border-radius:0;padding:0;margin:0;background:transparent;
+  -webkit-appearance:none;appearance:none;outline:0 none;box-shadow:none;
+  cursor:grab;overflow:visible;font-family:inherit;opacity:1;
+  -webkit-tap-highlight-color:transparent;touch-action:none;
 }
-
-/* Nuke every browser-drawn rectangle on any interaction state */
-.cartridge:focus,
-.cartridge:focus-visible,
-.cartridge:active,
-.cartridge:focus:not(:focus-visible){
-  outline:0 none;
-  border:0 none;
-  box-shadow:none;
-}
-
+.cartridge.grabbed{cursor:grabbing}
+.cartridge:focus,.cartridge:focus-visible,.cartridge:active{outline:0 none;border:0 none;box-shadow:none}
 .cartridge .cart-img{
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  object-fit:contain;
-  pointer-events:none;
-  display:block;
-  transition:filter 0.2s ease;
+  position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+  pointer-events:none;display:block;transition:filter .2s ease;
 }
-
-/* ── HOVER on a NON-plugged cartridge: dull green glow ── */
+.cartridge .cart-fallback{
+  display:none;position:absolute;inset:0;align-items:center;justify-content:center;
+  background:#382822;color:#fff;font-size:16px;font-weight:700;
+  padding:20px;text-align:center;border-radius:6px;line-height:1.3;
+}
+.cartridge.cart-noimg .cart-fallback{display:flex}
+.cartridge.cart-noimg .cart-img{display:none}
 .cartridge:not(.active):hover .cart-img{
-  filter:
-    drop-shadow(0 0 15px rgba(106,140,76,0.75))
-    drop-shadow(0 0 30px rgba(106,140,76,0.40))
-    brightness(1.04);
+  filter:drop-shadow(0 0 15px rgba(106,140,76,.75)) drop-shadow(0 0 30px rgba(106,140,76,.4)) brightness(1.04);
 }
-
-/* ── PLUGGED-IN cartridge: orange glow, always on, no hover change ── */
-.cartridge.active .cart-img{
-  filter:
-    drop-shadow(0 0 10px var(--accent))
-    drop-shadow(0 0 22px rgba(232,114,42,0.65))
-    brightness(1.12) saturate(1.08);
-}
-/* Pin the active glow so hovering the plugged cart doesn't alter it */
-.cartridge.active:hover .cart-img{
-  filter:
-    drop-shadow(0 0 10px var(--accent))
-    drop-shadow(0 0 22px rgba(232,114,42,0.65))
-    brightness(1.12) saturate(1.08);
+.cartridge.active .cart-img,.cartridge.active:hover .cart-img{
+  filter:drop-shadow(0 0 10px var(--accent)) drop-shadow(0 0 22px rgba(232,114,42,.65)) brightness(1.12) saturate(1.08);
 }
 
 #view-resume-btn{
-  position:absolute;
-  top:16px;
-  right:16px;
-  z-index:20;
-  color:#ddd;
-  font-size:13px;
-  padding:8px 14px;
-  border:1px solid #444;
-  border-radius:6px;
-  background:rgba(0,0,0,0.55);
-  backdrop-filter:blur(6px);
-  cursor:pointer;
-  font-family:inherit;
-  transition:color 0.15s, border-color 0.15s, background 0.15s;
+  position:absolute;top:16px;right:16px;z-index:20;color:#ddd;font-size:13px;padding:8px 14px;
+  border:1px solid #444;border-radius:6px;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);
+  cursor:pointer;font-family:inherit;transition:color .15s,border-color .15s,background .15s;
 }
-#view-resume-btn:hover{
-  color:#fff;
-  border-color:#888;
-  background:rgba(0,0,0,0.75);
-}
+#view-resume-btn:hover{color:#fff;border-color:#888;background:rgba(0,0,0,.75)}
 
 #loading{
-  position:fixed;
-  inset:0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:#000;
-  color:#666;
-  font-size:13px;
-  letter-spacing:0.15em;
-  text-transform:uppercase;
-  z-index:100;
-  transition:opacity 0.6s;
+  position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000;
+  color:#666;font-size:13px;letter-spacing:.15em;text-transform:uppercase;z-index:100;transition:opacity .6s;
 }
 
 #ar-button{
-  position:absolute;
-  bottom:16px;
-  left:16px;
-  z-index:20;
-  background:#1c1c1f;
-  color:#ddd;
-  border:1px solid #333;
-  padding:10px 16px;
-  border-radius:6px;
-  font:inherit;
-  font-size:13px;
-  cursor:pointer;
-  transition:color 0.15s, border-color 0.15s;
+  position:absolute;bottom:16px;left:16px;z-index:20;background:#1c1c1f;color:#ddd;
+  border:1px solid #333;padding:10px 16px;border-radius:6px;font:inherit;font-size:13px;
+  cursor:pointer;transition:color .15s,border-color .15s;
 }
 #ar-button:hover{color:#fff;border-color:#666}
-#ar-button:disabled{opacity:0.5;cursor:not-allowed}
+#ar-button:disabled{opacity:.5;cursor:not-allowed}
 
 #cinema-spacer{height:100vh;pointer-events:none}
 
-/* ============================================================
-   RESUME SECTION — Ryan's site scoped here
-   ============================================================ */
 #resume-section{
-  position:relative;
-  z-index:10;
-  padding:0;
-  border-bottom:0;
-  background:var(--bg);
-  color:var(--text);
-  font-family:var(--sans);
-  font-size:17px;
-  line-height:1.6;
-  -webkit-font-smoothing:antialiased;
-  min-height:100vh;
-  touch-action:pan-y;
-  box-shadow:0 -20px 60px rgba(0,0,0,0.35);
+  position:relative;z-index:10;padding:0;border-bottom:0;background:var(--bg);color:var(--text);
+  font-family:var(--sans);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased;
+  min-height:100vh;touch-action:pan-y;box-shadow:0 -20px 60px rgba(0,0,0,.35);
 }
-
-/* Back-to-cinema floating button (mobile) */
 #back-to-cinema-fab{
-  position:fixed;
-  bottom:24px;
-  right:24px;
-  z-index:50;
-  width:46px;
-  height:46px;
-  background:var(--surface);
-  color:var(--text);
-  border:1px solid var(--line);
-  border-radius:50%;
-  font-size:16px;
-  cursor:pointer;
-  display:none;
-  box-shadow:0 4px 16px rgba(0,0,0,0.55);
-  transition:color 0.15s, border-color 0.15s;
+  position:fixed;bottom:24px;right:24px;z-index:50;width:46px;height:46px;background:var(--surface);
+  color:var(--text);border:1px solid var(--line);border-radius:50%;font-size:16px;cursor:pointer;
+  display:none;box-shadow:0 4px 16px rgba(0,0,0,.55);transition:color .15s,border-color .15s;
 }
 #back-to-cinema-fab.visible{display:block}
 #back-to-cinema-fab:hover{border-color:var(--accent);color:var(--accent)}
 
-/* ---------- Ryan's global section base ---------- */
 section{padding:64px 0;border-bottom:1px solid var(--line)}
 section:last-of-type{border-bottom:0}
-
-/* ---------- Ryan's site content styles ---------- */
 .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
-
-.site-header{
-  position:sticky;
-  top:0;
-  z-index:10;
-  background:rgba(33,24,21,.85);
-  backdrop-filter:blur(8px);
-  border-bottom:1px solid var(--line);
-}
-.site-header .wrap{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  height:60px;
-}
+.site-header{position:sticky;top:0;z-index:10;background:rgba(33,24,21,.85);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.site-header .wrap{display:flex;align-items:center;justify-content:space-between;height:60px}
 .brand{font-weight:700;letter-spacing:-.01em;font-size:16px;text-decoration:none}
 .brand span{color:var(--accent)}
 .nav{display:flex;gap:22px;font-size:14px}
 .nav a{text-decoration:none;color:var(--muted)}
 .nav a:hover{color:var(--text)}
-
 .intro{padding:88px 0 64px;border-bottom:1px solid var(--line)}
-.eyebrow{
-  font-family:var(--mono);
-  font-size:12px;
-  letter-spacing:.12em;
-  text-transform:uppercase;
-  color:var(--accent);
-  margin:0 0 20px;
-}
-.intro h1{
-  font-size:clamp(38px,6vw,60px);
-  line-height:1.05;
-  letter-spacing:-.03em;
-  margin:0 0 22px;
-  font-weight:800;
-}
-.intro p.lede{
-  font-size:19px;
-  color:var(--muted);
-  max-width:60ch;
-  margin:0 0 36px;
-}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin:0 0 20px}
+.intro h1{font-size:clamp(38px,6vw,60px);line-height:1.05;letter-spacing:-.03em;margin:0 0 22px;font-weight:800}
+.intro p.lede{font-size:19px;color:var(--muted);max-width:60ch;margin:0 0 36px}
 .cta-row{display:flex;flex-wrap:wrap;gap:12px}
-.btn{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  padding:12px 20px;
-  border-radius:6px;
-  font-size:15px;
-  font-weight:600;
-  text-decoration:none;
-  border:1px solid transparent;
-  transition:.15s ease;
-}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;border-radius:6px;font-size:15px;font-weight:600;text-decoration:none;border:1px solid transparent;transition:.15s ease}
 .btn-primary{background:var(--text);color:var(--bg)}
 .btn-primary:hover{background:var(--accent)}
 .btn-ghost{border-color:var(--line);background:var(--surface);color:var(--text)}
 .btn-ghost:hover{border-color:var(--text)}
-
-h2.section-title{
-  font-family:var(--mono);
-  font-size:12px;
-  letter-spacing:.14em;
-  text-transform:uppercase;
-  color:var(--muted);
-  margin:0 0 36px;
-  font-weight:600;
-}
-
+h2.section-title{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 36px;font-weight:600}
 .about p{max-width:68ch;margin:0 0 18px}
 .about p:last-child{margin-bottom:0}
-
-.project{
-  display:grid;
-  grid-template-columns:180px 1fr;
-  gap:32px;
-  padding:32px 0;
-  border-top:1px solid var(--line);
-}
+.project{display:grid;grid-template-columns:180px 1fr;gap:32px;padding:32px 0;border-top:1px solid var(--line)}
 .project:first-of-type{border-top:0;padding-top:0}
 .project:last-of-type{padding-bottom:0}
-.project__meta{
-  font-family:var(--mono);
-  font-size:13px;
-  color:var(--muted);
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-}
+.project__meta{font-family:var(--mono);font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:6px}
 .project__year{color:var(--text);font-weight:600}
 .project__body h3{margin:0 0 4px;font-size:20px;letter-spacing:-.015em}
-.project__role{
-  font-family:var(--mono);
-  font-size:12.5px;
-  color:var(--accent);
-  text-transform:uppercase;
-  letter-spacing:.08em;
-  margin:0 0 14px;
-}
+.project__role{font-family:var(--mono);font-size:12.5px;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;margin:0 0 14px}
 .project__body p{margin:0 0 14px;color:var(--muted)}
 .tags{list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:6px}
-.tags li{
-  font-family:var(--mono);
-  font-size:11.5px;
-  padding:3px 9px;
-  border:1px solid var(--line);
-  border-radius:999px;
-  color:var(--muted);
-  background:var(--surface);
-}
-
-.skills-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-  gap:32px;
-}
-.skill-group h3{
-  font-family:var(--mono);
-  font-size:12px;
-  letter-spacing:.1em;
-  text-transform:uppercase;
-  color:var(--text);
-  margin:0 0 12px;
-}
+.tags li{font-family:var(--mono);font-size:11.5px;padding:3px 9px;border:1px solid var(--line);border-radius:999px;color:var(--muted);background:var(--surface)}
+.skills-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:32px}
+.skill-group h3{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--text);margin:0 0 12px}
 .skill-group ul{list-style:none;padding:0;margin:0;color:var(--muted)}
 .skill-group li{padding:3px 0;font-size:15px}
-
 .contact p{max-width:60ch;color:var(--muted)}
 .contact-links{display:flex;flex-wrap:wrap;gap:20px;margin-top:24px}
-.contact-links a{
-  font-family:var(--mono);
-  font-size:14px;
-  text-decoration:none;
-  border-bottom:1px solid var(--line);
-  padding-bottom:2px;
-}
+.contact-links a{font-family:var(--mono);font-size:14px;text-decoration:none;border-bottom:1px solid var(--line);padding-bottom:2px}
 .contact-links a:hover{border-color:var(--accent);color:var(--accent)}
-
-.site-footer{
-  padding:32px 0 48px;
-  font-family:var(--mono);
-  font-size:12px;
-  color:var(--muted);
-}
-.site-footer .wrap{
-  display:flex;
-  justify-content:space-between;
-  flex-wrap:wrap;
-  gap:12px;
-}
-
+.site-footer{padding:32px 0 48px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+.site-footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
 @media (max-width:640px){
   #resume-section{font-size:16px}
   .intro{padding:56px 0 44px}
   .project{grid-template-columns:1fr;gap:12px}
   .nav{display:none}
 }
-
-/* ============================================================
-   ARCADE
-   ============================================================ */
 .arcade{padding:64px 0;border-bottom:1px solid var(--line)}
 .arcade .section-title{margin-bottom:28px}
-
-.cab{
-  background:var(--surface);
-  border:1px solid var(--line);
-  border-radius:8px;
-  padding:16px;
-  max-width:620px;
-}
-
-.cab__hud{
-  display:flex;
-  flex-wrap:wrap;
-  gap:14px 22px;
-  font-family:var(--mono);
-  font-size:12px;
-  letter-spacing:.08em;
-  text-transform:uppercase;
-  color:var(--muted);
-  margin-bottom:8px;
-}
+.cab{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;max-width:620px}
+.cab__hud{display:flex;flex-wrap:wrap;gap:14px 22px;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
 .cab__hud b{color:var(--accent);font-weight:700}
 .cab__hud .hp b{letter-spacing:.12em}
-
-.cab__hud--stats{
-  gap:14px 18px;
-  font-size:11px;
-  padding-bottom:12px;
-  margin-bottom:12px;
-  border-bottom:1px solid var(--line);
-}
+.cab__hud--stats{gap:14px 18px;font-size:11px;padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--line)}
 .cab__hud--stats b{color:var(--muted);font-weight:700}
 .cab__hud--stats b.on{color:var(--accent)}
-
-.cab__screen{
-  position:relative;
-  background:var(--bg);
-  border:1px solid var(--line);
-  border-radius:4px;
-  overflow:hidden;
-  line-height:0;
-}
-#g-canvas{
-  width:100%;
-  height:auto;
-  display:block;
-  image-rendering:pixelated;
-  image-rendering:crisp-edges;
-  touch-action:none;
-}
-
-.g-upgrade{
-  position:absolute;
-  inset:0;
-  display:none;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  gap:8px;
-  padding:14px;
-  background:rgba(245,244,240,.95);
-  line-height:1.35;
-  z-index:2;
-}
+.cab__screen{position:relative;background:var(--bg);border:1px solid var(--line);border-radius:4px;overflow:hidden;line-height:0}
+#g-canvas{width:100%;height:auto;display:block;image-rendering:pixelated;image-rendering:crisp-edges;touch-action:none}
+.g-upgrade{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;align-items:center;gap:8px;padding:14px;background:rgba(245,244,240,.95);line-height:1.35;z-index:2}
 .g-upgrade.on{display:flex}
-.g-upgrade__title{
-  font-family:var(--mono);
-  font-size:11px;
-  letter-spacing:.16em;
-  text-transform:uppercase;
-  color:var(--accent);
-  font-weight:700;
-  margin:0 0 4px;
-}
-.g-upgrade__sub{
-  font-family:var(--mono);
-  font-size:10px;
-  letter-spacing:.08em;
-  text-transform:uppercase;
-  color:var(--muted);
-  margin:0 0 8px;
-}
+.g-upgrade__title{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:700;margin:0 0 4px}
+.g-upgrade__sub{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
 .g-upgrade__row{display:flex;gap:8px;width:100%;max-width:360px}
-.g-upgrade__btn{
-  flex:1;
-  background:var(--surface);
-  border:1px solid var(--line);
-  border-radius:4px;
-  padding:10px 6px;
-  cursor:pointer;
-  font-family:var(--mono);
-  color:var(--text);
-  text-align:center;
-  transition:.12s ease;
-}
-.g-upgrade__btn:hover{
-  border-color:var(--accent);
-  background:var(--bg);
-  transform:translateY(-1px);
-}
-.g-upgrade__btn .lbl{
-  display:block;
-  font-size:10px;
-  letter-spacing:.1em;
-  text-transform:uppercase;
-  color:var(--muted);
-  margin-bottom:5px;
-}
-.g-upgrade__btn .val{
-  display:block;
-  font-size:16px;
-  font-weight:800;
-  color:var(--accent);
-  letter-spacing:-.01em;
-}
+.g-upgrade__btn{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:10px 6px;cursor:pointer;font-family:var(--mono);color:var(--text);text-align:center;transition:.12s ease}
+.g-upgrade__btn:hover{border-color:var(--accent);background:var(--bg);transform:translateY(-1px)}
+.g-upgrade__btn .lbl{display:block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.g-upgrade__btn .val{display:block;font-size:16px;font-weight:800;color:var(--accent);letter-spacing:-.01em}
 .g-upgrade__btn .gain{display:block;font-size:10px;color:var(--muted);margin-top:3px}
-.g-upgrade__btn .key{
-  display:block;
-  font-size:9px;
-  color:var(--line);
-  margin-top:5px;
-  letter-spacing:.15em;
-}
-
+.g-upgrade__btn .key{display:block;font-size:9px;color:var(--line);margin-top:5px;letter-spacing:.15em}
 .cab__controls{display:flex;gap:8px;margin-top:12px}
 .cab__controls--second{margin-top:8px}
-.pad{
-  flex:1;
-  font-family:var(--mono);
-  font-size:13px;
-  letter-spacing:.1em;
-  text-transform:uppercase;
-  padding:12px;
-  background:var(--surface);
-  border:1px solid var(--line);
-  border-radius:4px;
-  color:var(--text);
-  cursor:pointer;
-  user-select:none;
-  -webkit-user-select:none;
-  touch-action:manipulation;
-  transition:.12s ease;
-}
+.pad{flex:1;font-family:var(--mono);font-size:13px;letter-spacing:.1em;text-transform:uppercase;padding:12px;background:var(--surface);border:1px solid var(--line);border-radius:4px;color:var(--text);cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation;transition:.12s ease}
 .pad:hover{border-color:var(--text)}
 .pad:active{background:var(--text);color:var(--bg)}
 .pad--go{flex:1.4;color:var(--accent);font-weight:700;border-color:var(--accent)}
 .pad--go:hover{background:var(--accent);color:var(--bg)}
-
 .pad--slow{color:var(--accent);border-color:var(--accent);font-weight:700}
 .pad--slow:hover{background:var(--accent);color:var(--bg)}
 .pad--slow.is-locked{color:var(--muted);border-color:var(--line);font-weight:400;opacity:.55}
-.pad--slow.is-locked:hover{background:var(--surface);color:var(--muted);border-color:var(--line)}
 .pad--slow.is-cooling{color:var(--muted);border-color:var(--line);font-weight:400}
-.pad--slow.is-cooling:hover{background:var(--surface);color:var(--muted);border-color:var(--line)}
 .pad--slow.is-active{background:var(--accent);color:var(--bg)}
-
 .cab__hint{font-family:var(--mono);font-size:12px;color:var(--muted);margin:14px 0 0}
-
-.g-upgrade__btn.is-maxed{
-  opacity:.38;
-  cursor:not-allowed;
-  pointer-events:none;
-  transform:none !important;
-}
+.g-upgrade__btn.is-maxed{opacity:.38;cursor:not-allowed;pointer-events:none;transform:none!important}
 .g-upgrade__btn.is-maxed .val{color:var(--muted)}
 .g-upgrade__btn.is-maxed .lbl{color:var(--line)}
 .g-upgrade__btn.is-maxed .key{color:transparent}
-.g-upgrade__btn.is-maxed .key::after{
-  content:"MAX";
-  color:var(--accent);
-  letter-spacing:.15em;
-}
-
-/* ============================================================
-   CREDITS GRID
-   ============================================================ */
-.credits-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(130px,1fr));
-  gap:14px;
-  margin-bottom:56px;
-}
-.credit{
-  position:relative;
-  display:block;
-  aspect-ratio:2/3;
-  border-radius:6px;
-  overflow:hidden;
-  background:var(--surface);
-  border:1px solid var(--line);
-  text-decoration:none;
-  cursor:pointer;
-  padding:0;
-  transition:transform .18s ease, border-color .18s ease;
-}
-.credit:hover,
-.credit:focus-visible{
-  transform:translateY(-3px);
-  border-color:var(--accent);
-  outline:none;
-}
+.g-upgrade__btn.is-maxed .key::after{content:"MAX";color:var(--accent);letter-spacing:.15em}
+.credits-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:14px;margin-bottom:56px}
+.credit{position:relative;display:block;aspect-ratio:2/3;border-radius:6px;overflow:hidden;background:var(--surface);border:1px solid var(--line);text-decoration:none;cursor:pointer;padding:0;transition:transform .18s ease,border-color .18s ease}
+.credit:hover,.credit:focus-visible{transform:translateY(-3px);border-color:var(--accent);outline:none}
 .credit img{width:100%;height:100%;object-fit:cover;display:block}
-.credit__label{
-  position:absolute;
-  left:0;right:0;bottom:0;
-  padding:10px 10px 8px;
-  background:linear-gradient(to top,rgba(33,24,21,.95) 0%,rgba(33,24,21,.75) 55%,rgba(33,24,21,0) 100%);
-  font-family:var(--mono);
-  font-size:10.5px;
-  line-height:1.3;
-  color:var(--text);
-  letter-spacing:.02em;
-}
-.credit__label b{
-  display:block;
-  font-size:10px;
-  font-weight:700;
-  color:var(--accent);
-  letter-spacing:.1em;
-  text-transform:uppercase;
-  margin-bottom:3px;
-}
-.credit--landscape{aspect-ratio:16/9}
-.credit--landscape .credit__label{font-size:10px}
-
-/* ============================================================
-   LIGHTBOX
-   ============================================================ */
-.lightbox{
-  position:fixed;
-  inset:0;
-  background:rgba(15,10,8,.92);
-  backdrop-filter:blur(6px);
-  display:none;
-  justify-content:center;
-  align-items:center;
-  padding:24px;
-  z-index:100;
-}
+.credit__label{position:absolute;left:0;right:0;bottom:0;padding:10px 10px 8px;background:linear-gradient(to top,rgba(33,24,21,.95) 0%,rgba(33,24,21,.75) 55%,rgba(33,24,21,0) 100%);font-family:var(--mono);font-size:10.5px;line-height:1.3;color:var(--text);letter-spacing:.02em}
+.credit__label b{display:block;font-size:10px;font-weight:700;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px}
+.lightbox{position:fixed;inset:0;background:rgba(15,10,8,.92);backdrop-filter:blur(6px);display:none;justify-content:center;align-items:center;padding:24px;z-index:100}
 .lightbox.on{display:flex}
-.lightbox__inner{
-  display:flex;
-  gap:28px;
-  max-width:900px;
-  width:100%;
-  align-items:center;
-  justify-content:center;
-  flex-wrap:wrap;
-}
-.lightbox__inner img{
-  max-height:70vh;
-  max-width:100%;
-  border-radius:8px;
-  box-shadow:0 24px 80px rgba(0,0,0,.6);
-}
+.lightbox__inner{display:flex;gap:28px;max-width:900px;width:100%;align-items:center;justify-content:center;flex-wrap:wrap}
+.lightbox__inner img{max-height:70vh;max-width:100%;border-radius:8px;box-shadow:0 24px 80px rgba(0,0,0,.6)}
 .lightbox__meta{color:var(--text);max-width:340px}
 .lightbox__meta h3{font-size:22px;margin:0 0 6px;letter-spacing:-.015em}
-.lightbox__role{
-  font-family:var(--mono);
-  font-size:12px;
-  letter-spacing:.08em;
-  text-transform:uppercase;
-  color:var(--accent);
-  margin:0 0 14px;
-}
+.lightbox__role{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:0 0 14px}
 .lightbox__desc{color:var(--muted);font-size:15px;margin:0 0 18px}
-.lightbox__imdb{
-  font-family:var(--mono);
-  font-size:12px;
-  color:var(--text);
-  text-decoration:none;
-  border-bottom:1px solid var(--line);
-  padding-bottom:2px;
-}
+.lightbox__imdb{font-family:var(--mono);font-size:12px;color:var(--text);text-decoration:none;border-bottom:1px solid var(--line);padding-bottom:2px}
 .lightbox__imdb:hover{border-color:var(--accent);color:var(--accent)}
-.lightbox__close{
-  position:absolute;
-  top:20px;right:24px;
-  background:transparent;
-  border:1px solid var(--line);
-  border-radius:4px;
-  color:var(--text);
-  font-size:22px;
-  width:40px;height:40px;
-  cursor:pointer;
-  line-height:1;
-  font-family:var(--sans);
-}
+.lightbox__close{position:absolute;top:20px;right:24px;background:transparent;border:1px solid var(--line);border-radius:4px;color:var(--text);font-size:22px;width:40px;height:40px;cursor:pointer;line-height:1;font-family:var(--sans)}
 .lightbox__close:hover{border-color:var(--accent);color:var(--accent)}
-
 @media (max-width:640px){
   .credits-grid{grid-template-columns:repeat(auto-fill,minmax(105px,1fr));gap:10px}
   .lightbox__meta{text-align:center}
   .lightbox__inner img{max-height:52vh}
-  #back-to-cinema-fab{display:none !important}
+  #back-to-cinema-fab{display:none!important}
   #back-to-cinema-fab.visible{display:block}
 }
 </style>
 
-<!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-GTQP2J9E2X"></script>
 <script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-GTQP2J9E2X', { anonymize_ip: true });
+window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-GTQP2J9E2X',{anonymize_ip:true});
 </script>
-
 </head>
 <body>
 
-<!-- ============================================================
-     CINEMA
-     ============================================================ -->
 <section id="cinema-section">
   <canvas id="webgl-canvas"></canvas>
   <div id="css3d-root"></div>
-
   <button id="view-resume-btn">View Traditional Resume ↓</button>
   <button id="ar-button">Step Into Cinema</button>
 </section>
 
 <div id="cinema-spacer"></div>
 
-<!-- ============================================================
-     RESUME (Ryan's site)
-     ============================================================ -->
 <section id="resume-section">
-
   <header class="site-header">
     <div class="wrap">
       <a class="brand" href="#top">Ryan Neal<span>.</span></a>
       <nav class="nav">
-        <a href="#about">About</a>
-        <a href="#work">Work</a>
-        <a href="#skills">Skills</a>
-        <a href="#contact">Contact</a>
+        <a href="#about">About</a><a href="#work">Work</a><a href="#skills">Skills</a><a href="#contact">Contact</a>
         <a href="#" id="back-to-cinema-nav" style="color:var(--accent)">↑ Cinema</a>
       </nav>
     </div>
   </header>
 
   <main id="top">
-
     <section class="intro">
       <div class="wrap">
         <p class="eyebrow">Pipeline Technical Director</p>
         <h1>Ryan Neal</h1>
-        <p class="lede">
-          I build and maintain the pipelines that let artists and studios ship
-          complex work on time. Helping Artists, Developers, and
-          Studios; everything from time tracking to time savers.
-        </p>
+        <p class="lede">I build and maintain the pipelines that let artists and studios ship complex work on time. Helping Artists, Developers, and Studios; everything from time tracking to time savers.</p>
         <div class="cta-row">
-          <a class="btn btn-primary" href="ryan_neal_engineer.pdf" target="_blank" rel="noopener">
-            View Résumé (PDF)
-          </a>
-          <a class="btn btn-ghost" href="https://ai-stream-mvp.onrender.com/" target="_blank" id="work-link">
-            See Selected Work →
-          </a>
+          <a class="btn btn-primary" href="ryan_neal_engineer.pdf" target="_blank" rel="noopener">View Résumé (PDF)</a>
+          <a class="btn btn-ghost" href="https://ai-stream-mvp.onrender.com/" target="_blank">See Selected Work →</a>
         </div>
       </div>
     </section>
@@ -842,239 +272,39 @@ h2.section-title{
     <section class="about" id="about">
       <div class="wrap">
         <h2 class="section-title">About</h2>
-        <p>
-          Starting at The Third Floor gave me a unique view into film production.
-          With quick turn arounds, blockbuster requirements, and a team of artists
-          who needed realtime tools; years ahead of the VFX industry.
-          Since then I've led teams and pipelines through feature, episodic, and real-time productions.
-        </p>
-        <p>
-          My work usually sits at the intersection of three things: artist
-          workflow, data integrity, and production deadlines. I write tools
-          that artists actually use, document them so they survive without me,
-          and design systems with more than the current project in sight.
-        </p>
+        <p>Starting at The Third Floor gave me a unique view into film production. With quick turn arounds, blockbuster requirements, and a team of artists who needed realtime tools; years ahead of the VFX industry. Since then I've led teams and pipelines through feature, episodic, and real-time productions.</p>
+        <p>My work usually sits at the intersection of three things: artist workflow, data integrity, and production deadlines. I write tools that artists actually use, document them so they survive without me, and design systems with more than the current project in sight.</p>
       </div>
     </section>
 
     <section id="work">
       <div class="wrap">
         <h2 class="section-title">Selected Projects</h2>
-
         <div class="credits-grid">
-
-          <button class="credit"
-            data-img="images/dragon-fly.jpg"
-            data-title="DragonFly Virtual Camera"
-            data-role="Maya TD"
-            data-desc="Virtual Camera plugin for Unity/Unreal/Maya. Take recording with non destructive workflows for creatives"
-            data-imdb="https://www.animationmagazine.net/2019/06/glassbox-launches-virtual-camera-toolset-dragonfly/">
-            <img src="images/dragon-fly.jpg" alt="Virtual Cameras" loading="lazy" />
-            <span class="credit__label">
-              <b>Maya TD</b>
-              Dragonfly Virtual Camera
-            </span>
-          </button>
-
-          <button class="credit"
-            data-img="images/felix-jorge-exterior-c.jpg"
-            data-title="2Chainz web VR experience"
-            data-role="Senior Pipeline TD"
-            data-desc="AWS and S2 configuration. Created VR webflow. Optimized scenes and KRPano to run on even low powered mobile devices"
-            data-imdb="https://youtu.be/VLL9rgmOMHY?si=ePOo841NEv6KWO4x&t=10">
-            <img src="images/felix-jorge-exterior-c.jpg" alt="VR 2Chainz Album Release" loading="lazy" />
-            <span class="credit__label">
-              <b>Senior Pipeline TD</b>
-              2Chainz - Trap House
-            </span>
-          </button>
-
-          <button class="credit"
-            data-img="images/lich.jpg"
-            data-title="Lichdom Battlemage"
-            data-role="Senior Pipeline TD"
-            data-desc="Created Python/Maya Scene exporter to deliver files to outside render farm vendor."
-            data-imdb="https://www.youtube.com/watch?v=YFv27QcJN2M&t=59s">
-            <img src="images/lich.jpg" alt="Lichdom Teaser Cinematic" loading="lazy" />
-            <span class="credit__label">
-              <b>Senior Pipeline TD</b>
-              Lichdom Cinematics
-            </span>
-          </button>
-
-          <button class="credit"
-            data-img="images/injustice2.jpg"
-            data-title="Injustice 2"
-            data-role="Pipeline TD"
-            data-desc="Built Studio Pipeline for artists and developers. Optimized scene build times X5. Injested +1900 face cam mocap videos"
-            data-imdb="https://www.youtube.com/watch?v=PvoYtrMJJSs&t=3s">
-            <img src="images/injustice2.jpg" alt="Injustice 2" loading="lazy" />
-            <span class="credit__label">
-              <b>Pipeline TD</b>
-              Injustice 2
-            </span>
-          </button>
-
-          <button class="credit"
-            data-img="images/vrtgo-4.jpg"
-            data-title="VRTGO"
-            data-role="Pipeline TD"
-            data-desc="Stripe configuration, Cross platform user sign in, VR Optimization, AWS Web deployment, & Secure S2 buckets"
-            data-imdb="https://reflexarc.co.uk/projects/vrtgo">
-            <img src="images/vrtgo-4.jpg" alt="VR Live" loading="lazy" />
-            <span class="credit__label">
-              <b>Pipeline TD</b>
-              VRTGO Web VR Experience
-            </span>
-          </button>
-
+          <button class="credit" data-img="images/dragon-fly.jpg" data-title="DragonFly Virtual Camera" data-role="Maya TD" data-desc="Virtual Camera plugin for Unity/Unreal/Maya." data-imdb="https://www.animationmagazine.net/2019/06/glassbox-launches-virtual-camera-toolset-dragonfly/"><img src="images/dragon-fly.jpg" alt="Virtual Cameras" loading="lazy" /><span class="credit__label"><b>Maya TD</b>Dragonfly Virtual Camera</span></button>
+          <button class="credit" data-img="images/felix-jorge-exterior-c.jpg" data-title="2Chainz web VR experience" data-role="Senior Pipeline TD" data-desc="AWS and S2 configuration. Created VR webflow." data-imdb="https://youtu.be/VLL9rgmOMHY"><img src="images/felix-jorge-exterior-c.jpg" alt="VR 2Chainz" loading="lazy" /><span class="credit__label"><b>Senior Pipeline TD</b>2Chainz - Trap House</span></button>
+          <button class="credit" data-img="images/lich.jpg" data-title="Lichdom Battlemage" data-role="Senior Pipeline TD" data-desc="Python/Maya Scene exporter." data-imdb="https://www.youtube.com/watch?v=YFv27QcJN2M"><img src="images/lich.jpg" alt="Lichdom" loading="lazy" /><span class="credit__label"><b>Senior Pipeline TD</b>Lichdom Cinematics</span></button>
+          <button class="credit" data-img="images/injustice2.jpg" data-title="Injustice 2" data-role="Pipeline TD" data-desc="Built Studio Pipeline for artists." data-imdb="https://www.youtube.com/watch?v=PvoYtrMJJSs"><img src="images/injustice2.jpg" alt="Injustice 2" loading="lazy" /><span class="credit__label"><b>Pipeline TD</b>Injustice 2</span></button>
+          <button class="credit" data-img="images/vrtgo-4.jpg" data-title="VRTGO" data-role="Pipeline TD" data-desc="Stripe, Cross platform sign in, VR Optimization." data-imdb="https://reflexarc.co.uk/projects/vrtgo"><img src="images/vrtgo-4.jpg" alt="VR Live" loading="lazy" /><span class="credit__label"><b>Pipeline TD</b>VRTGO Web VR Experience</span></button>
         </div>
 
-        <article class="project">
-          <div class="project__meta">
-            <span class="project__year">Feb 2026 - Present</span>
-            <span>Self-employed</span>
-          </div>
-          <div class="project__body">
-            <h3 style="color:var(--accent);">Stream Seed </h3>
-            <p class="project__role">Lead Software Engineer</p>
-            <p>
-              Built and operated a cloud-based media delivery pipeline using nginx, GPU codecs, and a dynamic P2P mesh to offload bandwidth, applying LL-HLS and adaptive bitrate techniques to improve streaming quality and latency.
-
-              Developed real-time metadata tracking (peer contribution, offload metrics) and quickly adopted WebRTC, libp2p, and WebGPU to solve evolving media challenges.
-            </p>
-            <ul class="tags">
-              <li>Cloud Computing</li><li>HTML/CSS</li><li>NodeJS</li><li>CI/CD</li><li>Docker</li><li>Linux</li><li>Git</li><li>TypeScript</li>
-            </ul>
-          </div>
-        </article>
-
-        <article class="project">
-          <div class="project__meta">
-            <span class="project__year">Jan 2021 - Apr 2022</span>
-            <span>Happy Mushroom</span>
-          </div>
-          <div class="project__body">
-            <h3 style="color:var(--accent);">The Mandalorian</h3>
-            <p class="project__role">Senior Pipeline Developer</p>
-            <p>
-              Translated complex technical workflows into straightforward tools and documentation, empowering creative directors, producers, and screenwriters to work independently without requiring a technician present.
-
-              Built custom offline tools that put creative control directly in the hands of directors, producers, and screenwriters, eliminating the need for expensive, technician-led meetings and real‑time hand‑holding.
-
-              Designed and maintained internal documentation that became the team's go‑to resource, drastically reducing repetitive support requests and enabling faster creative iteration.
-            </p>
-            <ul class="tags">
-              <li>Python</li><li>Unreal Engine</li><li>Maya</li><li>PySide</li><li>Javascript</li><li>Jira</li>
-            </ul>
-          </div>
-        </article>
-
-        <article class="project">
-          <div class="project__meta">
-            <span class="project__year">Dec 2018 - Jan 2021</span>
-            <span>Glassbox Technologies</span>
-          </div>
-          <div class="project__body">
-            <h3 style="color:var(--accent);">Dragonfly & Beehive</h3>
-            <p class="project__role">Maya TD</p>
-            <p>
-              Developed a virtual camera plugin for Maya (C++/Python) in a cross-time-zone engineering team, delivering a pitch‑ready prototype for Netflix and Epic in two weeks.
-
-              Resolved critical Wi‑Fi latency bottlenecks that made the product unusable in production, enabling stable real‑time operation for live client demos.
-            </p>
-            <ul class="tags">
-              <li>C++</li><li>Maya</li><li>Unreal Engine</li><li>Python</li><li>Git</li><li>Jenkins CI/CD</li><li>Product Support Laison</li><li>Live Demos</li>
-            </ul>
-          </div>
-        </article>
-
-        <article class="project">
-          <div class="project__meta">
-            <span class="project__year">Jul 2017 - Oct 2017</span>
-            <span>The Virtual Reality Company</span>
-          </div>
-          <div class="project__body">
-            <h3 style="color:var(--accent);">Jurrasic Park VR Ride</h3>
-            <p class="project__role">VR Pipeline R&D</p>
-            <p>
-              Creating interactive experiences for Vive and Oculus, developing an Animation Exporter for Maya 2017 with files placed inside a Perforce directory and uploaded for immediate use in Unreal Engine.
-              R&D for HD stereo video in a realtime unreal scene
-              Stress Testing HD Stereo Video in VR
-              Bink 2 Video Compression and stress testing in Unreal
-              Exploration of a new pipeline for assets to go from Nuke into Unreal.
-            </p>
-            <ul class="tags">
-              <li>Nuke</li><li>Unreal Engine</li><li>Python</li>
-            </ul>
-          </div>
-        </article>
-
-        <article class="project">
-          <div class="project__meta">
-            <span class="project__year">Apr 2017 - Jun 2017</span>
-            <span>VRLIVE</span>
-          </div>
-          <div class="project__body">
-            <h3 style="color:var(--accent);">2Chainz</h3>
-            <p class="project__role">VR Web Developer</p>
-            <p>
-              Optimized a mobile VR web application to run across all devices, not just iPhone 6 and above, using KRPano for in‑browser VR rendering.
-
-              Built the full Node.js backend on AWS, configuring Elastic Beanstalk for rapid command‑line deployments and Git for revision tracking with a remote development team.
-
-              Designed and integrated SQL databases supporting cross‑platform user accounts and purchases, and implemented Stripe payment processing on the web client.
-            </p>
-            <ul class="tags">
-              <li>HTML/CSS</li><li>KRPano</li><li>AWS</li><li>Stripe</li><li>RealTime</li>
-            </ul>
-          </div>
-        </article>
-
-        <article class="project">
-          <div class="project__meta">
-            <span class="project__year">Jun 2016 - Mar 2017</span>
-            <span>Frame Machine</span>
-          </div>
-          <div class="project__body">
-            <h3 style="color:var(--accent);">Injustice 2</h3>
-            <p class="project__role">Technical Developer</p>
-            <p>
-              Architected a new asset pipeline that reduced manual scene-building time by 5×, offloading all processing to headless machines so artists never lost productive time.
-
-              Established the studio's first version control and ticketing workflow (SVN + Shotgun), protecting source code, enabling artist tester approvals, and linking every revision to a searchable support ticket.
-
-              Solely managed the ingest, processing, and automated tracking of 1,900+ markerless facial mocap videos for 20+ digital characters across 17 performers, supporting a team of 5 animators.
-            </p>
-            <ul class="tags">
-              <li>Unreal Engine</li><li>Maya</li><li>Python</li><li>Shotgrid</li><li>Mocap</li><li>SVN</li>
-            </ul>
-          </div>
-        </article>
-
+        <article class="project"><div class="project__meta"><span class="project__year">Feb 2026 - Present</span><span>Self-employed</span></div><div class="project__body"><h3 style="color:var(--accent)">Stream Seed</h3><p class="project__role">Lead Software Engineer</p><p>Built and operated a cloud-based media delivery pipeline using nginx, GPU codecs, and a dynamic P2P mesh.</p><ul class="tags"><li>Cloud Computing</li><li>NodeJS</li><li>CI/CD</li><li>Docker</li><li>Linux</li><li>TypeScript</li></ul></div></article>
+        <article class="project"><div class="project__meta"><span class="project__year">Jan 2021 - Apr 2022</span><span>Happy Mushroom</span></div><div class="project__body"><h3 style="color:var(--accent)">The Mandalorian</h3><p class="project__role">Senior Pipeline Developer</p><p>Translated complex technical workflows into straightforward tools and documentation.</p><ul class="tags"><li>Python</li><li>Unreal Engine</li><li>Maya</li><li>PySide</li><li>Javascript</li><li>Jira</li></ul></div></article>
+        <article class="project"><div class="project__meta"><span class="project__year">Dec 2018 - Jan 2021</span><span>Glassbox Technologies</span></div><div class="project__body"><h3 style="color:var(--accent)">Dragonfly &amp; Beehive</h3><p class="project__role">Maya TD</p><p>Developed a virtual camera plugin for Maya (C++/Python).</p><ul class="tags"><li>C++</li><li>Maya</li><li>Unreal Engine</li><li>Python</li><li>Git</li><li>Jenkins CI/CD</li></ul></div></article>
+        <article class="project"><div class="project__meta"><span class="project__year">Jul 2017 - Oct 2017</span><span>The Virtual Reality Company</span></div><div class="project__body"><h3 style="color:var(--accent)">Jurrasic Park VR Ride</h3><p class="project__role">VR Pipeline R&amp;D</p><p>Creating interactive experiences for Vive and Oculus, animation exporter for Maya 2017.</p><ul class="tags"><li>Nuke</li><li>Unreal Engine</li><li>Python</li></ul></div></article>
+        <article class="project"><div class="project__meta"><span class="project__year">Apr 2017 - Jun 2017</span><span>VRLIVE</span></div><div class="project__body"><h3 style="color:var(--accent)">2Chainz</h3><p class="project__role">VR Web Developer</p><p>Optimized a mobile VR web application for all devices using KRPano for in-browser VR rendering.</p><ul class="tags"><li>HTML/CSS</li><li>KRPano</li><li>AWS</li><li>Stripe</li><li>RealTime</li></ul></div></article>
+        <article class="project"><div class="project__meta"><span class="project__year">Jun 2016 - Mar 2017</span><span>Frame Machine</span></div><div class="project__body"><h3 style="color:var(--accent)">Injustice 2</h3><p class="project__role">Technical Developer</p><p>Architected a new asset pipeline that reduced manual scene-building time by 5×.</p><ul class="tags"><li>Unreal Engine</li><li>Maya</li><li>Python</li><li>Shotgrid</li><li>Mocap</li><li>SVN</li></ul></div></article>
       </div>
     </section>
 
     <section id="skills">
       <div class="wrap">
-        <h2 class="section-title">Tools & Skills</h2>
+        <h2 class="section-title">Tools &amp; Skills</h2>
         <div class="skills-grid">
-          <div class="skill-group">
-            <h3>Languages</h3>
-            <ul><li>C++</li><li>Python</li><li>HTML/CSS</li><li>Bash & Powershell</li><li>Mel</li><li>JavaScript</li><li>C#</li></ul>
-          </div>
-          <div class="skill-group">
-            <h3>DCC & Pipeline</h3>
-            <ul><li>Maya</li><li>Unreal Engine</li><li>Houdini</li><li>Nuke</li><li>Adobe Suite</li><li>Blender</li><li>Realtime Rendering</li></ul>
-          </div>
-          <div class="skill-group">
-            <h3>Production</h3>
-            <ul><li>ShotGrid</li><li>Agile</li><li>Perforce / Git / SVN </li><li>KanBan</li></ul>
-          </div>
-          <div class="skill-group">
-            <h3>Systems</h3>
-            <ul><li>Windows</li><li>Linux</li><li>Docker</li><li>CI/CD</li><li>AWS/S2</li><li>VR</li></ul>
-          </div>
+          <div class="skill-group"><h3>Languages</h3><ul><li>C++</li><li>Python</li><li>HTML/CSS</li><li>Bash &amp; Powershell</li><li>Mel</li><li>JavaScript</li><li>C#</li></ul></div>
+          <div class="skill-group"><h3>DCC &amp; Pipeline</h3><ul><li>Maya</li><li>Unreal Engine</li><li>Houdini</li><li>Nuke</li><li>Adobe Suite</li><li>Blender</li><li>Realtime Rendering</li></ul></div>
+          <div class="skill-group"><h3>Production</h3><ul><li>ShotGrid</li><li>Agile</li><li>Perforce / Git / SVN</li><li>KanBan</li></ul></div>
+          <div class="skill-group"><h3>Systems</h3><ul><li>Windows</li><li>Linux</li><li>Docker</li><li>CI/CD</li><li>AWS/S2</li><li>VR</li></ul></div>
         </div>
       </div>
     </section>
@@ -1082,9 +312,7 @@ h2.section-title{
     <section class="contact" id="contact">
       <div class="wrap">
         <h2 class="section-title">Contact</h2>
-        <p>
-          The fastest way to reach me is email!
-        </p>
+        <p>The fastest way to reach me is email!</p>
         <div class="contact-links">
           <a href="mailto:vsfxryan@gmail.com">vsfxryan@gmail.com</a>
           <a href="https://www.linkedin.com/in/ryan-neal-791a5959/" target="_blank" rel="noopener">LinkedIn</a>
@@ -1097,50 +325,25 @@ h2.section-title{
     <section class="arcade" id="arcade">
       <div class="wrap">
         <h2 class="section-title">Break Room</h2>
-
         <div class="cab">
           <div class="cab__hud">
-            <span>Score <b id="g-score">0000</b></span>
-            <span>Hi <b id="g-hi">0000</b></span>
-            <span>Lv <b id="g-lvl">01</b></span>
-            <span class="hp">HP <b id="g-hp">███</b></span>
+            <span>Score <b id="g-score">0000</b></span><span>Hi <b id="g-hi">0000</b></span>
+            <span>Lv <b id="g-lvl">01</b></span><span class="hp">HP <b id="g-hp">███</b></span>
           </div>
-
           <div class="cab__hud cab__hud--stats">
-            <span>SPD <b id="g-hud-speed">100%</b></span>
-            <span>WID <b id="g-hud-width">100%</b></span>
-            <span>SLW <b id="g-hud-slow">—</b></span>
+            <span>SPD <b id="g-hud-speed">100%</b></span><span>WID <b id="g-hud-width">100%</b></span><span>SLW <b id="g-hud-slow">—</b></span>
           </div>
-
           <div class="cab__screen">
             <canvas id="g-canvas" width="240" height="160"></canvas>
-
             <div class="g-upgrade" id="g-upgrade">
-              <p class="g-upgrade__title">Level Up</p>
-              <p class="g-upgrade__sub">Choose an upgrade path</p>
+              <p class="g-upgrade__title">Level Up</p><p class="g-upgrade__sub">Choose an upgrade path</p>
               <div class="g-upgrade__row">
-                <button class="g-upgrade__btn" data-up="speed">
-                  <span class="lbl">Speed</span>
-                  <span class="val" id="g-up-val-speed">100%</span>
-                  <span class="gain">+8% / lv</span>
-                  <span class="key">[ 1 ]</span>
-                </button>
-                <button class="g-upgrade__btn" data-up="width">
-                  <span class="lbl">Width</span>
-                  <span class="val" id="g-up-val-width">100%</span>
-                  <span class="gain">+10% / lv</span>
-                  <span class="key">[ 2 ]</span>
-                </button>
-                <button class="g-upgrade__btn" data-up="slow">
-                  <span class="lbl" id="g-up-lbl-slow">Slow-Mo</span>
-                  <span class="val" id="g-up-val-slow">0s</span>
-                  <span class="gain" id="g-up-gain-slow">+1.0s / lv</span>
-                  <span class="key">[ 3 ]</span>
-                </button>
+                <button class="g-upgrade__btn" data-up="speed"><span class="lbl">Speed</span><span class="val" id="g-up-val-speed">100%</span><span class="gain">+8% / lv</span><span class="key">[ 1 ]</span></button>
+                <button class="g-upgrade__btn" data-up="width"><span class="lbl">Width</span><span class="val" id="g-up-val-width">100%</span><span class="gain">+10% / lv</span><span class="key">[ 2 ]</span></button>
+                <button class="g-upgrade__btn" data-up="slow"><span class="lbl" id="g-up-lbl-slow">Slow-Mo</span><span class="val" id="g-up-val-slow">0s</span><span class="gain" id="g-up-gain-slow">+1.0s / lv</span><span class="key">[ 3 ]</span></button>
               </div>
             </div>
           </div>
-
           <div class="cab__controls">
             <button class="pad" data-dir="left" aria-label="Move left">◀</button>
             <button class="pad pad--go" id="g-start">Start</button>
@@ -1150,121 +353,120 @@ h2.section-title{
             <button class="pad pad--slow is-locked" id="g-slow">Slow-Mo [S]</button>
           </div>
         </div>
-
-        <p class="cab__hint">
-          ← → or A / D to move. Space to start. 1 / 2 / 3 pick upgrades. S = slow-mo.
-        </p>
+        <p class="cab__hint">← → or A / D to move. Space to start. 1 / 2 / 3 pick upgrades. S = slow-mo.</p>
       </div>
     </section>
-
   </main>
 
   <footer class="site-footer">
-    <div class="wrap">
-      <span>© <span id="year"></span> Ryan Neal</span>
-      <span>Built with plain HTML.</span>
-    </div>
+    <div class="wrap"><span>© <span id="year"></span> Ryan Neal</span><span>Built with plain HTML.</span></div>
   </footer>
 
-  <!-- Lightbox -->
-  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Project detail">
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true">
     <button class="lightbox__close" aria-label="Close">×</button>
     <div class="lightbox__inner">
       <img id="lightbox-img" src="" alt="" />
       <div class="lightbox__meta">
-        <h3 id="lightbox-title"></h3>
-        <p class="lightbox__role" id="lightbox-role"></p>
+        <h3 id="lightbox-title"></h3><p class="lightbox__role" id="lightbox-role"></p>
         <p class="lightbox__desc" id="lightbox-desc"></p>
         <a class="lightbox__imdb" id="lightbox-imdb" href="#" target="_blank" rel="noopener" style="display:none;">View external link →</a>
       </div>
     </div>
   </div>
-
 </section>
 
-<!-- Floating mobile "back to cinema" -->
 <button id="back-to-cinema-fab" aria-label="Back to Cinema" title="Back to Cinema">↑</button>
-
 <div id="loading">Loading cinema…</div>
 
-<!-- ============================================================
-     IMPORTS
-     ============================================================ -->
 <script type="importmap">
 {
   "imports": {
     "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
     "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
-    "html2canvas": "https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.esm.js"
+    "html2canvas": "https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.esm.js",
+    "cannon-es": "https://unpkg.com/cannon-es@0.20.0/dist/cannon-es.js"
   }
 }
 </script>
 
-<!-- ============================================================
-     CINEMA JS
-     ============================================================ -->
 <script type="module">
 import * as THREE from 'three';
 import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
 import html2canvas from 'html2canvas';
+import * as CANNON from 'cannon-es';
 
-const CONTENT = {
-  rendering: `<div class="kicker">Lens 01 · Rendering &amp; Throughput</div>
-    <h1>Senior Render Wrangler</h1>
-    <p>The role behind the role: how I've kept render farms alive, shots flowing, and deadlines honest across a decade of production.</p>
-    <h2>Through-line</h2>
-    <p><strong>2018 · Studio A.</strong> My title was Production Engineer, but the work was render wrangling — overnight farm triage, shot prioritization, and emergency troubleshooting for 40+ artists.</p>
-    <p><strong>2020–2022 · Studio B.</strong> I owned the submission pipeline. Average shot turnaround dropped 34%, and the nightly render queue never missed a delivery window for two consecutive seasons.</p>
-    <h2>What I actually built</h2>
-    <ul>
-      <li>Automated overnight farm triage — reduced artist morning triage from 90 minutes to 15.</li>
-      <li>Shot prioritization system that surfaced blocking renders before artists knew they were blocked.</li>
-      <li>Cloud burst rendering pipeline that scaled to 2,000 nodes during crunch.</li>
-    </ul>
-    <h2>Tools</h2><p>Deadline · OpenCue · AWS · Python · Prometheus · Grafana</p>`,
-  pipeline: `<div class="kicker">Lens 02 · Pipeline &amp; Tooling</div>
-    <h1>Pipeline Engineer</h1>
-    <p>The connective tissue between departments: the tools, naming conventions, and automation that let artists do their work.</p>
-    <h2>Through-line</h2>
-    <p>Every role I've held, I ended up building the tool the department didn't know it needed. Asset QC at Studio C. Naming and versioning overhaul at Studio D. Render submission at Studio A.</p>
-    <h2>What I actually built</h2>
-    <ul>
-      <li>Naming and versioning overhaul that eliminated 90% of asset mis-delivery incidents.</li>
-      <li>Asset QC automation that flagged 1,200 issues across three shows before they reached lighting.</li>
-      <li>Render submission tool adopted by 4 departments and 80+ artists.</li>
-    </ul>
-    <h2>Tools</h2><p>Python · Maya · Nuke · ShotGrid · Docker · Kubernetes</p>`,
-  lookdev: `<div class="kicker">Lens 03 · Look &amp; Lighting</div>
-    <h1>Look Development</h1>
-    <p>The role that's hardest to see in a resume: the people who make the render actually look like the concept.</p>
-    <h2>Through-line</h2>
-    <p>Look dev is often uncredited, but it shows up in every frame. My contributions at Studio B and Studio D set the shader library and lighting rig that became each show's visual baseline.</p>
-    <h2>What I actually built</h2>
-    <ul>
-      <li>Shader library used across 3 shows and 200+ assets.</li>
-      <li>Lighting rigs adopted by two lighting teams as the default starting point.</li>
-      <li>Color pipeline that eliminated the "why does the render look different from the comp" problem.</li>
-    </ul>
-    <h2>Tools</h2><p>Arnold · Katana · Houdini · Nuke · OpenColorIO</p>`,
+// =========================================================
+// PROJECTS (5 total)
+// =========================================================
+const PROJECTS = {
+  rendering: {
+    palette:['#7a1f17','#c0392b','#ff9d5c','#e8722a','#211815'],
+    videos:{}, tools:['Deadline','OpenCue','AWS','Python','Prometheus','Grafana'],
+    content:`<div class="kicker">Lens 01 · Rendering &amp; Throughput</div>
+      <h1>Senior Render Wrangler</h1>
+      <p>The role behind the role: keeping render farms alive, shots flowing, and deadlines honest.</p>
+      <h2>Through-line</h2>
+      <p><strong>2018 · Studio A.</strong> Production Engineer — overnight farm triage, shot prioritization, emergency troubleshooting for 40+ artists.</p>
+      <p><strong>2020–2022 · Studio B.</strong> Owned submission pipeline. Shot turnaround -34%.</p>
+      <h2>What I built</h2>
+      <ul><li>Automated overnight farm triage — 90 → 15 min.</li><li>Shot prioritization surfacing blocking renders.</li><li>Cloud burst rendering to 2,000 nodes.</li></ul>`
+  },
+  pipeline: {
+    palette:['#1e5c36','#27ae60','#a8d5a2','#5cab7d','#211815'],
+    videos:{}, tools:['Python','Maya','Nuke','ShotGrid','Docker','Kubernetes'],
+    content:`<div class="kicker">Lens 02 · Pipeline &amp; Tooling</div>
+      <h1>Pipeline Engineer</h1>
+      <p>The connective tissue between departments: the tools, naming conventions, and automation that let artists do their work.</p>
+      <h2>Through-line</h2>
+      <p>Every role I've held, I ended up building the tool the department didn't know it needed.</p>
+      <h2>What I built</h2>
+      <ul><li>Naming and versioning overhaul — eliminated 90% of mis-delivery.</li><li>Asset QC automation — flagged 1,200 issues.</li><li>Render submission tool adopted by 4 departments, 80+ artists.</li></ul>`
+  },
+  lookdev: {
+    palette:['#1a487a','#2980b9','#6cb5e8','#3f7dc9','#211815'],
+    videos:{}, tools:['Arnold','Katana','Houdini','Nuke','OpenColorIO'],
+    content:`<div class="kicker">Lens 03 · Look &amp; Lighting</div>
+      <h1>Look Development</h1>
+      <p>The role that's hardest to see in a resume: the people who make the render actually look like the concept.</p>
+      <h2>What I built</h2>
+      <ul><li>Shader library across 3 shows and 200+ assets.</li><li>Lighting rigs adopted by two lighting teams.</li><li>Color pipeline that killed "render vs comp" drift.</li></ul>`
+  },
+  virtualprod: {
+    palette:['#5c1f4a','#8e3c78','#d484bb','#7a2e60','#211815'],
+    videos:{}, tools:['Unreal Engine','Maya','Python','Perforce','nDisplay'],
+    content:`<div class="kicker">Lens 04 · Virtual Production</div>
+      <h1>Virtual Production Engineer</h1>
+      <p>Real-time pipeline for the LED volume era — where the camera can see the shot before anyone steps on set.</p>
+      <h2>Through-line</h2>
+      <p><strong>2021 · Happy Mushroom.</strong> Built the offline tools and documentation that put creative control into the hands of directors and screenwriters without a technician in the room.</p>
+      <h2>What I built</h2>
+      <ul><li>Offline tooling for The Mandalorian creative team.</li><li>LED volume camera tracking pipeline for Maya↔Unreal.</li><li>Documentation kit that cut repetitive support requests.</li></ul>`
+  },
+  engineering: {
+    palette:['#1f4a5c','#3c7a8e','#84c4d4','#2e607a','#211815'],
+    videos:{}, tools:['Node.js','WebRTC','Docker','AWS','TypeScript','nginx'],
+    content:`<div class="kicker">Lens 05 · Systems &amp; Scale</div>
+      <h1>Lead Software Engineer</h1>
+      <p>Building the systems that carry the pixels — cloud, media, and the things that keep them alive at scale.</p>
+      <h2>Through-line</h2>
+      <p><strong>2026 · Stream Seed.</strong> Cloud-based media delivery pipeline using nginx, GPU codecs, and a dynamic P2P mesh.</p>
+      <h2>What I built</h2>
+      <ul><li>LL-HLS + adaptive bitrate delivery.</li><li>Real-time peer contribution metrics.</li><li>WebRTC, libp2p, WebGPU integration.</li></ul>`
+  }
 };
-
-// === NEW: Welcome content shown on page load (no auto-inserted cartridge) ===
+const DEFAULT_PALETTE = ['#382822','#3d2c24','#2b1f1a','#e8722a','#211815'];
 const WELCOME_CONTENT = `
-  <div class="kicker">Interactive Resume</div>
+  <div class="kicker">Interactive Cinema</div>
   <h1>Pick a cartridge</h1>
-  <p>Three cartridges sit on the shelf. Each one tells the same career story through a different role lens — pick the one closest to the role you're hiring for, or drag to look around first.</p>
-  <h2>What you're looking at</h2>
-  <p>This is a 3D cinema built with Three.js. The cartridges are real DOM elements projected in 3D space. When you click one, it slides into the projector and the screen loads that role's resume.</p>
-  <h2>Short on time?</h2>
-  <p>Click <strong>View Traditional Resume</strong> in the top-right corner to skip the cinema entirely.</p>
-`;
+  <p>Five cartridges float in the shelf. Click one to load a role lens, grab and throw them if you want chaos, or tap <strong>View Traditional Resume</strong> to skip the cinema.</p>`;
 
+// =========================================================
+// RENDERER SETUP
+// =========================================================
 const canvas = document.getElementById('webgl-canvas');
 const css3dRoot = document.getElementById('css3d-root');
-
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 1000);
-
 const CAMERA_SCREEN_DISTANCE = 5;
 const INITIAL_CAMERA_POS = new THREE.Vector3(0, 0, CAMERA_SCREEN_DISTANCE);
 camera.position.copy(INITIAL_CAMERA_POS);
@@ -1282,17 +484,23 @@ css3dRenderer.domElement.style.pointerEvents = 'none';
 css3dRoot.appendChild(css3dRenderer.domElement);
 
 const layoutState = { visibleW: 1, visibleH: 1, screenWorldW: 1, screenWorldH: 1 };
-const CART_W = 320;
-const CART_H = 180;
+const CART_W = 320, CART_H = 180;
 
+// =========================================================
+// PANO BACKDROP (disabled; LED volume would go here)
+// =========================================================
 const panoTexture = new THREE.TextureLoader().load(
   'https://dl.polyhaven.org/file/ph-assets/HDRIs/extra/Tonemapped%20JPG/studio_small_03.jpg'
 );
 panoTexture.colorSpace = THREE.SRGBColorSpace;
 const panoMaterial = new THREE.MeshBasicMaterial({ map: panoTexture, side: THREE.BackSide });
 const pano = new THREE.Mesh(new THREE.SphereGeometry(50, 64, 40), panoMaterial);
+pano.visible = true;
 scene.add(pano);
 
+// =========================================================
+// SCREEN (CSS3D)
+// =========================================================
 const screenWrapper = document.createElement('div');
 screenWrapper.id = 'screen-wrapper';
 const screenScroll = document.createElement('div');
@@ -1301,11 +509,62 @@ screenWrapper.appendChild(screenScroll);
 const screenObject = new CSS3DObject(screenWrapper);
 scene.add(screenObject);
 
-// Cartridges — image only, no text/color underneath.
+// =========================================================
+// PHYSICS WORLD
+// =========================================================
+const physicsWorld = new CANNON.World({ gravity: new CANNON.Vec3(0, -8, 0) });
+physicsWorld.broadphase = new CANNON.NaiveBroadphase();
+physicsWorld.solver.iterations = 10;
+const cartPhysMat = new CANNON.Material('cart');
+const wallPhysMat = new CANNON.Material('wall');
+physicsWorld.addContactMaterial(new CANNON.ContactMaterial(cartPhysMat, wallPhysMat, { friction: 0.35, restitution: 0.45 }));
+physicsWorld.addContactMaterial(new CANNON.ContactMaterial(cartPhysMat, cartPhysMat, { friction: 0.4, restitution: 0.35 }));
+
+const physicsBounds = { w: 12, h: 8, d: 3 };
+const staticWalls = [];
+const perchBodies = [];
+
+function rebuildWalls() {
+  staticWalls.forEach(b => physicsWorld.removeBody(b));
+  staticWalls.length = 0;
+  const hw = physicsBounds.w / 2, hh = physicsBounds.h / 2, hd = physicsBounds.d / 2;
+  function addWall(x, y, z, hx, hy, hz) {
+    const b = new CANNON.Body({ mass: 0, material: wallPhysMat });
+    b.addShape(new CANNON.Box(new CANNON.Vec3(hx, hy, hz)));
+    b.position.set(x, y, z);
+    physicsWorld.addBody(b);
+    staticWalls.push(b);
+  }
+  addWall(0, -hh - 0.5, 0, hw + 1, 0.5, hd + 1);      // floor
+  addWall(-hw - 0.5, 0, 0, 0.5, hh + 1, hd + 1);      // left
+  addWall(hw + 0.5, 0, 0, 0.5, hh + 1, hd + 1);       // right
+  addWall(0, 0, -hd - 0.5, hw + 1, hh + 1, 0.5);      // back
+  addWall(0, 0, hd + 0.5, hw + 1, hh + 1, 0.5);       // front (invisible)
+}
+
+function rebuildPerches() {
+  perchBodies.forEach(b => physicsWorld.removeBody(b));
+  perchBodies.length = 0;
+  for (const cart of cartridgeObjects) {
+    const w = CART_W * cart.homeScale;
+    const h = CART_H * cart.homeScale;
+    const b = new CANNON.Body({ mass: 0, material: wallPhysMat });
+    b.addShape(new CANNON.Box(new CANNON.Vec3(w * 0.35, 0.04, 0.04)));
+    b.position.set(cart.homePosition.x, cart.homePosition.y - h / 2 - 0.04, cart.homePosition.z);
+    physicsWorld.addBody(b);
+    perchBodies.push(b);
+  }
+}
+
+// =========================================================
+// CARTRIDGES
+// =========================================================
 const CARTRIDGE_DEFS = [
-  { id: 'rendering', title: 'Senior Render Wrangler', imgUrl: './cartridges/rendering.webp' },
-  { id: 'pipeline',  title: 'Pipeline Engineer',      imgUrl: './cartridges/pipeline.webp'  },
-  { id: 'lookdev',   title: 'Look Development',       imgUrl: './cartridges/lookdev.webp'   },
+  { id: 'rendering',   title: 'Senior Render Wrangler',  imgUrl: './cartridges/rendering.webp'  },
+  { id: 'pipeline',    title: 'Pipeline Engineer',       imgUrl: './cartridges/pipeline.webp'   },
+  { id: 'lookdev',     title: 'Look Development',        imgUrl: './cartridges/lookdev.webp'    },
+  { id: 'virtualprod', title: 'Virtual Production',      imgUrl: './cartridges/virtualprod.webp'},
+  { id: 'engineering', title: 'Lead Software Engineer',  imgUrl: './cartridges/engineering.webp'}
 ];
 
 const cartridgeObjects = [];
@@ -1318,168 +577,296 @@ CARTRIDGE_DEFS.forEach(({ id, title, imgUrl }) => {
   btn.style.opacity = '1';
   btn.style.zIndex = '20';
   btn.setAttribute('aria-label', title);
-  btn.innerHTML = `<img class="cart-img" src="${imgUrl}" alt="" draggable="false" onerror="this.style.display='none'">`;
-  btn.addEventListener('click', () => selectCartridge(id));
+  btn.innerHTML = `
+    <img class="cart-img" src="${imgUrl}" alt="" draggable="false"
+         onerror="this.parentNode.classList.add('cart-noimg')">
+    <span class="cart-fallback">${title}</span>`;
 
   const obj = new CSS3DObject(btn);
   obj.position.set(0, 0, 0);
   obj.scale.setScalar(1);
   scene.add(obj);
 
-  cartridgeObjects.push({
-    id, el: btn, obj,
+  const body = new CANNON.Body({
+    mass: 1,
+    material: cartPhysMat,
+    shape: new CANNON.Box(new CANNON.Vec3(0.5, 0.5, 0.05))
+  });
+  body.linearDamping = 0.15;
+  body.angularDamping = 0.4;
+  physicsWorld.addBody(body);
+
+  const cart = {
+    id, el: btn, obj, body,
     state: 'on_shelf',
     homePosition: new THREE.Vector3(),
     homeScale: 1,
     anim: null,
-  });
+    grabbed: false,
+    bodyInWorld: true,
+    shapeW: 0.5, shapeH: 0.5,
+  };
+
+  btn.addEventListener('pointerdown', (e) => handleCartPointerDown(e, cart));
+  btn.addEventListener('pointermove', (e) => handleCartPointerMove(e, cart));
+  btn.addEventListener('pointerup',   (e) => handleCartPointerUp(e, cart));
+  btn.addEventListener('pointercancel', (e) => handleCartPointerUp(e, cart));
+
+  cartridgeObjects.push(cart);
 });
 
+function setCartPhysics(cart, enabled) {
+  if (enabled && !cart.bodyInWorld) {
+    physicsWorld.addBody(cart.body);
+    cart.bodyInWorld = true;
+  } else if (!enabled && cart.bodyInWorld) {
+    physicsWorld.removeBody(cart.body);
+    cart.bodyInWorld = false;
+  }
+}
+
+function resizeCartShape(cart) {
+  const w = CART_W * cart.homeScale;
+  const h = CART_H * cart.homeScale;
+  cart.body.shapes[0].halfExtents.set(w / 2, h / 2, 0.05);
+  cart.body.updateBoundingRadius();
+  cart.body.updateMassProperties();
+  cart.shapeW = w / 2;
+  cart.shapeH = h / 2;
+}
+
+function homePhysicsBody(cart, randomize = false) {
+  cart.body.position.set(
+    cart.homePosition.x,
+    cart.homePosition.y,
+    cart.homePosition.z + 0.1
+  );
+  cart.body.quaternion.set(0, 0, 0, 1);
+  cart.body.velocity.set(0, 0, 0);
+  cart.body.angularVelocity.set(0, 0, 0);
+  if (randomize) {
+    cart.body.velocity.set(
+      (Math.random() - 0.5) * 2,
+      Math.random() * 2 + 1,
+      (Math.random() - 0.5) * 2
+    );
+    cart.body.angularVelocity.set(
+      (Math.random() - 0.5) * 4,
+      (Math.random() - 0.5) * 4,
+      (Math.random() - 0.5) * 4
+    );
+  }
+}
+
+function respawnCart(cart) {
+  cart.body.position.set(
+    cart.homePosition.x + (Math.random() - 0.5) * 2,
+    physicsBounds.h * 0.4,
+    cart.homePosition.z + (Math.random() - 0.5) * 0.3
+  );
+  cart.body.velocity.set(0, -1, 0);
+  cart.body.angularVelocity.set(
+    (Math.random() - 0.5) * 4,
+    (Math.random() - 0.5) * 4,
+    (Math.random() - 0.5) * 4
+  );
+  cart.body.quaternion.set(0, 0, 0, 1);
+}
+
+// =========================================================
+// GRAB & THROW
+// =========================================================
+const grabRaycaster = new THREE.Raycaster();
+const grabPlane = new THREE.Plane();
+const grabWorld = new THREE.Vector3();
+let grabbedCart = null;
+let grabOffsetX = 0, grabOffsetY = 0;
+let grabLastX = 0, grabLastY = 0, grabLastT = 0;
+let grabVelX = 0, grabVelY = 0;
+let grabStartX = 0, grabStartY = 0, grabStartT = 0;
+const GRAB_CLICK_PX = 10;
+const GRAB_CLICK_MS = 220;
+
+function screenToWorldZ(sx, sy, worldZ) {
+  const ndcX = (sx / window.innerWidth) * 2 - 1;
+  const ndcY = -(sy / window.innerHeight) * 2 + 1;
+  grabRaycaster.setFromCamera({ x: ndcX, y: ndcY }, camera);
+  grabPlane.set(new THREE.Vector3(0, 0, 1), -worldZ);
+  if (grabRaycaster.ray.intersectPlane(grabPlane, grabWorld)) {
+    return grabWorld.clone();
+  }
+  return null;
+}
+
+function handleCartPointerDown(e, cart) {
+  if (cart.state !== 'on_shelf' || cart.anim || grabbedCart) return;
+  e.preventDefault();
+  e.stopPropagation();
+  grabbedCart = cart;
+  cart.grabbed = true;
+  cart.el.classList.add('grabbed');
+  grabStartX = e.clientX; grabStartY = e.clientY; grabStartT = performance.now();
+  grabLastX = e.clientX; grabLastY = e.clientY; grabLastT = grabStartT;
+  grabVelX = 0; grabVelY = 0;
+  const world = screenToWorldZ(e.clientX, e.clientY, cart.body.position.z);
+  if (world) {
+    grabOffsetX = cart.body.position.x - world.x;
+    grabOffsetY = cart.body.position.y - world.y;
+  } else { grabOffsetX = 0; grabOffsetY = 0; }
+  cart.body.type = CANNON.Body.KINEMATIC;
+  cart.body.velocity.set(0, 0, 0);
+  cart.body.angularVelocity.set(0, 0, 0);
+  cart.el.setPointerCapture?.(e.pointerId);
+}
+
+function handleCartPointerMove(e, cart) {
+  if (grabbedCart !== cart) return;
+  const now = performance.now();
+  const dt = Math.max(1, now - grabLastT) / 1000;
+  const world = screenToWorldZ(e.clientX, e.clientY, cart.body.position.z);
+  if (!world) return;
+  const targetX = world.x + grabOffsetX;
+  const targetY = world.y + grabOffsetY;
+  const dx = targetX - cart.body.position.x;
+  const dy = targetY - cart.body.position.y;
+  grabVelX = THREE.MathUtils.clamp(dx / dt, -15, 15);
+  grabVelY = THREE.MathUtils.clamp(dy / dt, -15, 15);
+  cart.body.position.x = targetX;
+  cart.body.position.y = targetY;
+  cart.body.velocity.set(grabVelX, grabVelY, 0);
+  grabLastX = e.clientX; grabLastY = e.clientY; grabLastT = now;
+}
+
+function handleCartPointerUp(e, cart) {
+  if (grabbedCart !== cart) return;
+  const moved = Math.hypot(e.clientX - grabStartX, e.clientY - grabStartY);
+  const dur = performance.now() - grabStartT;
+  grabbedCart = null;
+  cart.grabbed = false;
+  cart.el.classList.remove('grabbed');
+  cart.el.releasePointerCapture?.(e.pointerId);
+  cart.body.type = CANNON.Body.DYNAMIC;
+
+  if (moved < GRAB_CLICK_PX && dur < GRAB_CLICK_MS) {
+    // treat as a click
+    selectCartridge(cart.id);
+  } else {
+    // throw
+    cart.body.velocity.set(grabVelX, grabVelY, (Math.random() - 0.5) * 1.5);
+    cart.body.angularVelocity.set(
+      (Math.random() - 0.5) * 6,
+      (Math.random() - 0.5) * 6,
+      (Math.random() - 0.5) * 6
+    );
+  }
+}
+
+// =========================================================
+// XR SCREEN
+// =========================================================
 const xrScreenCanvas = document.createElement('canvas');
-xrScreenCanvas.width = 1280;
-xrScreenCanvas.height = 720;
+xrScreenCanvas.width = 1280; xrScreenCanvas.height = 720;
 const xrScreenTexture = new THREE.CanvasTexture(xrScreenCanvas);
 xrScreenTexture.colorSpace = THREE.SRGBColorSpace;
-const xrScreenMaterial = new THREE.MeshBasicMaterial({ map: xrScreenTexture, side: THREE.DoubleSide });
-const xrScreenMesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), xrScreenMaterial);
+const xrScreenMesh = new THREE.Mesh(
+  new THREE.PlaneGeometry(1, 1),
+  new THREE.MeshBasicMaterial({ map: xrScreenTexture, side: THREE.DoubleSide })
+);
 xrScreenMesh.visible = false;
 scene.add(xrScreenMesh);
 
+// =========================================================
+// CAMERA STATE
+// =========================================================
 let yaw = 0, pitch = 0, targetYaw = 0, targetPitch = 0;
 let targetCameraX = INITIAL_CAMERA_POS.x;
 let targetCameraY = INITIAL_CAMERA_POS.y;
 let targetCameraZ = INITIAL_CAMERA_POS.z;
-// === NEW: true until first cartridge is picked (drives shelf view vs screen view) ===
 let inShelfView = true;
-
 const YAW_LIMIT   = THREE.MathUtils.degToRad(70);
 const PITCH_LIMIT = THREE.MathUtils.degToRad(25);
 const CAMERA_DAMP_LAMBDA = 2.5;
 
 let dragging = false, lastX = 0, lastY = 0;
 const DRAG_SENSITIVITY = 0.0035;
-
 canvas.addEventListener('pointerdown', (e) => {
   if (isInXR()) return;
-  dragging = true;
-  lastX = e.clientX;
-  lastY = e.clientY;
+  dragging = true; lastX = e.clientX; lastY = e.clientY;
   canvas.classList.add('dragging');
   canvas.setPointerCapture(e.pointerId);
 });
 canvas.addEventListener('pointermove', (e) => {
   if (!dragging || isInXR()) return;
-  const dx = e.clientX - lastX;
-  const dy = e.clientY - lastY;
-  lastX = e.clientX;
-  lastY = e.clientY;
+  const dx = e.clientX - lastX, dy = e.clientY - lastY;
+  lastX = e.clientX; lastY = e.clientY;
   targetYaw   = THREE.MathUtils.clamp(targetYaw   - dx * DRAG_SENSITIVITY, -YAW_LIMIT, YAW_LIMIT);
   targetPitch = THREE.MathUtils.clamp(targetPitch - dy * DRAG_SENSITIVITY, -PITCH_LIMIT, PITCH_LIMIT);
 });
 const endDrag = (e) => {
-  dragging = false;
-  canvas.classList.remove('dragging');
-  if (e.pointerId !== undefined && canvas.hasPointerCapture(e.pointerId)) {
-    canvas.releasePointerCapture(e.pointerId);
-  }
+  dragging = false; canvas.classList.remove('dragging');
+  if (e.pointerId !== undefined && canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
 };
 canvas.addEventListener('pointerup', endDrag);
 canvas.addEventListener('pointercancel', endDrag);
 
 function faceScreen() {
-  inShelfView = false;   // === NEW: leave shelf view when a cartridge is chosen
+  inShelfView = false;
   targetCameraX = screenObject.position.x;
   targetCameraY = screenObject.position.y;
   targetCameraZ = screenObject.position.z + CAMERA_SCREEN_DISTANCE;
-  targetYaw = 0;
-  targetPitch = 0;
+  targetYaw = 0; targetPitch = 0;
 }
 
-// === NEW: compute a camera pose that fits the screen + all cartridges on screen.
-// Only used in landscape; portrait preserves the existing z=5 zoom per user request.
 function computeShelfView() {
   const fovRad = (camera.fov * Math.PI) / 180;
   const aspect = camera.aspect;
-
-  const items = [
-    {
-      minX: screenObject.position.x - layoutState.screenWorldW / 2,
-      maxX: screenObject.position.x + layoutState.screenWorldW / 2,
-      minY: screenObject.position.y - layoutState.screenWorldH / 2,
-      maxY: screenObject.position.y + layoutState.screenWorldH / 2,
-    },
-  ];
-
+  const items = [{
+    minX: screenObject.position.x - layoutState.screenWorldW / 2,
+    maxX: screenObject.position.x + layoutState.screenWorldW / 2,
+    minY: screenObject.position.y - layoutState.screenWorldH / 2,
+    maxY: screenObject.position.y + layoutState.screenWorldH / 2,
+  }];
   for (const c of cartridgeObjects) {
-    const w = CART_W * c.homeScale;
-    const h = CART_H * c.homeScale;
+    const w = CART_W * c.homeScale, h = CART_H * c.homeScale;
     items.push({
-      minX: c.homePosition.x - w / 2,
-      maxX: c.homePosition.x + w / 2,
-      minY: c.homePosition.y - h / 2,
-      maxY: c.homePosition.y + h / 2,
+      minX: c.homePosition.x - w / 2, maxX: c.homePosition.x + w / 2,
+      minY: c.homePosition.y - h / 2, maxY: c.homePosition.y + h / 2,
     });
   }
-
-  const minX = Math.min(...items.map(i => i.minX));
-  const maxX = Math.max(...items.map(i => i.maxX));
-  const minY = Math.min(...items.map(i => i.minY));
-  const maxY = Math.max(...items.map(i => i.maxY));
-
-  const boundsW = maxX - minX;
-  const boundsH = maxY - minY;
-
+  const minX = Math.min(...items.map(i => i.minX)), maxX = Math.max(...items.map(i => i.maxX));
+  const minY = Math.min(...items.map(i => i.minY)), maxY = Math.max(...items.map(i => i.maxY));
+  const bW = maxX - minX, bH = maxY - minY;
   const PADDING = 1.15;
   const halfFovTan = Math.tan(fovRad / 2);
-  const distForHeight = (boundsH * PADDING / 2) / halfFovTan;
-  const distForWidth = (boundsW * PADDING / 2) / (halfFovTan * aspect);
-  const distance = Math.max(distForHeight, distForWidth);
-
-  return {
-    x: (minX + maxX) / 2,
-    y: (minY + maxY) / 2,
-    z: screenObject.position.z + distance,
-  };
+  const distH = (bH * PADDING / 2) / halfFovTan;
+  const distW = (bW * PADDING / 2) / (halfFovTan * aspect);
+  const distance = Math.max(distH, distW);
+  return { x: (minX + maxX) / 2, y: (minY + maxY) / 2, z: screenObject.position.z + distance };
 }
 
+// =========================================================
+// TWEEN SYSTEM (unchanged)
+// =========================================================
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
-function easeInQuad(t)   { return t * t; }
-function easeInOutCubic(t) {
-  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-}
-
+const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
+const easeInQuad   = t => t * t;
+const easeInOutCubic = t => t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3) / 2;
 function tween(cart, toPos, toScale, toOpacity, durationSec, easing, options = {}) {
   return new Promise(resolve => {
-    const currentOpacity = parseFloat(cart.el.style.opacity);
+    const curOp = parseFloat(cart.el.style.opacity);
     cart.anim = {
       t: 0, duration: durationSec,
-      from: {
-        pos: cart.obj.position.clone(),
-        scale: cart.obj.scale.x,
-        opacity: isNaN(currentOpacity) ? 1 : currentOpacity,
-        rotation: cart.obj.rotation.z,
-      },
-      to: {
-        pos: toPos.clone(),
-        scale: toScale,
-        opacity: toOpacity,
-        rotation: options.rotationTo !== undefined ? options.rotationTo : cart.obj.rotation.z,
-      },
+      from: { pos: cart.obj.position.clone(), scale: cart.obj.scale.x, opacity: isNaN(curOp)?1:curOp, rotation: cart.obj.rotation.z },
+      to:   { pos: toPos.clone(), scale: toScale, opacity: toOpacity, rotation: options.rotationTo !== undefined ? options.rotationTo : cart.obj.rotation.z },
       easing, resolve,
     };
   });
 }
-
-function updateCartZIndex(cart) {
-  cart.el.style.zIndex = cart.obj.position.z < -0.01 ? '1' : '20';
-}
-
+function updateCartZIndex(cart) { cart.el.style.zIndex = cart.obj.position.z < -0.01 ? '1' : '20'; }
 function updateAnimations(dt) {
   for (const cart of cartridgeObjects) {
     if (!cart.anim) continue;
-    const a = cart.anim;
-    a.t += dt;
+    const a = cart.anim; a.t += dt;
     const p = Math.min(a.t / a.duration, 1);
     const e = a.easing(p);
     cart.obj.position.lerpVectors(a.from.pos, a.to.pos, e);
@@ -1490,11 +877,11 @@ function updateAnimations(dt) {
     if (p >= 1) { cart.anim.resolve(); cart.anim = null; }
   }
 }
+function cancelTween(cart) { if (cart.anim) { cart.anim.resolve(); cart.anim = null; } }
 
-function cancelTween(cart) {
-  if (cart.anim) { cart.anim.resolve(); cart.anim = null; }
-}
-
+// =========================================================
+// CARTRIDGE POSITIONING
+// =========================================================
 function snapToHome(cart) {
   cart.obj.position.copy(cart.homePosition);
   cart.obj.scale.setScalar(cart.homeScale);
@@ -1502,6 +889,8 @@ function snapToHome(cart) {
   cart.el.style.opacity = '1';
   cart.el.style.zIndex = '20';
   cart.state = 'on_shelf';
+  setCartPhysics(cart, true);
+  homePhysicsBody(cart);
 }
 
 function getSlotPosition(cart) {
@@ -1510,7 +899,6 @@ function getSlotPosition(cart) {
   const cartCenterY = screenObject.position.y + layoutState.screenWorldH / 2 + insertedCartH * 0.3;
   return new THREE.Vector3(screenObject.position.x, cartCenterY, -0.2);
 }
-
 function snapToSlot(cart) {
   cart.obj.position.copy(getSlotPosition(cart));
   cart.obj.scale.setScalar(cart.homeScale * 0.65);
@@ -1519,79 +907,60 @@ function snapToSlot(cart) {
   cart.el.style.zIndex = '1';
 }
 
-function positionCartridges(visibleW, screenWorldW, orientation) {
+function positionCartridges(visibleW, screenWorldW) {
   const cssScale = visibleW / window.innerWidth;
   const cartWorldW = CART_W * cssScale;
   const cartWorldH = CART_H * cssScale;
   const screenRightEdge = screenObject.position.x + screenWorldW / 2;
-  const gapBetweenCarts = 0.10;
-  const gapFromScreen = 0.15;
-
-  if (orientation === 'landscape') {
-    const startX = screenRightEdge + gapFromScreen + cartWorldW / 2;
-    cartridgeObjects.forEach((c, i) => {
-      c.homeScale = cssScale;
-      c.homePosition = new THREE.Vector3(
-        startX + i * (cartWorldW + gapBetweenCarts),
-        screenObject.position.y,
-        0
-      );
-    });
-  } else {
-    const totalHeight =
-      cartridgeObjects.length * cartWorldH +
-      (cartridgeObjects.length - 1) * gapBetweenCarts;
-    const startY = screenObject.position.y + totalHeight / 2 - cartWorldH / 2;
-    cartridgeObjects.forEach((c, i) => {
-      c.homeScale = cssScale;
-      c.homePosition = new THREE.Vector3(
-        screenRightEdge + gapFromScreen + cartWorldW / 2,
-        startY - i * (cartWorldH + gapBetweenCarts),
-        0
-      );
-    });
-  }
-
+  const gapBetween = 0.10, gapFromScreen = 0.15;
+  const totalH = cartridgeObjects.length * cartWorldH + (cartridgeObjects.length - 1) * gapBetween;
+  const startY = screenObject.position.y + totalH / 2 - cartWorldH / 2;
+  const colX = screenRightEdge + gapFromScreen + cartWorldW / 2;
+  cartridgeObjects.forEach((c, i) => {
+    c.homeScale = cssScale;
+    c.homePosition = new THREE.Vector3(colX, startY - i * (cartWorldH + gapBetween), 0);
+    resizeCartShape(c);
+  });
   for (const c of cartridgeObjects) {
-    if (c.state === 'on_shelf' && !c.anim) snapToHome(c);
+    if (c.state === 'on_shelf' && !c.anim && !c.grabbed) {
+      c.obj.position.copy(c.homePosition);
+      c.obj.scale.setScalar(c.homeScale);
+      c.obj.rotation.set(0, 0, 0);
+      homePhysicsBody(c);
+    }
   }
+  rebuildPerches();
 }
 
+// =========================================================
+// LAYOUT
+// =========================================================
 let currentOrientation = 'landscape';
-
 function updateLayout() {
   if (isInXR()) return;
-
-  const w = window.innerWidth;
-  const h = window.innerHeight;
+  const w = window.innerWidth, h = window.innerHeight;
   const aspect = w / h;
   const orientation = h >= w ? 'portrait' : 'landscape';
 
   webglRenderer.setSize(w, h);
   css3dRenderer.setSize(w, h);
-  camera.aspect = aspect;
-  camera.updateProjectionMatrix();
+  camera.aspect = aspect; camera.updateProjectionMatrix();
 
   const distance = CAMERA_SCREEN_DISTANCE;
   const fovRad = (camera.fov * Math.PI) / 180;
   const visibleH = 2 * Math.tan(fovRad / 2) * distance;
   const visibleW = visibleH * aspect;
-
   layoutState.visibleW = visibleW;
   layoutState.visibleH = visibleH;
 
   const SCREEN_FRACTION = 0.6;
-  const screenWorldW = visibleW * SCREEN_FRACTION;
-  const screenWorldH = visibleH * SCREEN_FRACTION;
-  layoutState.screenWorldW = screenWorldW;
-  layoutState.screenWorldH = screenWorldH;
+  const sW = visibleW * SCREEN_FRACTION, sH = visibleH * SCREEN_FRACTION;
+  layoutState.screenWorldW = sW; layoutState.screenWorldH = sH;
 
-  const wrapperWpx = Math.round(w * SCREEN_FRACTION);
-  const wrapperHpx = Math.round(h * SCREEN_FRACTION);
-  screenWrapper.style.width  = wrapperWpx + 'px';
-  screenWrapper.style.height = wrapperHpx + 'px';
-
-  screenObject.scale.set(screenWorldW / wrapperWpx, screenWorldH / wrapperHpx, 1);
+  const wpx = Math.round(w * SCREEN_FRACTION), hpx = Math.round(h * SCREEN_FRACTION);
+  screenWrapper.style.width = wpx + 'px';
+  screenWrapper.style.height = hpx + 'px';
+  screenObject.scale.set(sW / wpx, sH / hpx, 1);
 
   if (orientation === 'landscape') {
     screenObject.position.set(-visibleW * 0.12, 0, 0);
@@ -1599,7 +968,7 @@ function updateLayout() {
     screenObject.position.set(-visibleW * 0.10, visibleH * 0.05, 0);
   }
 
-  xrScreenMesh.scale.set(screenWorldW, screenWorldH, 1);
+  xrScreenMesh.scale.set(sW, sH, 1);
   xrScreenMesh.position.copy(screenObject.position);
   xrScreenMesh.quaternion.copy(screenObject.quaternion);
 
@@ -1610,23 +979,24 @@ function updateLayout() {
     else snapToHome(cart);
   }
 
-  positionCartridges(visibleW, screenWorldW, orientation);
+  positionCartridges(visibleW, sW);
 
   if (insertedCartridge && !insertedCartridge.anim) snapToSlot(insertedCartridge);
 
-  // === Camera target: shelf view (landscape pulls back; portrait keeps z=5) or screen view ===
+  // Physics box scales with viewport
+  physicsBounds.w = Math.max(visibleW * 1.15, 8);
+  physicsBounds.h = Math.max(visibleH * 1.15, 6);
+  physicsBounds.d = Math.max(2.5, visibleH * 0.4);
+  rebuildWalls();
+
   if (inShelfView) {
     if (orientation === 'portrait') {
-      // Portrait: preserve current zoom (z=5, origin). Screen fills view; hint of cart on the right.
       targetCameraX = INITIAL_CAMERA_POS.x;
       targetCameraY = INITIAL_CAMERA_POS.y;
       targetCameraZ = INITIAL_CAMERA_POS.z;
     } else {
-      // Landscape: fit screen + all carts.
       const shelf = computeShelfView();
-      targetCameraX = shelf.x;
-      targetCameraY = shelf.y;
-      targetCameraZ = shelf.z;
+      targetCameraX = shelf.x; targetCameraY = shelf.y; targetCameraZ = shelf.z;
     }
   } else {
     targetCameraX = screenObject.position.x;
@@ -1634,9 +1004,12 @@ function updateLayout() {
     targetCameraZ = screenObject.position.z + CAMERA_SCREEN_DISTANCE;
   }
 
-  if (orientation !== currentOrientation) currentOrientation = orientation;
+  currentOrientation = orientation;
 }
 
+// =========================================================
+// INSERT / EJECT
+// =========================================================
 function cancelInsert(cart) {
   cancelTween(cart);
   cart.state = 'on_shelf';
@@ -1646,6 +1019,8 @@ function cancelInsert(cart) {
 async function insertCartridge(cart) {
   if (cart.state !== 'on_shelf') return;
   cart.state = 'moving_to_projector';
+  setCartPhysics(cart, false);
+  cart.obj.rotation.set(0, 0, 0);
 
   const slotPos = getSlotPosition(cart);
   const abovePos = new THREE.Vector3(slotPos.x, slotPos.y + layoutState.visibleH * 0.15, 0.01);
@@ -1653,13 +1028,10 @@ async function insertCartridge(cart) {
 
   await tween(cart, abovePos, cart.homeScale * 0.85, 1, 0.4, easeOutCubic);
   if (cart.state !== 'moving_to_projector') return;
-
   await tween(cart, backPos, cart.homeScale * 0.75, 1, 0.1, easeInOutCubic);
   if (cart.state !== 'moving_to_projector') return;
-
   await tween(cart, slotPos, cart.homeScale * 0.65, 1, 0.25, easeInQuad);
   if (cart.state !== 'moving_to_projector') return;
-
   cart.state = 'inserted';
 }
 
@@ -1668,27 +1040,20 @@ async function ejectCartridge(cart) {
   cart.state = 'ejecting';
 
   const startPos = cart.obj.position.clone();
-  const popPos = startPos.clone();
-  popPos.y += cart.obj.scale.x * 30;
-  const forwardPos = popPos.clone();
-  forwardPos.z = 0.05;
+  const popPos = startPos.clone(); popPos.y += cart.obj.scale.x * 30;
+  const forwardPos = popPos.clone(); forwardPos.z = 0.05;
 
   await tween(cart, popPos, cart.obj.scale.x * 1.05, 1, 0.15, easeOutCubic);
   if (cart.state !== 'ejecting') return;
-
   await tween(cart, forwardPos, cart.obj.scale.x * 1.05, 1, 0.1, easeOutCubic);
   if (cart.state !== 'ejecting') return;
 
   cart.state = 'falling';
   const groundY = -layoutState.visibleH * 0.5;
   const fallPos = new THREE.Vector3(
-    screenObject.position.x + layoutState.visibleW * 0.05,
-    groundY,
-    forwardPos.z
+    screenObject.position.x + layoutState.visibleW * 0.05, groundY, forwardPos.z
   );
-  await tween(cart, fallPos, cart.obj.scale.x * 0.7, 1, 0.7, easeInQuad, {
-    rotationTo: Math.PI * 0.7,
-  });
+  await tween(cart, fallPos, cart.obj.scale.x * 0.7, 1, 0.7, easeInQuad, { rotationTo: Math.PI * 0.7 });
   if (cart.state !== 'falling') return;
 
   cart.state = 'waiting';
@@ -1707,28 +1072,49 @@ async function ejectCartridge(cart) {
   if (cart.state !== 'respawning') return;
 
   cart.state = 'on_shelf';
+  setCartPhysics(cart, true);
+  homePhysicsBody(cart, true);
 }
 
+// =========================================================
+// SELECTION
+// =========================================================
 async function selectCartridge(id) {
   const newCart = cartridgeObjects.find(c => c.id === id);
   if (!newCart) return;
+  if (['ejecting','falling','waiting','respawning','moving_to_projector'].includes(newCart.state)) return;
 
-  if (
-    newCart.state === 'ejecting' ||
-    newCart.state === 'falling' ||
-    newCart.state === 'waiting' ||
-    newCart.state === 'respawning'
-  ) return;
-
-  screenScroll.innerHTML = CONTENT[id] || '';
+  const project = PROJECTS[id];
+  screenScroll.innerHTML = project ? project.content : WELCOME_CONTENT;
   screenScroll.scrollTop = 0;
-  cartridgeObjects.forEach(c => {
-    c.el.classList.toggle('active', c.id === id);
-  });
+  cartridgeObjects.forEach(c => c.el.classList.toggle('active', c.id === id));
+
+  // Kick other carts into chaos
+  for (const c of cartridgeObjects) {
+    if (c.id === id || c.state !== 'on_shelf' || c.grabbed || !c.bodyInWorld) continue;
+    const dx = c.body.position.x - screenObject.position.x;
+    const dy = c.body.position.y - screenObject.position.y;
+    const dist = Math.max(0.5, Math.hypot(dx, dy));
+    const strength = 6 / Math.max(dist, 1);
+    c.body.applyImpulse(
+      new CANNON.Vec3(
+        (dx / dist) * strength + (Math.random() - 0.5) * 2,
+        Math.abs(dy / dist) * strength + 3 + Math.random() * 2,
+        (Math.random() - 0.5) * 2
+      ),
+      c.body.position
+    );
+    c.body.angularVelocity.set(
+      (Math.random() - 0.5) * 8,
+      (Math.random() - 0.5) * 8,
+      (Math.random() - 0.5) * 8
+    );
+  }
+
   faceScreen();
   if (isInXR()) snapshotToXrScreen();
 
-  if (newCart.state === 'moving_to_projector' || newCart.state === 'inserted') return;
+  if (newCart.state === 'inserted') return;
   if (newCart.state !== 'on_shelf') return;
 
   for (const c of cartridgeObjects) {
@@ -1743,11 +1129,34 @@ async function selectCartridge(id) {
   if (newCart.state === 'inserted') insertedCartridge = newCart;
 }
 
+// =========================================================
+// PHYSICS STEP + SYNC
+// =========================================================
+const PHYSICS_DT = 1 / 60;
+function stepPhysics(dt) {
+  if (!isCinemaVisible()) return;
+  physicsWorld.step(PHYSICS_DT, dt, 3);
+  for (const cart of cartridgeObjects) {
+    if (cart.state !== 'on_shelf' || cart.grabbed) continue;
+    cart.obj.position.set(cart.body.position.x, cart.body.position.y, cart.body.position.z);
+    cart.obj.quaternion.set(cart.body.quaternion.x, cart.body.quaternion.y, cart.body.quaternion.z, cart.body.quaternion.w);
+    updateCartZIndex(cart);
+    if (
+      cart.body.position.y < -physicsBounds.h ||
+      Math.abs(cart.body.position.x) > physicsBounds.w * 0.95 ||
+      Math.abs(cart.body.position.z) > physicsBounds.d * 1.5
+    ) {
+      respawnCart(cart);
+    }
+  }
+}
+
+// =========================================================
+// SCROLL / UI
+// =========================================================
 document.getElementById('view-resume-btn').addEventListener('click', () => {
   document.getElementById('resume-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
-
-// Scroll handlers for both back-to-cinema entry points
 function goToCinema() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
 const backNav = document.getElementById('back-to-cinema-nav');
 if (backNav) backNav.addEventListener('click', (e) => { e.preventDefault(); goToCinema(); });
@@ -1760,41 +1169,32 @@ if (backFab) {
   }, { passive: true });
 }
 
+// =========================================================
+// XR
+// =========================================================
 async function snapshotToXrScreen() {
   try {
     await document.fonts.ready;
     const rendered = await html2canvas(screenScroll, {
-      backgroundColor: '#0b0b0d',
-      scale: 1.5,
-      logging: false,
-      width: screenScroll.scrollWidth,
-      height: screenScroll.scrollHeight,
+      backgroundColor: '#0b0b0d', scale: 1.5, logging: false,
+      width: screenScroll.scrollWidth, height: screenScroll.scrollHeight,
     });
     const ctx = xrScreenCanvas.getContext('2d');
     ctx.fillStyle = '#0b0b0d';
     ctx.fillRect(0, 0, xrScreenCanvas.width, xrScreenCanvas.height);
-    const scale = Math.min(
-      xrScreenCanvas.width / rendered.width,
-      xrScreenCanvas.height / rendered.height
-    );
-    const w = rendered.width * scale;
-    const h = rendered.height * scale;
-    const x = (xrScreenCanvas.width - w) / 2;
-    ctx.drawImage(rendered, x, 0, w, h);
+    const scale = Math.min(xrScreenCanvas.width / rendered.width, xrScreenCanvas.height / rendered.height);
+    const w = rendered.width * scale, h = rendered.height * scale;
+    ctx.drawImage(rendered, (xrScreenCanvas.width - w) / 2, 0, w, h);
     xrScreenTexture.needsUpdate = true;
-  } catch (err) {
-    console.warn('XR snapshot failed', err);
-  }
+  } catch (err) { console.warn('XR snapshot failed', err); }
 }
 
-let xrSession = null;
-let usesDeviceOrientation = false;
-function isInXR() { return webglRenderer.xr.isPresenting || usesDeviceOrientation; }
+let xrSession = null, usesDeviceOrientation = false;
+const isInXR = () => webglRenderer.xr.isPresenting || usesDeviceOrientation;
 
 async function startXRSession() {
   const button = document.getElementById('ar-button');
   button.disabled = true;
-
   if (navigator.xr) {
     try {
       const supported = await navigator.xr.isSessionSupported('immersive-ar');
@@ -1807,35 +1207,20 @@ async function startXRSession() {
         await webglRenderer.xr.setSession(xrSession);
         return;
       }
-    } catch (err) {
-      console.warn('immersive-ar failed, falling back', err);
-    }
+    } catch (err) { console.warn('immersive-ar failed', err); }
   }
-
   if (window.DeviceOrientationEvent) {
     if (typeof DeviceOrientationEvent.requestPermission === 'function') {
       try {
-        const permission = await DeviceOrientationEvent.requestPermission();
-        if (permission !== 'granted') {
-          alert('Motion permission was denied. The cinema will stay in flat mode.');
-          button.disabled = false;
-          return;
-        }
-      } catch (err) {
-        console.warn('DeviceOrientation permission failed', err);
-        button.disabled = false;
-        return;
-      }
+        const p = await DeviceOrientationEvent.requestPermission();
+        if (p !== 'granted') { button.disabled = false; return; }
+      } catch (err) { button.disabled = false; return; }
     }
     enableDeviceOrientationFallback();
     button.textContent = 'Exit Cinema';
     button.disabled = false;
-  } else {
-    alert('This device does not support motion tracking.');
-    button.disabled = false;
-  }
+  } else { button.disabled = false; }
 }
-
 function enableDeviceOrientationFallback() {
   usesDeviceOrientation = true;
   document.body.classList.add('vr-mode');
@@ -1854,29 +1239,19 @@ function onDeviceOrientation(event) {
   targetYaw   = THREE.MathUtils.clamp(THREE.MathUtils.degToRad(event.alpha || 0), -YAW_LIMIT, YAW_LIMIT);
   targetPitch = THREE.MathUtils.clamp(THREE.MathUtils.degToRad(event.beta  || 0), -PITCH_LIMIT, PITCH_LIMIT);
 }
-
 webglRenderer.xr.addEventListener('sessionstart', async () => {
   document.body.classList.add('vr-mode');
-  xrScreenMesh.visible = true;
-  pano.visible = false;
+  xrScreenMesh.visible = true; pano.visible = false;
   await snapshotToXrScreen();
   startRenderLoop();
-  const button = document.getElementById('ar-button');
-  button.textContent = 'Exit Cinema';
-  button.disabled = false;
+  const b = document.getElementById('ar-button'); b.textContent = 'Exit Cinema'; b.disabled = false;
 });
-
 webglRenderer.xr.addEventListener('sessionend', () => {
   document.body.classList.remove('vr-mode');
-  xrScreenMesh.visible = false;
-  pano.visible = true;
-  xrSession = null;
+  xrScreenMesh.visible = false; pano.visible = true; xrSession = null;
   startRenderLoop();
-  const button = document.getElementById('ar-button');
-  button.textContent = 'Step Into Cinema';
-  button.disabled = false;
+  const b = document.getElementById('ar-button'); b.textContent = 'Step Into Cinema'; b.disabled = false;
 });
-
 document.getElementById('ar-button').addEventListener('click', () => {
   if (isInXR()) {
     if (xrSession) xrSession.end();
@@ -1884,49 +1259,42 @@ document.getElementById('ar-button').addEventListener('click', () => {
       disableDeviceOrientationFallback();
       document.getElementById('ar-button').textContent = 'Step Into Cinema';
     }
-  } else {
-    startXRSession();
-  }
+  } else startXRSession();
 });
 
+// =========================================================
+// RENDER LOOP
+// =========================================================
 let lastTime = performance.now();
-
-function isCinemaVisible() {
-  return window.scrollY < window.innerHeight * 0.95;
-}
-
+const isCinemaVisible = () => window.scrollY < window.innerHeight * 0.95;
 function updateCameraDamp(dt) {
   yaw   = THREE.MathUtils.damp(yaw,   targetYaw,   CAMERA_DAMP_LAMBDA, dt);
   pitch = THREE.MathUtils.damp(pitch, targetPitch, CAMERA_DAMP_LAMBDA, dt);
   camera.rotation.set(pitch, yaw, 0, 'YXZ');
-
   camera.position.x = THREE.MathUtils.damp(camera.position.x, targetCameraX, CAMERA_DAMP_LAMBDA, dt);
   camera.position.y = THREE.MathUtils.damp(camera.position.y, targetCameraY, CAMERA_DAMP_LAMBDA, dt);
   camera.position.z = THREE.MathUtils.damp(camera.position.z, targetCameraZ, CAMERA_DAMP_LAMBDA, dt);
 }
-
 function flatAnimate(now) {
   if (isInXR()) return;
   const dt = Math.min((now - lastTime) / 1000, 0.1);
   lastTime = now;
-
   updateCameraDamp(dt);
   updateAnimations(dt);
-
+  stepPhysics(dt);
   if (isCinemaVisible()) {
     webglRenderer.render(scene, camera);
     css3dRenderer.render(scene, camera);
   }
 }
-
 function startRenderLoop() {
   webglRenderer.setAnimationLoop(null);
-
   if (webglRenderer.xr.isPresenting) {
     webglRenderer.setAnimationLoop((time) => {
       const dt = Math.min((time - lastTime) / 1000, 0.1);
       lastTime = time;
       updateAnimations(dt);
+      stepPhysics(dt);
       webglRenderer.render(scene, camera);
     });
   } else if (usesDeviceOrientation) {
@@ -1937,6 +1305,7 @@ function startRenderLoop() {
       lastTime = now;
       updateCameraDamp(dt);
       updateAnimations(dt);
+      stepPhysics(dt);
       webglRenderer.render(scene, camera);
       requestAnimationFrame(tick);
     };
@@ -1961,18 +1330,13 @@ window.addEventListener('resize', onResize);
 window.addEventListener('orientationchange', onResize);
 
 // =========================================================
-// BOOT — show welcome message, snap to shelf view, start loop
+// BOOT
 // =========================================================
 updateLayout();
-
 screenScroll.innerHTML = WELCOME_CONTENT;
-
-// Snap camera to the computed shelf pose (no pan animation on first frame)
 camera.position.set(targetCameraX, targetCameraY, targetCameraZ);
-yaw = targetYaw;
-pitch = targetPitch;
+yaw = targetYaw; pitch = targetPitch;
 camera.rotation.set(pitch, yaw, 0, 'YXZ');
-
 startRenderLoop();
 
 const loading = document.getElementById('loading');
@@ -1982,709 +1346,170 @@ requestAnimationFrame(() => {
 });
 </script>
 
-<!-- ============================================================
-     RYAN'S SITE JS — arcade game, lightbox, footer year, prewarm
-     ============================================================ -->
 <script>
-(function () {
-  var canvas = document.getElementById('g-canvas');
-  if (!canvas) return;
-  var ctx = canvas.getContext('2d');
-  var W = canvas.width, H = canvas.height;
-
-  var C = {
-    bg:'#f5f4f0', ink:'#15171b', muted:'#5d636b',
-    line:'#e3e1db', accent:'#c2410c', surface:'#ffffff',
-    hot:'#dc2626', hotter:'#991b1b'
-  };
-
-  var elScore = document.getElementById('g-score');
-  var elHi    = document.getElementById('g-hi');
-  var elLvl   = document.getElementById('g-lvl');
-  var elHp    = document.getElementById('g-hp');
-  var elStart = document.getElementById('g-start');
-  var elSlow  = document.getElementById('g-slow');
-  var elUp    = document.getElementById('g-upgrade');
-
-  var elHudSpeed = document.getElementById('g-hud-speed');
-  var elHudWidth = document.getElementById('g-hud-width');
-  var elHudSlow  = document.getElementById('g-hud-slow');
-
-  var elValSpeed   = document.getElementById('g-up-val-speed');
-  var elValWidth   = document.getElementById('g-up-val-width');
-  var elValSlow    = document.getElementById('g-up-val-slow');
-  var elLblSlow    = document.getElementById('g-up-lbl-slow');
-  var elGainSlow   = document.getElementById('g-up-gain-slow');
-
-  var GROUND_Y      = H - 18;
-  var PLAYER_W_BASE = 20;
-  var PLAYER_H      = 8;
-  var HITBOX_Y      = GROUND_Y - 2;
-
-  var UP_PCT = { speed: 8, width: 10 };
-
-  var SLOW_MAX_DUR_LEVEL = 3;
-  var SLOW_FRAMES_PER_LV = 60;
-  var SLOW_DEPTH         = 0.30;
-  var SLOW_BASE_CD       = 720;
-  var SLOW_MIN_CD        = 30;
-  var SLOW_CD_STEP       = 60;
-
-  var COMBO_WINDOW      = 300;
-  var COMBO_CAP         = 9;
-  var POINTS_PER_CATCH  = 25;
-  var CATCHES_PER_LEVEL = 10;
-  var UPGRADE_EVERY_POINTS = 250;
-
-  var MAX_LEVELS = { speed: 10, width: 10, slow: 15 };
-
-  var UP = { speed: 0, width: 0, slow: 0 };
-
-  var state = 'idle';
-  var player, items, particles;
-  var score, hp, level, spawnT, frame, shake, flash, hi;
-  var catches, nextUpgradeAt;
-  var combo, comboTimer;
-  var slowRemaining, slowCooldown;
-  var comboFx;
-
-  hi = parseInt(localStorage.getItem('pipeline_hi') || '0', 10) || 0;
-
-  function pad(n, len) {
-    var s = String(n | 0);
-    while (s.length < len) s = '0' + s;
-    return s;
-  }
-  function speedMult() { return 1 + UP.speed * UP_PCT.speed / 100; }
-  function playerW()   { return PLAYER_W_BASE + UP.width * 2; }
-  function pct(v, p)   { return (100 + v * p) + '%'; }
-
-  function slowDurFrames(lv) { return Math.min(lv, SLOW_MAX_DUR_LEVEL) * SLOW_FRAMES_PER_LV; }
-  function slowRechargeLv(lv) { return Math.max(0, lv - SLOW_MAX_DUR_LEVEL); }
-  function slowCooldownFrames(lv) {
-    var cd = SLOW_BASE_CD - slowRechargeLv(lv) * SLOW_CD_STEP;
-    return Math.max(SLOW_MIN_CD, cd);
-  }
-  function slowIsMaxed(lv) { return lv >= SLOW_MAX_DUR_LEVEL; }
-  function slowDurationLabel(lv) {
-    if (lv === 0) return '0s';
-    return Math.min(lv, SLOW_MAX_DUR_LEVEL).toFixed(1) + 's';
-  }
-  function slowRechargeLabel(lv) { return (slowCooldownFrames(lv) / 60).toFixed(1) + 's'; }
-
-  function isMaxed(path) {
-    if (path === 'speed') return UP.speed >= MAX_LEVELS.speed;
-    if (path === 'width') return UP.width >= MAX_LEVELS.width;
-    if (path === 'slow')  return UP.slow  >= MAX_LEVELS.slow;
-    return false;
-  }
-  function anyUpgradeAvailable() { return !isMaxed('speed') || !isMaxed('width') || !isMaxed('slow'); }
-
-  function refreshUpgradeButtons() {
-    var btns = document.querySelectorAll('.g-upgrade__btn');
-    Array.prototype.forEach.call(btns, function (b) {
-      var p = b.getAttribute('data-up');
-      if (isMaxed(p)) b.classList.add('is-maxed');
-      else b.classList.remove('is-maxed');
-    });
-  }
-
-  function comboColor(c) {
-    if (c >= 7) return C.hotter;
-    if (c >= 4) return C.hot;
-    return C.accent;
-  }
-
-  function breakCombo() {
-    if (combo > 1) {
-      comboFx.breakT = 1;
-      comboFx.breakVal = combo;
-    }
-    combo = 0;
-    comboTimer = 0;
-  }
-
-  function reset() {
-    player    = { x: W / 2 - PLAYER_W_BASE / 2, vx: 0, w: PLAYER_W_BASE };
-    items     = [];
-    particles = [];
-    score = 0; hp = 3; level = 1;
-    spawnT = 30; frame = 0; shake = 0; flash = 0;
-    UP.speed = 0; UP.width = 0; UP.slow = 0;
-    catches = 0; nextUpgradeAt = UPGRADE_EVERY_POINTS;
-    combo = 0; comboTimer = 0;
-    slowRemaining = 0; slowCooldown = 0;
-    comboFx = { pop: 0, ringT: 0, breakT: 0, breakVal: 0 };
-  }
-
-  function updateHud() {
-    elScore.textContent = pad(score, 4);
-    elHi.textContent    = pad(hi, 4);
-    elLvl.textContent   = pad(level, 2);
-
-    var bars = '';
-    for (var i = 0; i < 3; i++) bars += (i < hp ? '█' : '░');
-    elHp.textContent = bars;
-
-    var s = pct(UP.speed, UP_PCT.speed);
-    var w = pct(UP.width, UP_PCT.width);
-    elHudSpeed.textContent = s;
-    elHudWidth.textContent = w;
-    elHudSpeed.className = UP.speed ? 'on' : '';
-    elHudWidth.className = UP.width ? 'on' : '';
-
-    var slowText, slowOn = false;
-    if (UP.slow === 0) {
-      slowText = '—';
-    } else if (slowRemaining > 0) {
-      slowText = (slowRemaining / 60).toFixed(1) + 's';
-      slowOn = true;
-    } else if (slowCooldown > 0) {
-      slowText = (slowCooldown / 60).toFixed(1) + 's';
-    } else {
-      slowText = 'READY';
-      slowOn = true;
-    }
-    elHudSlow.textContent = slowText;
-    elHudSlow.className = slowOn ? 'on' : '';
-
-    elSlow.classList.remove('is-locked', 'is-cooling', 'is-active');
-    if (UP.slow === 0)              elSlow.classList.add('is-locked');
-    else if (slowRemaining > 0)     elSlow.classList.add('is-active');
-    else if (slowCooldown > 0)      elSlow.classList.add('is-cooling');
-
-    elValSpeed.textContent = s;
-    elValWidth.textContent = w;
-
-    if (slowIsMaxed(UP.slow)) {
-      elLblSlow.textContent  = 'Recharge';
-      elValSlow.textContent  = slowRechargeLabel(UP.slow);
-      elGainSlow.textContent = '−1.0s / lv';
-    } else {
-      elLblSlow.textContent  = 'Slow-Mo';
-      elValSlow.textContent  = slowDurationLabel(UP.slow);
-      elGainSlow.textContent = '+1.0s / lv';
-    }
-
+/* ============ RYAN'S SITE JS (arcade + lightbox + footer) ============ */
+(function(){
+  var canvas = document.getElementById('g-canvas'); if (!canvas) return;
+  var ctx = canvas.getContext('2d'); var W = canvas.width, H = canvas.height;
+  var C = {bg:'#f5f4f0',ink:'#15171b',muted:'#5d636b',line:'#e3e1db',accent:'#c2410c',surface:'#ffffff',hot:'#dc2626',hotter:'#991b1b'};
+  var elScore = document.getElementById('g-score'), elHi = document.getElementById('g-hi'), elLvl = document.getElementById('g-lvl'), elHp = document.getElementById('g-hp');
+  var elStart = document.getElementById('g-start'), elSlow = document.getElementById('g-slow'), elUp = document.getElementById('g-upgrade');
+  var elHudSpeed = document.getElementById('g-hud-speed'), elHudWidth = document.getElementById('g-hud-width'), elHudSlow = document.getElementById('g-hud-slow');
+  var elValSpeed = document.getElementById('g-up-val-speed'), elValWidth = document.getElementById('g-up-val-width'), elValSlow = document.getElementById('g-up-val-slow'), elLblSlow = document.getElementById('g-up-lbl-slow'), elGainSlow = document.getElementById('g-up-gain-slow');
+  var GROUND_Y = H - 18, PLAYER_W_BASE = 20, PLAYER_H = 8, HITBOX_Y = GROUND_Y - 2;
+  var UP_PCT = {speed:8, width:10};
+  var SLOW_MAX_DUR_LEVEL=3, SLOW_FRAMES_PER_LV=60, SLOW_DEPTH=0.3, SLOW_BASE_CD=720, SLOW_MIN_CD=30, SLOW_CD_STEP=60;
+  var COMBO_WINDOW=300, COMBO_CAP=9, POINTS_PER_CATCH=25, CATCHES_PER_LEVEL=10, UPGRADE_EVERY_POINTS=250;
+  var MAX_LEVELS = {speed:10, width:10, slow:15};
+  var UP = {speed:0, width:0, slow:0};
+  var state='idle', player, items, particles, score, hp, level, spawnT, frame, shake, flash, hi, catches, nextUpgradeAt, combo, comboTimer, slowRemaining, slowCooldown, comboFx;
+  hi = parseInt(localStorage.getItem('pipeline_hi')||'0',10)||0;
+  function pad(n,l){var s=String(n|0);while(s.length<l)s='0'+s;return s;}
+  function speedMult(){return 1+UP.speed*UP_PCT.speed/100;}
+  function playerW(){return PLAYER_W_BASE+UP.width*2;}
+  function pct(v,p){return (100+v*p)+'%';}
+  function slowDurFrames(lv){return Math.min(lv,SLOW_MAX_DUR_LEVEL)*SLOW_FRAMES_PER_LV;}
+  function slowRechargeLv(lv){return Math.max(0,lv-SLOW_MAX_DUR_LEVEL);}
+  function slowCooldownFrames(lv){return Math.max(SLOW_MIN_CD,SLOW_BASE_CD-slowRechargeLv(lv)*SLOW_CD_STEP);}
+  function slowIsMaxed(lv){return lv>=SLOW_MAX_DUR_LEVEL;}
+  function slowDurationLabel(lv){return lv===0?'0s':Math.min(lv,SLOW_MAX_DUR_LEVEL).toFixed(1)+'s';}
+  function slowRechargeLabel(lv){return (slowCooldownFrames(lv)/60).toFixed(1)+'s';}
+  function isMaxed(p){if(p==='speed')return UP.speed>=MAX_LEVELS.speed;if(p==='width')return UP.width>=MAX_LEVELS.width;if(p==='slow')return UP.slow>=MAX_LEVELS.slow;return false;}
+  function anyUpgradeAvailable(){return !isMaxed('speed')||!isMaxed('width')||!isMaxed('slow');}
+  function refreshUpgradeButtons(){var btns=document.querySelectorAll('.g-upgrade__btn');Array.prototype.forEach.call(btns,function(b){if(isMaxed(b.getAttribute('data-up')))b.classList.add('is-maxed');else b.classList.remove('is-maxed');});}
+  function comboColor(c){return c>=7?C.hotter:c>=4?C.hot:C.accent;}
+  function breakCombo(){if(combo>1){comboFx.breakT=1;comboFx.breakVal=combo;}combo=0;comboTimer=0;}
+  function reset(){player={x:W/2-PLAYER_W_BASE/2,vx:0,w:PLAYER_W_BASE};items=[];particles=[];score=0;hp=3;level=1;spawnT=30;frame=0;shake=0;flash=0;UP.speed=0;UP.width=0;UP.slow=0;catches=0;nextUpgradeAt=UPGRADE_EVERY_POINTS;combo=0;comboTimer=0;slowRemaining=0;slowCooldown=0;comboFx={pop:0,ringT:0,breakT:0,breakVal:0};}
+  function updateHud(){
+    elScore.textContent=pad(score,4);elHi.textContent=pad(hi,4);elLvl.textContent=pad(level,2);
+    var bars='';for(var i=0;i<3;i++)bars+=(i<hp?'█':'░');elHp.textContent=bars;
+    var s=pct(UP.speed,UP_PCT.speed),w=pct(UP.width,UP_PCT.width);
+    elHudSpeed.textContent=s;elHudWidth.textContent=w;elHudSpeed.className=UP.speed?'on':'';elHudWidth.className=UP.width?'on':'';
+    var slowText,slowOn=false;
+    if(UP.slow===0)slowText='—';else if(slowRemaining>0){slowText=(slowRemaining/60).toFixed(1)+'s';slowOn=true;}else if(slowCooldown>0)slowText=(slowCooldown/60).toFixed(1)+'s';else{slowText='READY';slowOn=true;}
+    elHudSlow.textContent=slowText;elHudSlow.className=slowOn?'on':'';
+    elSlow.classList.remove('is-locked','is-cooling','is-active');
+    if(UP.slow===0)elSlow.classList.add('is-locked');else if(slowRemaining>0)elSlow.classList.add('is-active');else if(slowCooldown>0)elSlow.classList.add('is-cooling');
+    elValSpeed.textContent=s;elValWidth.textContent=w;
+    if(slowIsMaxed(UP.slow)){elLblSlow.textContent='Recharge';elValSlow.textContent=slowRechargeLabel(UP.slow);elGainSlow.textContent='−1.0s / lv';}else{elLblSlow.textContent='Slow-Mo';elValSlow.textContent=slowDurationLabel(UP.slow);elGainSlow.textContent='+1.0s / lv';}
     refreshUpgradeButtons();
   }
-
-  function startGame() { reset(); state = 'playing'; updateHud(); }
-  function openUpgradeMenu() { updateHud(); elUp.classList.add('on'); }
-
-  function pickUpgrade(path) {
-    if (state !== 'upgrade') return;
-    if (!UP.hasOwnProperty(path)) return;
-    if (isMaxed(path)) return;
-    UP[path]++;
-    elUp.classList.remove('on');
-
-    if (path === 'width') {
-      var targetW = playerW();
-      var cx = player.x + player.w / 2;
-      player.w = targetW;
-      player.x = cx - player.w / 2;
-    }
-
-    state = 'playing';
-    updateHud();
-  }
-
-  function activateSlow() {
-    if (state !== 'playing') return;
-    if (UP.slow === 0) return;
-    if (slowRemaining > 0) return;
-    if (slowCooldown > 0) return;
-    slowRemaining = slowDurFrames(UP.slow);
-    slowCooldown  = slowCooldownFrames(UP.slow);
-    updateHud();
-  }
-
-  var keys = {};
-  var padLeft = false, padRight = false;
-
-  function norm(e) {
-    var k = e.key;
-    return k.length === 1 ? k.toLowerCase() : k;
-  }
-
-  window.addEventListener('keydown', function (e) {
-    var k = norm(e);
-
-    if (state === 'upgrade' && (k === '1' || k === '2' || k === '3')) {
-      e.preventDefault();
-      var pick = k === '1' ? 'speed' : k === '2' ? 'width' : 'slow';
-      if (!isMaxed(pick)) pickUpgrade(pick);
-      return;
-    }
-
-    if (k === 's' || k === 'Shift') {
-      if (state === 'playing') { e.preventDefault(); activateSlow(); }
-      return;
-    }
-
-    if (state === 'playing' &&
-        (k === 'ArrowLeft' || k === 'ArrowRight' || k === 'a' || k === 'd')) {
-      e.preventDefault();
-    }
-
-    if ((k === ' ' || k === 'Enter') && (state === 'idle' || state === 'over')) {
-      e.preventDefault();
-      startGame();
-      return;
-    }
-
-    keys[k] = true;
+  function startGame(){reset();state='playing';updateHud();}
+  function openUpgradeMenu(){updateHud();elUp.classList.add('on');}
+  function pickUpgrade(p){if(state!=='upgrade'||!UP.hasOwnProperty(p)||isMaxed(p))return;UP[p]++;elUp.classList.remove('on');if(p==='width'){var t=playerW(),cx=player.x+player.w/2;player.w=t;player.x=cx-player.w/2;}state='playing';updateHud();}
+  function activateSlow(){if(state!=='playing'||UP.slow===0||slowRemaining>0||slowCooldown>0)return;slowRemaining=slowDurFrames(UP.slow);slowCooldown=slowCooldownFrames(UP.slow);updateHud();}
+  var keys={},padLeft=false,padRight=false;
+  function norm(e){var k=e.key;return k.length===1?k.toLowerCase():k;}
+  window.addEventListener('keydown',function(e){
+    var k=norm(e);
+    if(state==='upgrade'&&(k==='1'||k==='2'||k==='3')){e.preventDefault();var pick=k==='1'?'speed':k==='2'?'width':'slow';if(!isMaxed(pick))pickUpgrade(pick);return;}
+    if(k==='s'||k==='Shift'){if(state==='playing'){e.preventDefault();activateSlow();}return;}
+    if(state==='playing'&&(k==='ArrowLeft'||k==='ArrowRight'||k==='a'||k==='d'))e.preventDefault();
+    if((k===' '||k==='Enter')&&(state==='idle'||state==='over')){e.preventDefault();startGame();return;}
+    keys[k]=true;
   });
-
-  window.addEventListener('keyup', function (e) { keys[norm(e)] = false; });
-
-  Array.prototype.forEach.call(
-    document.querySelectorAll('.pad[data-dir]'),
-    function (btn) {
-      var isLeft = btn.getAttribute('data-dir') === 'left';
-      function on(e)  { e.preventDefault(); if (isLeft) padLeft  = true; else padRight  = true; }
-      function off(e) { e.preventDefault(); if (isLeft) padLeft  = false; else padRight = false; }
-      btn.addEventListener('pointerdown', on);
-      btn.addEventListener('pointerup', off);
-      btn.addEventListener('pointerleave', off);
-      btn.addEventListener('pointercancel', off);
-    }
-  );
-
-  Array.prototype.forEach.call(
-    document.querySelectorAll('.g-upgrade__btn'),
-    function (btn) {
-      btn.addEventListener('click', function () {
-        pickUpgrade(btn.getAttribute('data-up'));
-      });
-    }
-  );
-
-  elStart.addEventListener('click', function () {
-    if (state === 'idle' || state === 'over') startGame();
+  window.addEventListener('keyup',function(e){keys[norm(e)]=false;});
+  Array.prototype.forEach.call(document.querySelectorAll('.pad[data-dir]'),function(btn){
+    var isLeft=btn.getAttribute('data-dir')==='left';
+    function on(e){e.preventDefault();if(isLeft)padLeft=true;else padRight=true;}
+    function off(e){e.preventDefault();if(isLeft)padLeft=false;else padRight=false;}
+    btn.addEventListener('pointerdown',on);btn.addEventListener('pointerup',off);btn.addEventListener('pointerleave',off);btn.addEventListener('pointercancel',off);
   });
-  elSlow.addEventListener('click', activateSlow);
-  canvas.addEventListener('pointerdown', function () {
-    if (state === 'idle' || state === 'over') startGame();
-  });
-
-  function spawnItem() {
-    var bad  = Math.random() < 0.3;
-    var size = 8;
-    var x    = 6 + Math.random() * (W - 12 - size);
-    items.push({
-      x: x, y: -size, w: size, h: size,
-      vy: 0.5 + level * 0.12 + Math.random() * 0.22,
-      bad: bad
-    });
-  }
-
-  function burst(x, y, color, n) {
-    for (var i = 0; i < n; i++) {
-      particles.push({
-        x: x, y: y,
-        vx: (Math.random() - 0.5) * 2.4,
-        vy: (Math.random() - 0.8) * 2.0,
-        life: 14 + Math.random() * 10,
-        s: Math.random() < 0.35 ? 2 : 1,
-        color: color
-      });
-    }
-  }
-
-  function update() {
+  Array.prototype.forEach.call(document.querySelectorAll('.g-upgrade__btn'),function(btn){btn.addEventListener('click',function(){pickUpgrade(btn.getAttribute('data-up'));});});
+  elStart.addEventListener('click',function(){if(state==='idle'||state==='over')startGame();});
+  elSlow.addEventListener('click',activateSlow);
+  canvas.addEventListener('pointerdown',function(){if(state==='idle'||state==='over')startGame();});
+  function spawnItem(){var bad=Math.random()<0.3,size=8,x=6+Math.random()*(W-12-size);items.push({x:x,y:-size,w:size,h:size,vy:0.5+level*0.12+Math.random()*0.22,bad:bad});}
+  function burst(x,y,color,n){for(var i=0;i<n;i++)particles.push({x:x,y:y,vx:(Math.random()-0.5)*2.4,vy:(Math.random()-0.8)*2,life:14+Math.random()*10,s:Math.random()<0.35?2:1,color:color});}
+  function update(){
     frame++;
-
-    if (state === 'playing') {
-      var sm = speedMult();
-      var dir = 0;
-      if (keys['ArrowLeft']  || keys['a'] || padLeft)  dir -= 1;
-      if (keys['ArrowRight'] || keys['d'] || padRight) dir += 1;
-
-      player.vx += dir * 0.55 * sm;
-      player.vx *= 0.78;
-
-      var maxV = 2.4 * sm;
-      if (player.vx >  maxV) player.vx =  maxV;
-      if (player.vx < -maxV) player.vx = -maxV;
-      player.x += player.vx;
-
-      if (player.x < 2) { player.x = 2; player.vx = 0; }
-      if (player.x + player.w > W - 2) {
-        player.x = W - 2 - player.w; player.vx = 0;
-      }
-
-      if (comboTimer > 0) {
-        comboTimer--;
-        if (comboTimer === 0) breakCombo();
-      }
-      if (slowRemaining > 0) slowRemaining--;
-      if (slowCooldown > 0)  slowCooldown--;
-
-      spawnT--;
-      if (spawnT <= 0) {
-        spawnItem();
-        spawnT = Math.max(16, 52 - level * 4) + Math.random() * 12;
-      }
-
-      var itemScale = slowRemaining > 0 ? SLOW_DEPTH : 1.0;
-      for (var i = items.length - 1; i >= 0; i--) {
-        var it = items[i];
-        it.y += it.vy * itemScale;
-
-        var hitX = it.x + it.w > player.x && it.x < player.x + player.w;
-        var hitY = it.y + it.h >= HITBOX_Y && it.y < GROUND_Y + PLAYER_H;
-
-        if (hitX && hitY) {
-          if (it.bad) {
-            hp--;
-            breakCombo();
-            shake = 8;
-            flash = 10;
-            burst(it.x + it.w / 2, it.y + it.h / 2, C.accent, 10);
-            if (hp <= 0) {
-              hp = 0;
-              state = 'over';
-              if (score > hi) {
-                hi = score;
-                try { localStorage.setItem('pipeline_hi', String(hi)); } catch (e) {}
-              }
-            }
-          } else {
-            catches++;
-            combo = Math.min(combo + 1, COMBO_CAP);
-            comboTimer = COMBO_WINDOW;
-            score += POINTS_PER_CATCH * combo;
-            level = 1 + Math.floor(catches / CATCHES_PER_LEVEL);
-            burst(it.x + it.w / 2, it.y + it.h / 2, C.ink, 6);
-            if (combo > 1) {
-              comboFx.pop = 1;
-              comboFx.ringT = 1;
-            }
-          }
-          items.splice(i, 1);
-          updateHud();
-          continue;
+    if(state==='playing'){
+      var sm=speedMult(),dir=0;
+      if(keys['ArrowLeft']||keys['a']||padLeft)dir-=1;
+      if(keys['ArrowRight']||keys['d']||padRight)dir+=1;
+      player.vx+=dir*0.55*sm;player.vx*=0.78;
+      var maxV=2.4*sm;if(player.vx>maxV)player.vx=maxV;if(player.vx<-maxV)player.vx=-maxV;
+      player.x+=player.vx;
+      if(player.x<2){player.x=2;player.vx=0;}
+      if(player.x+player.w>W-2){player.x=W-2-player.w;player.vx=0;}
+      if(comboTimer>0){comboTimer--;if(comboTimer===0)breakCombo();}
+      if(slowRemaining>0)slowRemaining--;if(slowCooldown>0)slowCooldown--;
+      spawnT--;if(spawnT<=0){spawnItem();spawnT=Math.max(16,52-level*4)+Math.random()*12;}
+      var itemScale=slowRemaining>0?SLOW_DEPTH:1;
+      for(var i=items.length-1;i>=0;i--){
+        var it=items[i];it.y+=it.vy*itemScale;
+        var hX=it.x+it.w>player.x&&it.x<player.x+player.w,hY=it.y+it.h>=HITBOX_Y&&it.y<GROUND_Y+PLAYER_H;
+        if(hX&&hY){
+          if(it.bad){hp--;breakCombo();shake=8;flash=10;burst(it.x+it.w/2,it.y+it.h/2,C.accent,10);if(hp<=0){hp=0;state='over';if(score>hi){hi=score;try{localStorage.setItem('pipeline_hi',String(hi));}catch(e){}}}}
+          else{catches++;combo=Math.min(combo+1,COMBO_CAP);comboTimer=COMBO_WINDOW;score+=POINTS_PER_CATCH*combo;level=1+Math.floor(catches/CATCHES_PER_LEVEL);burst(it.x+it.w/2,it.y+it.h/2,C.ink,6);if(combo>1){comboFx.pop=1;comboFx.ringT=1;}}
+          items.splice(i,1);updateHud();continue;
         }
-
-        if (it.y > H + 10) items.splice(i, 1);
+        if(it.y>H+10)items.splice(i,1);
       }
-
-      if (state === 'playing' && score >= nextUpgradeAt) {
-        nextUpgradeAt += UPGRADE_EVERY_POINTS;
-        if (anyUpgradeAvailable()) {
-          state = 'upgrade';
-          openUpgradeMenu();
-        }
-      }
-
+      if(state==='playing'&&score>=nextUpgradeAt){nextUpgradeAt+=UPGRADE_EVERY_POINTS;if(anyUpgradeAvailable()){state='upgrade';openUpgradeMenu();}}
       updateHud();
     }
-
-    for (var p = particles.length - 1; p >= 0; p--) {
-      var q = particles[p];
-      q.x += q.vx; q.y += q.vy; q.vy += 0.12; q.life--;
-      if (q.life <= 0) particles.splice(p, 1);
-    }
-
-    if (shake > 0) shake--;
-    if (flash > 0) flash--;
+    for(var p=particles.length-1;p>=0;p--){var q=particles[p];q.x+=q.vx;q.y+=q.vy;q.vy+=0.12;q.life--;if(q.life<=0)particles.splice(p,1);}
+    if(shake>0)shake--;if(flash>0)flash--;
   }
-
-  function drawGrid() {
-    ctx.fillStyle = C.line;
-    for (var x = 0; x < W; x += 16) ctx.fillRect(x, 0, 1, H);
-    for (var y = 0; y < H; y += 16) ctx.fillRect(0, y, W, 1);
+  function drawGrid(){ctx.fillStyle=C.line;for(var x=0;x<W;x+=16)ctx.fillRect(x,0,1,H);for(var y=0;y<H;y+=16)ctx.fillRect(0,y,W,1);}
+  function drawGround(){ctx.fillStyle=C.ink;ctx.fillRect(0,GROUND_Y+PLAYER_H+3,W,1);ctx.fillStyle=C.line;ctx.fillRect(0,GROUND_Y+PLAYER_H+5,W,1);}
+  function drawPlayer(){var x=Math.round(player.x),y=GROUND_Y,w=player.w;ctx.fillStyle=C.ink;ctx.fillRect(x,y+2,w,PLAYER_H-2);ctx.fillRect(x+4,y,w-8,2);ctx.fillStyle=C.accent;ctx.fillRect(x+3,y+4,2,2);ctx.fillRect(x+w-5,y+4,2,2);ctx.fillStyle=C.bg;ctx.fillRect(x+w/2-2,y+4,4,2);}
+  function drawItem(it){var x=Math.round(it.x),y=Math.round(it.y),s=it.w;if(it.bad){ctx.fillStyle=C.accent;ctx.fillRect(x,y,s,s);ctx.fillStyle=C.bg;ctx.fillRect(x+1,y+2,2,2);ctx.fillRect(x+3,y+4,2,2);ctx.fillRect(x+5,y+2,2,2);ctx.fillStyle=C.ink;ctx.fillRect(x+2,y+6,4,1);}else{ctx.fillStyle=C.surface;ctx.fillRect(x,y,s,s);ctx.fillStyle=C.ink;ctx.fillRect(x,y,s,1);ctx.fillRect(x,y+s-1,s,1);ctx.fillRect(x,y,1,s);ctx.fillRect(x+s-1,y,1,s);ctx.fillStyle=C.accent;ctx.fillRect(x+3,y+3,2,2);}}
+  function drawCombo(){
+    if(comboFx.breakT>0){var bt=comboFx.breakT,bv=comboFx.breakVal,col=comboColor(bv),size=Math.round((14+Math.min(bv,9)*0.9)*(0.4+bt*0.6));ctx.globalAlpha=bt;ctx.textAlign='left';ctx.font='bold '+size+'px monospace';ctx.fillStyle=col;var wob=Math.sin(bt*22)*(1-bt)*3;ctx.fillText('x'+bv,10+wob,22+(1-bt)*6);ctx.textAlign='start';ctx.globalAlpha=1;comboFx.breakT-=0.045;if(comboFx.breakT<0)comboFx.breakT=0;}
+    if(combo<=1)return;
+    var col2=comboColor(combo),popScale=1;
+    if(comboFx.pop>0){var t=1-comboFx.pop;popScale=1+Math.sin(Math.min(t,0.5)*Math.PI)*0.55;comboFx.pop-=0.07;if(comboFx.pop<0)comboFx.pop=0;}
+    var p=comboTimer/COMBO_WINDOW,urgency=p<0.3,heartbeat=urgency?1+Math.sin(frame*0.45)*0.09:1;
+    var baseSize=14+Math.min(combo,9)*0.85,size2=Math.round(baseSize*popScale*heartbeat),px=10,py=22;
+    if(comboFx.ringT>0){var rt=1-comboFx.ringT;ctx.globalAlpha=comboFx.ringT*0.7;ctx.strokeStyle=col2;ctx.lineWidth=1;ctx.beginPath();ctx.arc(px+6,py-6,3+rt*20,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;comboFx.ringT-=0.055;if(comboFx.ringT<0)comboFx.ringT=0;}
+    if(combo>=5){ctx.globalAlpha=0.28;ctx.fillStyle=col2;ctx.textAlign='left';ctx.font='bold '+size2+'px monospace';ctx.fillText('x'+combo,px+1,py+1);ctx.fillText('x'+combo,px-1,py-1);ctx.globalAlpha=1;}
+    ctx.textAlign='left';ctx.font='bold '+size2+'px monospace';ctx.fillStyle=col2;ctx.fillText('x'+combo,px,py);
+    var bw=46,barY=py+5;
+    ctx.fillStyle=C.line;ctx.fillRect(px,barY,bw,3);ctx.fillStyle=col2;ctx.fillRect(px,barY,bw*p,3);
+    if(p>0.02){ctx.fillStyle=col2;ctx.fillRect(px+Math.max(0,bw*p-1),barY-1,2,5);}
+    if(urgency&&(frame%22<11)){ctx.globalAlpha=0.55;ctx.fillStyle=C.surface;ctx.fillRect(px,barY,bw*p,3);ctx.globalAlpha=1;}
+    ctx.textAlign='start';
   }
-
-  function drawGround() {
-    ctx.fillStyle = C.ink;
-    ctx.fillRect(0, GROUND_Y + PLAYER_H + 3, W, 1);
-    ctx.fillStyle = C.line;
-    ctx.fillRect(0, GROUND_Y + PLAYER_H + 5, W, 1);
+  function drawSlowBorder(){if(slowRemaining<=0)return;ctx.strokeStyle=C.accent;ctx.lineWidth=2;ctx.strokeRect(1,1,W-2,H-2);ctx.lineWidth=1;}
+  function drawOverlay(title,sub){
+    ctx.fillStyle=C.bg;ctx.globalAlpha=0.84;ctx.fillRect(0,0,W,H);ctx.globalAlpha=1;
+    var pw=168,ph=56,px=(W-pw)/2,py=(H-ph)/2;
+    ctx.fillStyle=C.surface;ctx.fillRect(px,py,pw,ph);
+    ctx.fillStyle=C.ink;ctx.fillRect(px,py,pw,1);ctx.fillRect(px,py+ph-1,pw,1);ctx.fillRect(px,py,1,ph);ctx.fillRect(px+pw-1,py,1,ph);
+    ctx.textAlign='center';ctx.fillStyle=C.accent;ctx.font='bold 13px monospace';ctx.fillText(title,W/2,py+24);
+    ctx.fillStyle=C.muted;ctx.font='6px monospace';ctx.fillText(sub,W/2,py+41);ctx.textAlign='start';
   }
-
-  function drawPlayer() {
-    var x = Math.round(player.x);
-    var y = GROUND_Y;
-    var w = player.w;
-    ctx.fillStyle = C.ink;
-    ctx.fillRect(x,     y + 2, w,     PLAYER_H - 2);
-    ctx.fillRect(x + 4, y,     w - 8, 2);
-    ctx.fillStyle = C.accent;
-    ctx.fillRect(x + 3,      y + 4, 2, 2);
-    ctx.fillRect(x + w - 5,  y + 4, 2, 2);
-    ctx.fillStyle = C.bg;
-    ctx.fillRect(x + w / 2 - 2, y + 4, 4, 2);
-  }
-
-  function drawItem(it) {
-    var x = Math.round(it.x), y = Math.round(it.y), s = it.w;
-    if (it.bad) {
-      ctx.fillStyle = C.accent;
-      ctx.fillRect(x, y, s, s);
-      ctx.fillStyle = C.bg;
-      ctx.fillRect(x + 1, y + 2, 2, 2);
-      ctx.fillRect(x + 3, y + 4, 2, 2);
-      ctx.fillRect(x + 5, y + 2, 2, 2);
-      ctx.fillStyle = C.ink;
-      ctx.fillRect(x + 2, y + 6, 4, 1);
-    } else {
-      ctx.fillStyle = C.surface;
-      ctx.fillRect(x, y, s, s);
-      ctx.fillStyle = C.ink;
-      ctx.fillRect(x,         y,         s, 1);
-      ctx.fillRect(x,         y + s - 1, s, 1);
-      ctx.fillRect(x,         y,         1, s);
-      ctx.fillRect(x + s - 1, y,         1, s);
-      ctx.fillStyle = C.accent;
-      ctx.fillRect(x + 3, y + 3, 2, 2);
-    }
-  }
-
-  function drawCombo() {
-    if (comboFx.breakT > 0) {
-      var bt = comboFx.breakT;
-      var bv = comboFx.breakVal;
-      var col = comboColor(bv);
-      var size = Math.round((14 + Math.min(bv, 9) * 0.9) * (0.4 + bt * 0.6));
-      ctx.globalAlpha = bt;
-      ctx.textAlign = 'left';
-      ctx.font = 'bold ' + size + 'px monospace';
-      ctx.fillStyle = col;
-      var wob = Math.sin(bt * 22) * (1 - bt) * 3;
-      ctx.fillText('x' + bv, 10 + wob, 22 + (1 - bt) * 6);
-      ctx.textAlign = 'start';
-      ctx.globalAlpha = 1;
-      comboFx.breakT -= 0.045;
-      if (comboFx.breakT < 0) comboFx.breakT = 0;
-    }
-
-    if (combo <= 1) return;
-
-    var col2 = comboColor(combo);
-
-    var popScale = 1;
-    if (comboFx.pop > 0) {
-      var t = 1 - comboFx.pop;
-      popScale = 1 + Math.sin(Math.min(t, 0.5) * Math.PI) * 0.55;
-      comboFx.pop -= 0.07;
-      if (comboFx.pop < 0) comboFx.pop = 0;
-    }
-
-    var p = comboTimer / COMBO_WINDOW;
-    var urgency = p < 0.3;
-    var heartbeat = 1;
-    if (urgency) heartbeat = 1 + Math.sin(frame * 0.45) * 0.09;
-
-    var baseSize = 14 + Math.min(combo, 9) * 0.85;
-    var size2 = Math.round(baseSize * popScale * heartbeat);
-
-    var px = 10;
-    var py = 22;
-
-    if (comboFx.ringT > 0) {
-      var rt = 1 - comboFx.ringT;
-      ctx.globalAlpha = comboFx.ringT * 0.7;
-      ctx.strokeStyle = col2;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.arc(px + 6, py - 6, 3 + rt * 20, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.globalAlpha = 1;
-      comboFx.ringT -= 0.055;
-      if (comboFx.ringT < 0) comboFx.ringT = 0;
-    }
-
-    if (combo >= 5) {
-      ctx.globalAlpha = 0.28;
-      ctx.fillStyle = col2;
-      ctx.textAlign = 'left';
-      ctx.font = 'bold ' + size2 + 'px monospace';
-      ctx.fillText('x' + combo, px + 1, py + 1);
-      ctx.fillText('x' + combo, px - 1, py - 1);
-      ctx.globalAlpha = 1;
-    }
-
-    ctx.textAlign = 'left';
-    ctx.font = 'bold ' + size2 + 'px monospace';
-    ctx.fillStyle = col2;
-    ctx.fillText('x' + combo, px, py);
-
-    var bw = 46;
-    var barY = py + 5;
-    ctx.fillStyle = C.line;
-    ctx.fillRect(px, barY, bw, 3);
-    ctx.fillStyle = col2;
-    ctx.fillRect(px, barY, bw * p, 3);
-    if (p > 0.02) {
-      ctx.fillStyle = col2;
-      ctx.fillRect(px + Math.max(0, bw * p - 1), barY - 1, 2, 5);
-    }
-
-    if (urgency && (frame % 22 < 11)) {
-      ctx.globalAlpha = 0.55;
-      ctx.fillStyle = C.surface;
-      ctx.fillRect(px, barY, bw * p, 3);
-      ctx.globalAlpha = 1;
-    }
-
-    ctx.textAlign = 'start';
-  }
-
-  function drawSlowBorder() {
-    if (slowRemaining <= 0) return;
-    ctx.strokeStyle = C.accent;
-    ctx.lineWidth = 2;
-    ctx.strokeRect(1, 1, W - 2, H - 2);
-    ctx.lineWidth = 1;
-  }
-
-  function drawOverlay(title, sub) {
-    ctx.fillStyle = C.bg;
-    ctx.globalAlpha = 0.84;
-    ctx.fillRect(0, 0, W, H);
-    ctx.globalAlpha = 1;
-
-    var pw = 168, ph = 56;
-    var px = (W - pw) / 2, py = (H - ph) / 2;
-
-    ctx.fillStyle = C.surface;
-    ctx.fillRect(px, py, pw, ph);
-    ctx.fillStyle = C.ink;
-    ctx.fillRect(px,          py,          pw, 1);
-    ctx.fillRect(px,          py + ph - 1, pw, 1);
-    ctx.fillRect(px,          py,          1,  ph);
-    ctx.fillRect(px + pw - 1, py,          1,  ph);
-
-    ctx.textAlign = 'center';
-    ctx.fillStyle = C.accent;
-    ctx.font = 'bold 13px monospace';
-    ctx.fillText(title, W / 2, py + 24);
-
-    ctx.fillStyle = C.muted;
-    ctx.font = '6px monospace';
-    ctx.fillText(sub, W / 2, py + 41);
-    ctx.textAlign = 'start';
-  }
-
-  function draw() {
+  function draw(){
     ctx.save();
-    if (shake > 0) {
-      ctx.translate(
-        (Math.random() - 0.5) * shake * 0.6,
-        (Math.random() - 0.5) * shake * 0.6
-      );
-    }
-
-    ctx.fillStyle = C.bg;
-    ctx.fillRect(-12, -12, W + 24, H + 24);
-
-    drawGrid();
-    drawGround();
-
-    for (var i = 0; i < items.length; i++) drawItem(items[i]);
-
-    for (var p = 0; p < particles.length; p++) {
-      var q = particles[p];
-      ctx.fillStyle = q.color;
-      ctx.fillRect(q.x | 0, q.y | 0, q.s, q.s);
-    }
-
-    drawPlayer();
-    drawSlowBorder();
-    drawCombo();
-
-    if (state === 'idle') {
-      drawOverlay('PIPELINE', 'PRESS START');
-    } else if (state === 'over') {
-      drawOverlay('GAME OVER', 'SCORE ' + pad(score, 4) + '  ·  PRESS START');
-    }
-
-    if (flash > 0) {
-      ctx.fillStyle = C.accent;
-      ctx.globalAlpha = flash / 26;
-      ctx.fillRect(0, 0, W, H);
-      ctx.globalAlpha = 1;
-    }
-
+    if(shake>0){ctx.translate((Math.random()-0.5)*shake*0.6,(Math.random()-0.5)*shake*0.6);}
+    ctx.fillStyle=C.bg;ctx.fillRect(-12,-12,W+24,H+24);
+    drawGrid();drawGround();
+    for(var i=0;i<items.length;i++)drawItem(items[i]);
+    for(var p=0;p<particles.length;p++){var q=particles[p];ctx.fillStyle=q.color;ctx.fillRect(q.x|0,q.y|0,q.s,q.s);}
+    drawPlayer();drawSlowBorder();drawCombo();
+    if(state==='idle')drawOverlay('PIPELINE','PRESS START');
+    else if(state==='over')drawOverlay('GAME OVER','SCORE '+pad(score,4)+'  ·  PRESS START');
+    if(flash>0){ctx.fillStyle=C.accent;ctx.globalAlpha=flash/26;ctx.fillRect(0,0,W,H);ctx.globalAlpha=1;}
     ctx.restore();
   }
-
-  function loop() {
-    update();
-    draw();
-    requestAnimationFrame(loop);
-  }
-
-  reset();
-  updateHud();
-  loop();
+  function loop(){update();draw();requestAnimationFrame(loop);}
+  reset();updateHud();loop();
 })();
 
-/* Credits lightbox */
-(function () {
-  var lb      = document.getElementById('lightbox');
-  if (!lb) return;
-  var lbImg   = document.getElementById('lightbox-img');
-  var lbTitle = document.getElementById('lightbox-title');
-  var lbRole  = document.getElementById('lightbox-role');
-  var lbDesc  = document.getElementById('lightbox-desc');
-  var lbImdb  = document.getElementById('lightbox-imdb');
-  var lbClose = lb.querySelector('.lightbox__close');
-
-  function open(btn) {
-    lbImg.src           = btn.getAttribute('data-img') || '';
-    lbImg.alt           = btn.getAttribute('data-title') || '';
-    lbTitle.textContent = btn.getAttribute('data-title') || '';
-    lbRole.textContent  = btn.getAttribute('data-role')  || '';
-    lbDesc.textContent  = btn.getAttribute('data-desc')  || '';
-    var imdb = btn.getAttribute('data-imdb');
-    if (imdb) {
-      lbImdb.href = imdb;
-      lbImdb.style.display = '';
-    } else {
-      lbImdb.style.display = 'none';
-    }
-    lb.classList.add('on');
-    document.body.style.overflow = 'hidden';
-  }
-
-  function close() {
-    lb.classList.remove('on');
-    document.body.style.overflow = '';
-  }
-
-  Array.prototype.forEach.call(
-    document.querySelectorAll('.credit'),
-    function (btn) {
-      btn.addEventListener('click', function () { open(btn); });
-    }
-  );
-
-  lbClose.addEventListener('click', close);
-  lb.addEventListener('click', function (e) {
-    if (e.target === lb) close();
-  });
-  window.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && lb.classList.contains('on')) close();
-  });
+(function(){
+  var lb=document.getElementById('lightbox');if(!lb)return;
+  var lbImg=document.getElementById('lightbox-img'),lbTitle=document.getElementById('lightbox-title'),lbRole=document.getElementById('lightbox-role'),lbDesc=document.getElementById('lightbox-desc'),lbImdb=document.getElementById('lightbox-imdb'),lbClose=lb.querySelector('.lightbox__close');
+  function open(btn){lbImg.src=btn.getAttribute('data-img')||'';lbImg.alt=btn.getAttribute('data-title')||'';lbTitle.textContent=btn.getAttribute('data-title')||'';lbRole.textContent=btn.getAttribute('data-role')||'';lbDesc.textContent=btn.getAttribute('data-desc')||'';var imdb=btn.getAttribute('data-imdb');if(imdb){lbImdb.href=imdb;lbImdb.style.display='';}else lbImdb.style.display='none';lb.classList.add('on');document.body.style.overflow='hidden';}
+  function close(){lb.classList.remove('on');document.body.style.overflow='';}
+  Array.prototype.forEach.call(document.querySelectorAll('.credit'),function(btn){btn.addEventListener('click',function(){open(btn);});});
+  lbClose.addEventListener('click',close);
+  lb.addEventListener('click',function(e){if(e.target===lb)close();});
+  window.addEventListener('keydown',function(e){if(e.key==='Escape'&&lb.classList.contains('on'))close();});
 })();
-
-/* Footer year */
 document.getElementById('year').textContent = new Date().getFullYear();
-
-/* Prewarm backend */
-(function prewarmBackend() {
-  var BACKEND = "https://ai-stream-mvp.onrender.com";
-  var ping = new Image();
-  ping.onerror = function () {};
-  ping.src = BACKEND + "?_=" + Date.now();
-  try {
-    fetch(BACKEND, { mode: "no-cors", cache: "no-store" }).catch(function () {});
-  } catch (e) {}
-})();
+(function(){var BACKEND="https://ai-stream-mvp.onrender.com";var ping=new Image();ping.onerror=function(){};ping.src=BACKEND+"?_="+Date.now();try{fetch(BACKEND,{mode:"no-cors",cache:"no-store"}).catch(function(){});}catch(e){}})();
 </script>
 
 </body>
