@@ -1328,53 +1328,76 @@ const TOOLS = {
 };
 
 const CONTENT = {
-  rendering: `<div class="kicker">Lens 01 · Rendering &amp; Throughput</div>
-    <h1>Senior Render Wrangler</h1>
-    <p>The role behind the role: how I've kept render farms alive, shots flowing, and deadlines honest across a decade of production.</p>
+  rendering: `<div class="kicker">Rendering &amp; Throughput</div>
+    <h1>Rendering &amp; Throughput</h1>
+    <p>Rendering and media pipeline work spanning cloud video delivery, GPU codecs, real-time rendering, video compression, headless processing, and render/swarm configuration.</p>
     <h2>Through-line</h2>
-    <p><strong>2018 · Studio A.</strong> My title was Production Engineer, but the work was render wrangling — overnight farm triage, shot prioritization, and emergency troubleshooting for 40+ artists.</p>
-    <p><strong>2020–2022 · Studio B.</strong> I owned the submission pipeline. Average shot turnaround dropped 34%, and the nightly render queue never missed a delivery window for two consecutive seasons.</p>
+    <p><strong>Stream Seed.</strong> Cloud media delivery pipeline work centered on nginx, GPU codecs, P2P mesh bandwidth offload, LL-HLS/ABR, and realtime metadata.</p>
+    <p><strong>Glassbox Technologies, VR Pipeline R&amp;D, Frame Machine, Happy Mushroom, and VRLIVE.</strong> Rendering-adjacent work across Maya virtual camera plugins, realtime Unreal video stress testing, headless asset processing, render/swarm device configuration, and in-browser VR rendering with backend media delivery.</p>
     <h2>What I actually built</h2>
     <ul>
-      <li>Automated overnight farm triage — reduced artist morning triage from 90 minutes to 15.</li>
-      <li>Shot prioritization system that surfaced blocking renders before artists knew they were blocked.</li>
-      <li>Cloud burst rendering pipeline that scaled to 2,000 nodes during crunch.</li>
-    </ul>
-    <h2>Tools</h2><p>Deadline · OpenCue · AWS · Python · Prometheus · Grafana</p>`,
-  pipeline: `<div class="kicker">Lens 02 · Pipeline &amp; Tooling</div>
-    <h1>Pipeline Engineer</h1>
-    <p>The connective tissue between departments: the tools, naming conventions, and automation that let artists do their work.</p>
+      <li>Built and operated a cloud-based media delivery pipeline using nginx, GPU codecs, and a dynamic P2P mesh to offload bandwidth.</li>
+      <li>Applied LL-HLS and adaptive bitrate techniques to improve streaming quality and latency; developed real-time metadata tracking for peer contribution and offload metrics.</li>
+      <li>Adopted WebRTC, libp2p, and WebGPU to solve evolving media challenges.</li>
+      <li>Developed a Maya virtual camera plugin in C++/Python/C#; contributed core real-time features: frame timing, digital camera lens modeling, keyframe handling, and animation storage.</li>
+      <li>Resolved critical Wi‑Fi latency bottlenecks, enabling stable real-time operation for live client demos.</li>
+      <li>Developed HD stereo video in a realtime Unreal scene; performed Bink 2 video compression and stress testing in Unreal.</li>
+      <li>Explored a Nuke-to-Unreal asset pipeline and built a Maya 2017 Animation Exporter feeding Perforce/Unreal workflows.</li>
+      <li>Architected an asset pipeline that reduced manual scene-building time by 5× by offloading processing to headless machines.</li>
+      <li>Created a batch video rotator that renamed, rotated, and compressed thousands of mocap videos while preserving metadata.</li>
+      <li>Evaluated and built render and swarm device configurations, balancing performance, cost, and long-term reliability.</li>
+      <li>Optimized a mobile VR web application using KRPano for in-browser VR rendering; built Node.js/AWS backend and secure video-serving APIs.</li>
+    </ul>`,
+  pipeline: `<div class="kicker">Pipeline &amp; Tooling</div>
+    <h1>Pipeline &amp; Tooling</h1>
+    <p>Pipeline and tools work focused on automating DCC and production workflows, building artist-facing tools, writing technical documentation, and establishing version-control/ticketing workflows.</p>
     <h2>Through-line</h2>
-    <p>Every role I've held, I ended up building the tool the department didn't know it needed. Asset QC at Studio C. Naming and versioning overhaul at Studio D. Render submission at Studio A.</p>
+    <p><strong>Happy Mushroom, Glassbox Technologies, Frame Machine, Alexx Henry Studios, and The Third Floor.</strong> Pipeline/tooling work focused on artist-facing tools, technical documentation, version-control/ticketing, asset tracking, batch processing, photogrammetry automation, and DCC automation.</p>
     <h2>What I actually built</h2>
     <ul>
-      <li>Naming and versioning overhaul that eliminated 90% of asset mis-delivery incidents.</li>
-      <li>Asset QC automation that flagged 1,200 issues across three shows before they reached lighting.</li>
-      <li>Render submission tool adopted by 4 departments and 80+ artists.</li>
-    </ul>
-    <h2>Tools</h2><p>Python · Maya · Nuke · ShotGrid · Docker · Kubernetes</p>`,
-  lookdev: `<div class="kicker">Lens 03 · Look &amp; Lighting</div>
-    <h1>Look Development</h1>
-    <p>The role that's hardest to see in a resume: the people who make the render actually look like the concept.</p>
+      <li>Translated complex technical workflows into straightforward tools and documentation for creative directors, producers, and screenwriters.</li>
+      <li>Built custom offline tools that gave creative control directly to directors/producers/screenwriters, eliminating technician-led hand-holding.</li>
+      <li>Maintained internal documentation that became the team’s go-to resource, reducing repetitive support requests and speeding creative iteration.</li>
+      <li>Developed a Maya virtual camera plugin in C++/Python in a cross-time-zone engineering team; delivered a pitch-ready Netflix/Epic prototype in two weeks.</li>
+      <li>Contributed to core real-time features—frame timing, lens modeling, keyframe handling, animation storage—and provided hands-on technical support/live demos.</li>
+      <li>Architected a new asset pipeline that reduced manual scene-building time by 5× by offloading processing to headless machines.</li>
+      <li>Established the studio’s first version control and ticketing workflow using SVN + Shotgun; built automated Shotgun event triggers that routed assets without manual intervention.</li>
+      <li>Managed ingest, processing, and automated tracking of 1,900+ markerless facial mocap videos for 20+ digital characters across 17 performers; built a batch video rotator preserving metadata.</li>
+      <li>Automated a manual photogrammetry workflow; wrote image-manipulation code for metadata queries, masking, feature detection, sorting, conversion, display, quality checking, and naming.</li>
+      <li>Oversaw every aspect of the production pipeline.</li>
+      <li>Created tools to automate redundant tasks and optimize pipeline workflows; contributed to tool creation and pipeline development studio-wide.</li>
+      <li>Spearheaded delivery of the studio’s first fully finals project, implementing code fixes under a strict deadline while delivering shots to an outside vendor.</li>
+      <li>Developed a Maya 2017 Animation Exporter writing to Perforce for immediate Unreal use; explored Nuke-to-Unreal asset pipeline.</li>
+    </ul>`,
+  realtime: `<div class="kicker">Lens 03 · Realtime Tech Art</div>
+    <h1>Realtime Tech Art</h1>
+    <p>Realtime tech art work spanning WebRTC/libp2p/WebGPU media delivery, P2P mesh offload, Maya virtual-camera latency work, Unreal/VR realtime experiences, mobile VR web apps, and real-time 3D face interaction.</p>
     <h2>Through-line</h2>
-    <p>Look dev is often uncredited, but it shows up in every frame. My contributions at Studio B and Studio D set the shader library and lighting rig that became each show's visual baseline.</p>
+    <p><strong>Stream Seed, Glassbox Technologies, VR Pipeline R&amp;D, VRLIVE, and Alexx Henry Studios.</strong> Realtime work across WebRTC/libp2p/WebGPU media delivery, P2P mesh offload, Maya virtual-camera latency debugging, Unreal/VR realtime experiences, mobile VR web apps, and real-time 3D face interaction.</p>
     <h2>What I actually built</h2>
     <ul>
-      <li>Shader library used across 3 shows and 200+ assets.</li>
-      <li>Lighting rigs adopted by two lighting teams as the default starting point.</li>
-      <li>Color pipeline that eliminated the "why does the render look different from the comp" problem.</li>
-    </ul>
-    <h2>Tools</h2><p>Arnold · Katana · Houdini · Nuke · OpenColorIO</p>`,
+      <li>Built and operated a cloud-based media delivery pipeline using nginx, GPU codecs, and a dynamic P2P mesh to offload bandwidth; applied LL-HLS and adaptive bitrate.</li>
+      <li>Developed real-time metadata tracking for peer contribution and offload metrics; adopted WebRTC, libp2p, and WebGPU to solve evolving media challenges.</li>
+      <li>Developed a Maya virtual camera plugin in C++/Python; contributed frame timing, digital camera lens modeling, keyframe handling, and animation storage.</li>
+      <li>Resolved critical Wi‑Fi latency bottlenecks that made the product unusable in production, enabling stable real-time operation for live client demos.</li>
+      <li>Delivered a pitch-ready prototype for Netflix and Epic in two weeks.</li>
+      <li>Created interactive experiences for Vive and Oculus; developed HD stereo video in a realtime Unreal scene and stress-tested Bink 2 video compression in Unreal.</li>
+      <li>Built a Maya 2017 Animation Exporter writing to Perforce for immediate Unreal use; explored a Nuke-to-Unreal asset pipeline.</li>
+      <li>Optimized a mobile VR web application to run across all devices using KRPano for in-browser VR rendering.</li>
+      <li>Built the full Node.js backend on AWS with Elastic Beanstalk; designed SQL databases supporting cross-platform accounts/purchases; implemented Stripe payments.</li>
+      <li>Created backend APIs to securely obfuscate and serve video content from cloud storage.</li>
+      <li>Created real-time 3D face interaction in conjunction with USC Research Labs.</li>
+    </ul>`
 };
-
 const WELCOME_CONTENT = `
   <div class="kicker">Interactive Resume</div>
-  <h1>Pick a cartridge</h1>
-  <p>Three cartridges sit on the shelf. Each one tells the same career story through a different role lens — pick the one closest to the role you're hiring for, or drag to look around first.</p>
+  <h1>Pick a cartridge from the right side of the page</h1>
+  <p>Each cartridges tells the same career story through a different role lens. Pick the one closest to the role you're hiring for, or drag to look around the environment first.</p>
   <h2>What you're looking at</h2>
   <p>This is a 3D cinema built with Three.js. The cartridges are real DOM elements projected in 3D space. When you click one, it slides into the projector, the screen loads that role's resume, and the toolkit tube fills with the software stack used on that job.</p>
   <h2>Short on time?</h2>
-  <p>Click <strong>View Traditional Resume</strong> in the top-right corner to skip the cinema entirely.</p>
+  <p>Click <strong>View Traditional Resume</strong> in the top-right corner to skip the cinema entirely or use your mouse wheel to scroll to my traditional resume</p>
+  <p>Can you find the easter egg??</p>
 `;
 
 const canvas = document.getElementById('webgl-canvas');
