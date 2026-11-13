@@ -202,6 +202,20 @@ body.vr-mode #ar-button {
     brightness(1.12) saturate(1.08);
 }
 
+/* Shake wiggle feedback */
+@keyframes cartShakeWiggle {
+  0%, 100% { transform: translate(0, 0) rotate(0); }
+  25%      { transform: translate(-3px, -2px) rotate(-3deg); }
+  50%      { transform: translate(3px, 2px) rotate(3deg); }
+  75%      { transform: translate(-2px, 2px) rotate(-2deg); }
+}
+.cartridge.shaking .cart-img {
+  animation: cartShakeWiggle 0.14s infinite;
+}
+
+/* Prevent touch scroll from interfering with shake */
+.cartridge { touch-action: none; }
+
 #view-resume-btn{
   position:absolute;
   top:16px;
@@ -1439,6 +1453,206 @@ CARTRIDGE_DEFS.forEach(({ id, title, imgUrl }) => {
 });
 
 // =========================================================
+// EASTER EGG — grab a loaded cartridge, shake >1s to reveal the arcade
+// =========================================================
+let shakeSession = null;
+let easterEggActive = false;
+let originalCabScreen = null;
+
+const SHAKE_MIN_COUNT         = 12;    // direction flips required
+const SHAKE_MIN_DURATION_MS   = 1000;  // must shake for at least this long
+const SHAKE_PAUSE_RESET_MS    = 300;   // pause > this resets the counter
+const SHAKE_MIN_MOVE_PX       = 3;     // ignore sub-pixel jitter
+
+css3dRoot.addEventListener('pointerdown', (e) => {
+  const btn = e.target.closest('.cartridge');
+  if (!btn) return;
+  const cart = cartridgeObjects.find(c => c.el === btn);
+  if (!cart || cart.state !== 'inserted') return;
+  if (easterEggActive) return;
+
+  shakeSession = {
+    cart,
+    startTime:   performance.now(),
+    lastMoveTime: performance.now(),
+    lastX: e.clientX,
+    lastY: e.clientY,
+    lastSignX: 0,
+    lastSignY: 0,
+    shakeCount: 0,
+  };
+  cart.el.classList.add('shaking');
+
+  document.addEventListener('pointermove', onShakeMove, { passive: false });
+  document.addEventListener('pointerup', onShakeEnd);
+  document.addEventListener('pointercancel', onShakeEnd);
+});
+
+function onShakeMove(e) {
+  const s = shakeSession;
+  if (!s) return;
+
+  const now = performance.now();
+
+  // Long pause → reset the shake window
+  if (now - s.lastMoveTime > SHAKE_PAUSE_RESET_MS) {
+    s.startTime = now;
+    s.shakeCount = 0;
+  }
+
+  const dx = e.clientX - s.lastX;
+  const dy = e.clientY - s.lastY;
+  s.lastX = e.clientX;
+  s.lastY = e.clientY;
+
+  if (Math.abs(dx) >= SHAKE_MIN_MOVE_PX) {
+    const sign = Math.sign(dx);
+    if (s.lastSignX !== 0 && sign !== s.lastSignX) s.shakeCount++;
+    s.lastSignX = sign;
+  }
+  if (Math.abs(dy) >= SHAKE_MIN_MOVE_PX) {
+    const sign = Math.sign(dy);
+    if (s.lastSignY !== 0 && sign !== s.lastSignY) s.shakeCount++;
+    s.lastSignY = sign;
+  }
+
+  s.lastMoveTime = now;
+
+  if (now - s.startTime >= SHAKE_MIN_DURATION_MS && s.shakeCount >= SHAKE_MIN_COUNT) {
+    triggerEasterEgg();
+    onShakeEnd();
+  }
+}
+
+function onShakeEnd() {
+  if (shakeSession) {
+    shakeSession.cart.el.classList.remove('shaking');
+    shakeSession = null;
+  }
+  document.removeEventListener('pointermove', onShakeMove);
+  document.removeEventListener('pointerup', onShakeEnd);
+  document.removeEventListener('pointercancel', onShakeEnd);
+}
+
+async function quickEject(cart) {
+  if (!cart) return;
+  cart.state = 'ejecting';
+  const startPos = cart.obj.position.clone();
+  const upPos = startPos.clone();
+  upPos.y += cart.homeScale * 30;
+  upPos.z = 0.5;
+  await tween(cart, upPos, cart.obj.scale.x * 1.15, 0, 0.35, easeOutCubic);
+  cart.obj.position.copy(cart.homePosition);
+  cart.obj.scale.setScalar(cart.homeScale);
+  cart.obj.rotation.set(0, 0, 0);
+  cart.el.style.opacity = '1';
+  cart.el.style.zIndex = '20';
+  cart.state = 'on_shelf';
+}
+
+function triggerEasterEgg() {
+  if (easterEggActive) return;
+  easterEggActive = true;
+
+  const cart = insertedCartridge;
+  insertedCartridge = null;
+  if (cart) quickEject(cart);
+
+  // Orange flash on the projector frame
+  screenWrapper.animate([
+    { boxShadow: '0 0 0 0 rgba(232,114,42,0)' },
+    { boxShadow: '0 0 60px 30px rgba(232,114,42,0.9)', offset: 0.5 },
+    { boxShadow: '0 0 0 0 rgba(232,114,42,0)' },
+  ], { duration: 700, easing: 'ease-out' });
+
+  const gameCanvas = document.getElementById('g-canvas');
+  const gameUpgrade = document.getElementById('g-upgrade');
+  if (gameCanvas && !originalCabScreen) {
+    originalCabScreen = gameCanvas.parentElement;
+  }
+
+  screenScroll.innerHTML = '';
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = `
+    <div class="kicker" style="color: var(--accent);">Easter Egg Unlocked</div>
+    <h1>🎮 Pipeline Panic</h1>
+    <div id="cinema-game-host" style="position:relative; width:100%; max-width:480px; margin:18px auto; line-height:0; background:#000; border-radius:4px; overflow:hidden;"></div>
+    <p style="margin-top:16px; color: var(--muted); font-size:0.9em; text-align:center;">
+      Click the game to play. ← → or A/D to move, Space to start. Press <strong>Esc</strong> to exit.
+    </p>
+    <div style="text-align:center; margin-top:20px;">
+      <button id="exit-easter-egg" style="padding:10px 18px; background: var(--surface); color: var(--text); border:1px solid var(--line); border-radius:6px; font-family:var(--mono); font-size:12px; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer;">
+        ← Return to Cinema
+      </button>
+    </div>
+  `;
+  screenScroll.appendChild(wrapper);
+  screenScroll.scrollTop = 0;
+
+  const host = document.getElementById('cinema-game-host');
+  if (host && gameCanvas) {
+    gameCanvas.style.pointerEvents = 'auto';
+    host.appendChild(gameCanvas);
+  }
+  if (host && gameUpgrade) {
+    gameUpgrade.style.position = 'absolute';
+    gameUpgrade.style.inset = '0';
+    host.appendChild(gameUpgrade);
+  }
+
+  const exitBtn = document.getElementById('exit-easter-egg');
+  if (exitBtn) exitBtn.addEventListener('click', () => exitEasterEgg(true));
+  document.addEventListener('keydown', easterEggKeyHandler);
+
+  faceScreen();
+}
+
+function exitEasterEgg(showWelcome) {
+  if (!easterEggActive) return;
+  easterEggActive = false;
+
+  const gameCanvas = document.getElementById('g-canvas');
+  const gameUpgrade = document.getElementById('g-upgrade');
+
+  if (originalCabScreen) {
+    if (gameCanvas && gameCanvas.parentElement !== originalCabScreen) {
+      originalCabScreen.appendChild(gameCanvas);
+    }
+    if (gameUpgrade && gameUpgrade.parentElement !== originalCabScreen) {
+      gameUpgrade.style.position = '';
+      gameUpgrade.style.inset = '';
+      originalCabScreen.appendChild(gameUpgrade);
+    }
+  }
+  originalCabScreen = null;
+
+  document.removeEventListener('keydown', easterEggKeyHandler);
+
+  if (showWelcome) {
+    screenScroll.innerHTML = WELCOME_CONTENT;
+    screenScroll.scrollTop = 0;
+    inShelfView = true;
+    const portrait = window.innerHeight >= window.innerWidth;
+    if (portrait) {
+      targetCameraX = INITIAL_CAMERA_POS.x;
+      targetCameraY = INITIAL_CAMERA_POS.y;
+      targetCameraZ = INITIAL_CAMERA_POS.z;
+    } else {
+      const shelf = computeShelfView();
+      targetCameraX = shelf.x;
+      targetCameraY = shelf.y;
+      targetCameraZ = shelf.z;
+    }
+    targetYaw = 0;
+    targetPitch = 0;
+  }
+}
+
+function easterEggKeyHandler(e) {
+  if (e.key === 'Escape' && easterEggActive) exitEasterEgg(true);
+}
+
+// =========================================================
 // TOOL TUBE — tall glass cylinder to the left of the screen
 // =========================================================
 const TUBE_W_CSS = 210;
@@ -1935,6 +2149,7 @@ async function ejectCartridge(cart) {
 }
 
 async function selectCartridge(id) {
+  if (easterEggActive) exitEasterEgg(false);   // ← NEW LINE GOES HERE
   const newCart = cartridgeObjects.find(c => c.id === id);
   if (!newCart) return;
 
