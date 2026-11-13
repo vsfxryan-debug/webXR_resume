@@ -266,6 +266,148 @@ body.vr-mode #ar-button {
 #cinema-spacer{height:100vh;pointer-events:none}
 
 /* ============================================================
+   TOOL TUBE — fills with project tool logos
+   ============================================================ */
+#tool-tube-wrap{
+  position:relative;
+  width:110px;
+  height:340px;
+  pointer-events:none;
+}
+
+#tool-tube-label{
+  position:absolute;
+  top:-22px;
+  left:0;
+  right:0;
+  text-align:center;
+  font-family:var(--mono);
+  font-size:9px;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:rgba(200,190,220,.55);
+  pointer-events:none;
+}
+
+#tool-tube{
+  position:relative;
+  width:100%;
+  height:100%;
+  /* Cylindrical glass — horizontal gradient = curvature, vertical ellipse caps */
+  border-radius:55px / 24px;
+  background:
+    linear-gradient(to right,
+      rgba(8,6,12,.92) 0%,
+      rgba(35,28,46,.55) 16%,
+      rgba(90,78,110,.22) 50%,
+      rgba(35,28,46,.55) 84%,
+      rgba(8,6,12,.92) 100%);
+  border:1px solid rgba(180,168,220,.22);
+  box-shadow:
+    inset 0 0 28px rgba(0,0,0,.75),
+    inset 5px 0 14px rgba(255,210,170,.07),
+    inset -5px 0 14px rgba(0,0,0,.55),
+    0 10px 50px rgba(0,0,0,.55),
+    0 0 70px rgba(232,114,42,.10);
+  overflow:hidden;
+  display:flex;
+  flex-direction:column-reverse;   /* first child = bottom, fills upward */
+  align-items:center;
+  justify-content:flex-start;
+  padding:10px 0 18px 0;
+  gap:6px;
+  isolation:isolate;
+}
+
+/* Glass rim highlight (top ellipse) */
+#tool-tube::before{
+  content:'';
+  position:absolute;
+  top:3px; left:8%; right:8%;
+  height:22px;
+  border-radius:50%;
+  background:radial-gradient(ellipse at 50% 40%,
+    rgba(255,255,255,.16) 0%,
+    rgba(255,255,255,.04) 45%,
+    transparent 75%);
+  pointer-events:none;
+  z-index:1;
+}
+
+/* Warm landing glow at the bottom */
+#tool-tube::after{
+  content:'';
+  position:absolute;
+  bottom:4px; left:14%; right:14%;
+  height:18px;
+  border-radius:50%;
+  background:radial-gradient(ellipse at center,
+    rgba(232,114,42,.22) 0%,
+    transparent 70%);
+  pointer-events:none;
+  z-index:0;
+}
+
+/* Empty state */
+.tube-empty{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  font-family:var(--mono);
+  font-size:9px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:rgba(200,190,220,.35);
+  padding:0 18px;
+  pointer-events:none;
+}
+
+/* One tool chip */
+.tool-chip{
+  position:relative;
+  z-index:2;
+  width:64px;
+  height:36px;
+  border-radius:8px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-family:var(--mono);
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.04em;
+  color:#fff;
+  text-shadow:0 1px 2px rgba(0,0,0,.7);
+  box-shadow:
+    0 3px 8px rgba(0,0,0,.55),
+    inset 0 1px 0 rgba(255,255,255,.35),
+    inset 0 -2px 0 rgba(0,0,0,.35);
+  flex-shrink:0;
+  will-change:transform,opacity;
+  background-image:linear-gradient(155deg,
+    rgba(255,255,255,.28) 0%,
+    rgba(255,255,255,0) 42%,
+    rgba(0,0,0,.22) 100%);
+}
+
+.tool-chip.drop-in{ animation:chipDropIn .42s cubic-bezier(.34,1.46,.64,1) both; }
+.tool-chip.fall-out{ animation:chipFallOut .36s cubic-bezier(.5,0,.85,.4) both; }
+
+@keyframes chipDropIn{
+  0%   { transform:translateY(-70px) scale(.82); opacity:0; }
+  65%  { transform:translateY(4px)   scale(1.03); opacity:1; }
+  100% { transform:translateY(0)     scale(1);    opacity:1; }
+}
+
+@keyframes chipFallOut{
+  0%   { transform:translateY(0)    scale(1)   rotate(0);    opacity:1; }
+  100% { transform:translateY(48px) scale(.75) rotate(10deg); opacity:0; }
+}
+
+/* ============================================================
    RESUME SECTION — Ryan's site scoped here
    ============================================================ */
 #resume-section{
@@ -1208,6 +1350,36 @@ import * as THREE from 'three';
 import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
 import html2canvas from 'html2canvas';
 
+// =========================================================
+// TOOLS — one entry per cartridge id.
+// 'short' is what shows on the badge. Swap in an <img> later if you get real logos.
+// =========================================================
+const TOOLS = {
+  rendering: [
+    { name:'Deadline',    short:'DL',  color:'#e8443b' },
+    { name:'OpenCue',     short:'OC',  color:'#3b82f6' },
+    { name:'AWS',         short:'AWS', color:'#ff9900' },
+    { name:'Python',      short:'PY',  color:'#3776ab' },
+    { name:'Prometheus',  short:'PR',  color:'#e6522c' },
+    { name:'Grafana',     short:'GF',  color:'#f46800' },
+  ],
+  pipeline: [
+    { name:'Python',      short:'PY',  color:'#3776ab' },
+    { name:'Maya',        short:'MA',  color:'#37a5cc' },
+    { name:'Nuke',        short:'NK',  color:'#d4a900' },
+    { name:'ShotGrid',    short:'SG',  color:'#00a4d4' },
+    { name:'Docker',      short:'DK',  color:'#2496ed' },
+    { name:'Kubernetes',  short:'K8',  color:'#326ce5' },
+  ],
+  lookdev: [
+    { name:'Arnold',      short:'AR',  color:'#c9302c' },
+    { name:'Katana',      short:'KA',  color:'#7c3aed' },
+    { name:'Houdini',     short:'HD',  color:'#e64a19' },
+    { name:'Nuke',        short:'NK',  color:'#d4a900' },
+    { name:'OpenColorIO', short:'OCI', color:'#8b5cf6' },
+  ],
+};
+
 const CONTENT = {
   rendering: `<div class="kicker">Lens 01 · Rendering &amp; Throughput</div>
     <h1>Senior Render Wrangler</h1>
@@ -1248,7 +1420,7 @@ const CONTENT = {
     <h2>Tools</h2><p>Arnold · Katana · Houdini · Nuke · OpenColorIO</p>`,
 };
 
-// === NEW: Welcome content shown on page load (no auto-inserted cartridge) ===
+// === Welcome content shown on page load (no auto-inserted cartridge) ===
 const WELCOME_CONTENT = `
   <div class="kicker">Interactive Resume</div>
   <h1>Pick a cartridge</h1>
@@ -1281,7 +1453,7 @@ css3dRenderer.domElement.style.left = '0';
 css3dRenderer.domElement.style.pointerEvents = 'none';
 css3dRoot.appendChild(css3dRenderer.domElement);
 
-const layoutState = { visibleW: 1, visibleH: 1, screenWorldW: 1, screenWorldH: 1 };
+const layoutState = { visibleW: 1, visibleH: 1, screenWorldW: 1, screenWorldH: 1, tubeW: 0, tubeH: 0 };
 const CART_W = 320;
 const CART_H = 180;
 
@@ -1335,6 +1507,24 @@ CARTRIDGE_DEFS.forEach(({ id, title, imgUrl }) => {
   });
 });
 
+// =========================================================
+// TOOL TUBE — a tall glass cylinder that lives to the left of the screen
+// =========================================================
+const TUBE_W_CSS = 110;
+const TUBE_H_CSS = 340;
+
+const tubeWrap = document.createElement('div');
+tubeWrap.id = 'tool-tube-wrap';
+tubeWrap.innerHTML = `
+  <div id="tool-tube-label">Toolkit</div>
+  <div id="tool-tube">
+    <div class="tube-empty">Select a cartridge</div>
+  </div>
+`;
+const tubeObject = new CSS3DObject(tubeWrap);
+tubeObject.position.set(0, 0, 0);
+scene.add(tubeObject);
+
 const xrScreenCanvas = document.createElement('canvas');
 xrScreenCanvas.width = 1280;
 xrScreenCanvas.height = 720;
@@ -1349,7 +1539,7 @@ let yaw = 0, pitch = 0, targetYaw = 0, targetPitch = 0;
 let targetCameraX = INITIAL_CAMERA_POS.x;
 let targetCameraY = INITIAL_CAMERA_POS.y;
 let targetCameraZ = INITIAL_CAMERA_POS.z;
-// === NEW: true until first cartridge is picked (drives shelf view vs screen view) ===
+// true until first cartridge is picked (drives shelf view vs screen view)
 let inShelfView = true;
 
 const YAW_LIMIT   = THREE.MathUtils.degToRad(70);
@@ -1387,7 +1577,7 @@ canvas.addEventListener('pointerup', endDrag);
 canvas.addEventListener('pointercancel', endDrag);
 
 function faceScreen() {
-  inShelfView = false;   // === NEW: leave shelf view when a cartridge is chosen
+  inShelfView = false;   // leave shelf view when a cartridge is chosen
   targetCameraX = screenObject.position.x;
   targetCameraY = screenObject.position.y;
   targetCameraZ = screenObject.position.z + CAMERA_SCREEN_DISTANCE;
@@ -1395,7 +1585,7 @@ function faceScreen() {
   targetPitch = 0;
 }
 
-// === NEW: compute a camera pose that fits the screen + all cartridges on screen.
+// Compute a camera pose that fits the screen + all cartridges + the tool tube.
 // Only used in landscape; portrait preserves the existing z=5 zoom per user request.
 function computeShelfView() {
   const fovRad = (camera.fov * Math.PI) / 180;
@@ -1418,6 +1608,16 @@ function computeShelfView() {
       maxX: c.homePosition.x + w / 2,
       minY: c.homePosition.y - h / 2,
       maxY: c.homePosition.y + h / 2,
+    });
+  }
+
+  // Include the tool tube so the camera pulls back to fit it
+  if (tubeObject && tubeObject.visible && layoutState.tubeW) {
+    items.push({
+      minX: tubeObject.position.x - layoutState.tubeW / 2,
+      maxX: tubeObject.position.x + layoutState.tubeW / 2,
+      minY: tubeObject.position.y - layoutState.tubeH / 2,
+      maxY: tubeObject.position.y + layoutState.tubeH / 2,
     });
   }
 
@@ -1557,6 +1757,86 @@ function positionCartridges(visibleW, screenWorldW, orientation) {
   }
 }
 
+// =========================================================
+// TOOL TUBE: layout + fill logic
+// =========================================================
+function positionTube(cssScale, screenWorldW, orientation) {
+  if (!tubeObject) return;
+
+  // Portrait viewport is too tight for a tube on the left edge — hide it.
+  if (orientation === 'portrait') {
+    tubeObject.visible = false;
+    return;
+  }
+  tubeObject.visible = true;
+
+  const tubeWorldW = TUBE_W_CSS * cssScale;
+  const tubeWorldH = TUBE_H_CSS * cssScale;
+
+  tubeObject.scale.set(cssScale, cssScale, 1);
+
+  const screenLeft = screenObject.position.x - screenWorldW / 2;
+  const gap = 0.15;
+
+  tubeObject.position.set(
+    screenLeft - gap - tubeWorldW / 2,
+    screenObject.position.y,
+    0
+  );
+
+  layoutState.tubeW = tubeWorldW;
+  layoutState.tubeH = tubeWorldH;
+}
+
+let tubeSwapTimer = null;
+let tubeTargetId  = null;
+
+function fillTube(cartId) {
+  const tools = TOOLS[cartId];
+  if (!tools) return;
+  if (cartId === tubeTargetId) return;      // already showing this cart's tools
+  tubeTargetId = cartId;
+
+  if (tubeSwapTimer) { clearTimeout(tubeSwapTimer); tubeSwapTimer = null; }
+
+  const tube = document.getElementById('tool-tube');
+  if (!tube) return;
+
+  const existing = Array.from(tube.querySelectorAll('.tool-chip'));
+
+  const doSwap = () => {
+    tube.innerHTML = '';
+    addChips(tube, tools);
+  };
+
+  if (existing.length === 0) { doSwap(); return; }
+
+  // Fall out the old chips with a stagger
+  existing.forEach((chip, i) => {
+    chip.classList.remove('drop-in');
+    void chip.offsetWidth;                  // force reflow so animation restarts
+    chip.classList.add('fall-out');
+    chip.style.animationDelay = (i * 25) + 'ms';
+  });
+
+  const fallTime = (existing.length - 1) * 25 + 360 + 90;
+  tubeSwapTimer = setTimeout(() => {
+    tubeSwapTimer = null;
+    doSwap();
+  }, fallTime);
+}
+
+function addChips(tube, tools) {
+  tools.forEach((tool, i) => {
+    const chip = document.createElement('div');
+    chip.className = 'tool-chip drop-in';
+    chip.textContent = tool.short;
+    chip.style.backgroundColor = tool.color;
+    chip.style.animationDelay = (i * 70) + 'ms';
+    tube.appendChild(chip);
+  });
+}
+
 let currentOrientation = 'landscape';
 
 function updateLayout() {
@@ -1612,17 +1892,20 @@ function updateLayout() {
 
   positionCartridges(visibleW, screenWorldW, orientation);
 
+  const cssScale = visibleW / w;
+  positionTube(cssScale, screenWorldW, orientation);   // ← sets layoutState.tubeW/H
+
   if (insertedCartridge && !insertedCartridge.anim) snapToSlot(insertedCartridge);
 
-  // === Camera target: shelf view (landscape pulls back; portrait keeps z=5) or screen view ===
+  // Camera target: shelf view (landscape pulls back; portrait keeps z=5) or screen view
   if (inShelfView) {
     if (orientation === 'portrait') {
-      // Portrait: preserve current zoom (z=5, origin). Screen fills view; hint of cart on the right.
+      // Portrait: preserve current zoom (z=5, origin).
       targetCameraX = INITIAL_CAMERA_POS.x;
       targetCameraY = INITIAL_CAMERA_POS.y;
       targetCameraZ = INITIAL_CAMERA_POS.z;
     } else {
-      // Landscape: fit screen + all carts.
+      // Landscape: fit screen + all carts + tube.
       const shelf = computeShelfView();
       targetCameraX = shelf.x;
       targetCameraY = shelf.y;
@@ -1725,6 +2008,9 @@ async function selectCartridge(id) {
   cartridgeObjects.forEach(c => {
     c.el.classList.toggle('active', c.id === id);
   });
+
+  fillTube(id);   // ← fills the tool tube with this project's toolkit
+
   faceScreen();
   if (isInXR()) snapshotToXrScreen();
 
