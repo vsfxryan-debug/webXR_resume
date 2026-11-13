@@ -1361,7 +1361,7 @@ const TOOLS = {
   ],
   pipeline: [
     { name:'Python',     logo:'./images/logos/python.svg',     color:'#3776ab' },
-    { name:'Maya',       logo:'./images/logos/maya.png',       color:'#37a5cc' },
+    { name:'Maya',       logo:'./images/logos/maya.jpg',       color:'#37a5cc' },
     { name:'Nuke',       logo:'./images/logos/nuke.png',       color:'#d4a900' },
     { name:'ShotGrid',   logo:'./images/logos/shotgrid.png',   color:'#00a4d4' },
     { name:'Docker',     logo:'./images/logos/docker.svg',     color:'#2496ed' },
@@ -1453,7 +1453,7 @@ const CART_W = 320;
 const CART_H = 180;
 
 const panoTexture = new THREE.TextureLoader().load(
-  'https://github.com/vsfxryan-debug/webXR_resume/blob/main/images/tv_studio.jpg'
+  './images/tv_studio.jpg'
 );
 panoTexture.colorSpace = THREE.SRGBColorSpace;
 const panoMaterial = new THREE.MeshBasicMaterial({ map: panoTexture, side: THREE.BackSide });
