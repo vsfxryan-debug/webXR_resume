@@ -1308,7 +1308,7 @@ const TOOLS = {
     { name:'AWS',        logo:'./images/logos/aws.png',        color:'#ff9900' },
     { name:'Python',     logo:'./images/logos/python.png',     color:'#3776ab' },
     { name:'Prometheus', logo:'./images/logos/prometheus.svg', color:'#e6522c' },
-    { name:'Grafana',    logo:'./images/logos/grafana.svg',    color:'#f46800' },
+    { name:'Unreal',    logo:'./images/logos/unreal.png',    color:'#f46800' },
   ],
   pipeline: [
     { name:'Python',     logo:'./images/logos/python.png',     color:'#3776ab' },
@@ -1316,9 +1316,9 @@ const TOOLS = {
     { name:'Nuke',       logo:'./images/logos/nuke.png',       color:'#d4a900' },
     { name:'ShotGrid',   logo:'./images/logos/shotgrid.png',   color:'#00a4d4' },
     { name:'Docker',     logo:'./images/logos/docker.png',     color:'#2496ed' },
-    { name:'Kubernetes', logo:'./images/logos/kubernetes.svg', color:'#326ce5' },
+    { name:'Unreal',     logo:'./images/logos/unreal.png',     color:'#f46800' },
   ],
-  lookdev: [
+  realtime: [
     { name:'Arnold',      logo:'./images/logos/arnold.png',      color:'#c9302c' },
     { name:'Katana',      logo:'./images/logos/katana.png',      color:'#7c3aed' },
     { name:'Houdini',     logo:'./images/logos/houdini.png',     color:'#e64a19' },
@@ -1329,9 +1329,8 @@ const TOOLS = {
 
 const CONTENT = {
   rendering: `<div class="kicker">Rendering &amp; Throughput</div>
-    <h1>Rendering &amp; Throughput</h1>
     <p>Rendering and media pipeline work spanning cloud video delivery, GPU codecs, real-time rendering, video compression, headless processing, and render/swarm configuration.</p>
-    <h2>Through-line</h2>
+    <h2>Summary</h2>
     <p><strong>Stream Seed.</strong> Cloud media delivery pipeline work centered on nginx, GPU codecs, P2P mesh bandwidth offload, LL-HLS/ABR, and realtime metadata.</p>
     <p><strong>Glassbox Technologies, VR Pipeline R&amp;D, Frame Machine, Happy Mushroom, and VRLIVE.</strong> Rendering-adjacent work across Maya virtual camera plugins, realtime Unreal video stress testing, headless asset processing, render/swarm device configuration, and in-browser VR rendering with backend media delivery.</p>
     <h2>What I actually built</h2>
@@ -1349,9 +1348,8 @@ const CONTENT = {
       <li>Optimized a mobile VR web application using KRPano for in-browser VR rendering; built Node.js/AWS backend and secure video-serving APIs.</li>
     </ul>`,
   pipeline: `<div class="kicker">Pipeline &amp; Tooling</div>
-    <h1>Pipeline &amp; Tooling</h1>
     <p>Pipeline and tools work focused on automating DCC and production workflows, building artist-facing tools, writing technical documentation, and establishing version-control/ticketing workflows.</p>
-    <h2>Through-line</h2>
+    <h2>Summary</h2>
     <p><strong>Happy Mushroom, Glassbox Technologies, Frame Machine, Alexx Henry Studios, and The Third Floor.</strong> Pipeline/tooling work focused on artist-facing tools, technical documentation, version-control/ticketing, asset tracking, batch processing, photogrammetry automation, and DCC automation.</p>
     <h2>What I actually built</h2>
     <ul>
@@ -1359,20 +1357,19 @@ const CONTENT = {
       <li>Built custom offline tools that gave creative control directly to directors/producers/screenwriters, eliminating technician-led hand-holding.</li>
       <li>Maintained internal documentation that became the team’s go-to resource, reducing repetitive support requests and speeding creative iteration.</li>
       <li>Developed a Maya virtual camera plugin in C++/Python in a cross-time-zone engineering team; delivered a pitch-ready Netflix/Epic prototype in two weeks.</li>
-      <li>Contributed to core real-time features—frame timing, lens modeling, keyframe handling, animation storage—and provided hands-on technical support/live demos.</li>
+      <li>Contributed to core real-time features: frame timing, lens modeling, keyframe handling, animation storage, and provided hands-on technical support/live demos.</li>
       <li>Architected a new asset pipeline that reduced manual scene-building time by 5× by offloading processing to headless machines.</li>
       <li>Established the studio’s first version control and ticketing workflow using SVN + Shotgun; built automated Shotgun event triggers that routed assets without manual intervention.</li>
       <li>Managed ingest, processing, and automated tracking of 1,900+ markerless facial mocap videos for 20+ digital characters across 17 performers; built a batch video rotator preserving metadata.</li>
       <li>Automated a manual photogrammetry workflow; wrote image-manipulation code for metadata queries, masking, feature detection, sorting, conversion, display, quality checking, and naming.</li>
-      <li>Oversaw every aspect of the production pipeline.</li>
+      <li>Oversaw every aspect of the production pipeline at Third Floor Inc.</li>
       <li>Created tools to automate redundant tasks and optimize pipeline workflows; contributed to tool creation and pipeline development studio-wide.</li>
       <li>Spearheaded delivery of the studio’s first fully finals project, implementing code fixes under a strict deadline while delivering shots to an outside vendor.</li>
       <li>Developed a Maya 2017 Animation Exporter writing to Perforce for immediate Unreal use; explored Nuke-to-Unreal asset pipeline.</li>
     </ul>`,
-  realtime: `<div class="kicker">Lens 03 · Realtime Tech Art</div>
-    <h1>Realtime Tech Art</h1>
+  realtime: `<div class="kicker">Realtime Tech Art</div>
     <p>Realtime tech art work spanning WebRTC/libp2p/WebGPU media delivery, P2P mesh offload, Maya virtual-camera latency work, Unreal/VR realtime experiences, mobile VR web apps, and real-time 3D face interaction.</p>
-    <h2>Through-line</h2>
+    <h2>Summary</h2>
     <p><strong>Stream Seed, Glassbox Technologies, VR Pipeline R&amp;D, VRLIVE, and Alexx Henry Studios.</strong> Realtime work across WebRTC/libp2p/WebGPU media delivery, P2P mesh offload, Maya virtual-camera latency debugging, Unreal/VR realtime experiences, mobile VR web apps, and real-time 3D face interaction.</p>
     <h2>What I actually built</h2>
     <ul>
@@ -1380,13 +1377,13 @@ const CONTENT = {
       <li>Developed real-time metadata tracking for peer contribution and offload metrics; adopted WebRTC, libp2p, and WebGPU to solve evolving media challenges.</li>
       <li>Developed a Maya virtual camera plugin in C++/Python; contributed frame timing, digital camera lens modeling, keyframe handling, and animation storage.</li>
       <li>Resolved critical Wi‑Fi latency bottlenecks that made the product unusable in production, enabling stable real-time operation for live client demos.</li>
-      <li>Delivered a pitch-ready prototype for Netflix and Epic in two weeks.</li>
+      <li>Delivered a pitch-ready virtual camera prototype for Netflix and Epic in two weeks.</li>
       <li>Created interactive experiences for Vive and Oculus; developed HD stereo video in a realtime Unreal scene and stress-tested Bink 2 video compression in Unreal.</li>
       <li>Built a Maya 2017 Animation Exporter writing to Perforce for immediate Unreal use; explored a Nuke-to-Unreal asset pipeline.</li>
       <li>Optimized a mobile VR web application to run across all devices using KRPano for in-browser VR rendering.</li>
       <li>Built the full Node.js backend on AWS with Elastic Beanstalk; designed SQL databases supporting cross-platform accounts/purchases; implemented Stripe payments.</li>
       <li>Created backend APIs to securely obfuscate and serve video content from cloud storage.</li>
-      <li>Created real-time 3D face interaction in conjunction with USC Research Labs.</li>
+      <li>Created real-time 3D face interaction using a standard webcam as the animation driver, in conjunction with USC Research Labs.</li>
     </ul>`
 };
 const WELCOME_CONTENT = `
@@ -1445,7 +1442,7 @@ scene.add(screenObject);
 const CARTRIDGE_DEFS = [
   { id: 'rendering', title: 'Senior Render Wrangler', imgUrl: './cartridges/rendering.webp' },
   { id: 'pipeline',  title: 'Pipeline Engineer',      imgUrl: './cartridges/pipeline.webp'  },
-  { id: 'lookdev',   title: 'Look Development',       imgUrl: './cartridges/lookdev.webp'   },
+  { id: 'realtime',   title: 'Realtime Tech',       imgUrl: './cartridges/lookdev.webp'   },
 ];
 
 const cartridgeObjects = [];
