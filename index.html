@@ -69,14 +69,12 @@ img{max-width:100%}
   pointer-events:none;
   z-index:2;
 }
-/* Hide flat UI when in VR / AR mode */
 body.vr-mode #css3d-root,
 body.vr-mode #view-resume-btn,
 body.vr-mode #ar-button {
   display: none;
 }
 
-/* Button flash animation — must be top-level, not inside a selector list */
 @keyframes resumeFlash {
   0%, 100% {
     background-color: rgba(33,24,21,0.75);
@@ -96,7 +94,7 @@ body.vr-mode #ar-button {
   animation: resumeFlash 1s ease-in-out 5;
   will-change: background-color, box-shadow;
 }
-   
+
 #screen-wrapper{
   position:relative;
   z-index:10;
@@ -141,7 +139,7 @@ body.vr-mode #ar-button {
 }
 #screen-scroll .meta{color:#777;font-size:0.85em;margin-top:28px}
 
-/* === CARTRIDGES — shape-following glow, no rectangles ever === */
+/* === CARTRIDGES === */
 .cartridge{
   position:relative;
   z-index:20;
@@ -164,7 +162,6 @@ body.vr-mode #ar-button {
   -webkit-tap-highlight-color:transparent;
 }
 
-/* Nuke every browser-drawn rectangle on any interaction state */
 .cartridge:focus,
 .cartridge:focus-visible,
 .cartridge:active,
@@ -185,7 +182,6 @@ body.vr-mode #ar-button {
   transition:filter 0.2s ease;
 }
 
-/* ── HOVER on a NON-plugged cartridge: dull green glow ── */
 .cartridge:not(.active):hover .cart-img{
   filter:
     drop-shadow(0 0 15px rgba(106,140,76,0.75))
@@ -193,14 +189,12 @@ body.vr-mode #ar-button {
     brightness(1.04);
 }
 
-/* ── PLUGGED-IN cartridge: orange glow, always on, no hover change ── */
 .cartridge.active .cart-img{
   filter:
     drop-shadow(0 0 10px var(--accent))
     drop-shadow(0 0 22px rgba(232,114,42,0.65))
     brightness(1.12) saturate(1.08);
 }
-/* Pin the active glow so hovering the plugged cart doesn't alter it */
 .cartridge.active:hover .cart-img{
   filter:
     drop-shadow(0 0 10px var(--accent))
@@ -270,22 +264,22 @@ body.vr-mode #ar-button {
    ============================================================ */
 #tool-tube-wrap{
   position:relative;
-  width:110px;
-  height:340px;
+  width:190px;
+  height:460px;
   pointer-events:none;
 }
 
 #tool-tube-label{
   position:absolute;
-  top:-22px;
+  top:-24px;
   left:0;
   right:0;
   text-align:center;
   font-family:var(--mono);
-  font-size:9px;
-  letter-spacing:.22em;
+  font-size:10px;
+  letter-spacing:.24em;
   text-transform:uppercase;
-  color:rgba(200,190,220,.55);
+  color:rgba(210,200,225,.6);
   pointer-events:none;
 }
 
@@ -293,62 +287,58 @@ body.vr-mode #ar-button {
   position:relative;
   width:100%;
   height:100%;
-  /* Cylindrical glass — horizontal gradient = curvature, vertical ellipse caps */
-  border-radius:55px / 24px;
+  border-radius:95px / 28px;
   background:
     linear-gradient(to right,
-      rgba(8,6,12,.92) 0%,
-      rgba(35,28,46,.55) 16%,
-      rgba(90,78,110,.22) 50%,
-      rgba(35,28,46,.55) 84%,
-      rgba(8,6,12,.92) 100%);
-  border:1px solid rgba(180,168,220,.22);
+      rgba(8,6,12,.94) 0%,
+      rgba(35,28,46,.58) 16%,
+      rgba(90,78,110,.24) 50%,
+      rgba(35,28,46,.58) 84%,
+      rgba(8,6,12,.94) 100%);
+  border:1px solid rgba(180,168,220,.24);
   box-shadow:
-    inset 0 0 28px rgba(0,0,0,.75),
-    inset 5px 0 14px rgba(255,210,170,.07),
-    inset -5px 0 14px rgba(0,0,0,.55),
-    0 10px 50px rgba(0,0,0,.55),
-    0 0 70px rgba(232,114,42,.10);
+    inset 0 0 34px rgba(0,0,0,.8),
+    inset 6px 0 16px rgba(255,210,170,.08),
+    inset -6px 0 16px rgba(0,0,0,.6),
+    0 12px 60px rgba(0,0,0,.6),
+    0 0 90px rgba(232,114,42,.12);
   overflow:hidden;
   display:flex;
-  flex-direction:column-reverse;   /* first child = bottom, fills upward */
+  flex-direction:column-reverse;
   align-items:center;
   justify-content:flex-start;
-  padding:10px 0 18px 0;
-  gap:6px;
+  padding:10px 0 16px 0;
+  gap:5px;
   isolation:isolate;
 }
 
-/* Glass rim highlight (top ellipse) */
 #tool-tube::before{
   content:'';
   position:absolute;
   top:3px; left:8%; right:8%;
-  height:22px;
+  height:26px;
   border-radius:50%;
   background:radial-gradient(ellipse at 50% 40%,
-    rgba(255,255,255,.16) 0%,
-    rgba(255,255,255,.04) 45%,
+    rgba(255,255,255,.18) 0%,
+    rgba(255,255,255,.05) 45%,
     transparent 75%);
   pointer-events:none;
-  z-index:1;
+  z-index:3;
 }
 
-/* Warm landing glow at the bottom */
 #tool-tube::after{
   content:'';
   position:absolute;
   bottom:4px; left:14%; right:14%;
-  height:18px;
+  height:22px;
   border-radius:50%;
   background:radial-gradient(ellipse at center,
-    rgba(232,114,42,.22) 0%,
+    rgba(232,114,42,.26) 0%,
     transparent 70%);
   pointer-events:none;
   z-index:0;
 }
 
-/* Empty state */
 .tube-empty{
   position:absolute;
   inset:0;
@@ -357,58 +347,82 @@ body.vr-mode #ar-button {
   justify-content:center;
   text-align:center;
   font-family:var(--mono);
-  font-size:9px;
-  letter-spacing:.14em;
+  font-size:10px;
+  letter-spacing:.16em;
   text-transform:uppercase;
-  color:rgba(200,190,220,.35);
-  padding:0 18px;
+  color:rgba(200,190,220,.38);
+  padding:0 28px;
+  line-height:1.7;
   pointer-events:none;
+  z-index:1;
 }
 
-/* One tool chip */
+/* ── Tool chip (holds a logo <img>, or falls back to full name) ── */
 .tool-chip{
   position:relative;
   z-index:2;
-  width:64px;
-  height:36px;
+  width:148px;
+  height:52px;
   border-radius:8px;
   display:flex;
   align-items:center;
   justify-content:center;
-  font-family:var(--mono);
-  font-size:12px;
-  font-weight:800;
-  letter-spacing:.04em;
-  color:#fff;
-  text-shadow:0 1px 2px rgba(0,0,0,.7);
+  padding:8px 12px;
+  background:#f7f4ee;
   box-shadow:
-    0 3px 8px rgba(0,0,0,.55),
-    inset 0 1px 0 rgba(255,255,255,.35),
-    inset 0 -2px 0 rgba(0,0,0,.35);
+    0 3px 10px rgba(0,0,0,.55),
+    0 0 0 1px rgba(255,255,255,.06),
+    inset 0 1px 0 rgba(255,255,255,.95),
+    inset 0 -2px 0 rgba(0,0,0,.08);
   flex-shrink:0;
+  overflow:hidden;
   will-change:transform,opacity;
-  background-image:linear-gradient(155deg,
-    rgba(255,255,255,.28) 0%,
-    rgba(255,255,255,0) 42%,
-    rgba(0,0,0,.22) 100%);
 }
 
-.tool-chip.drop-in{ animation:chipDropIn .42s cubic-bezier(.34,1.46,.64,1) both; }
+.tool-chip img{
+  max-width:100%;
+  max-height:100%;
+  width:auto;
+  height:auto;
+  object-fit:contain;
+  display:block;
+  pointer-events:none;
+  user-select:none;
+  -webkit-user-drag:none;
+}
+
+/* Fallback when the logo file is missing: full name on brand color */
+.tool-chip.is-fallback{
+  color:#fff;
+  font-family:var(--mono);
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  text-shadow:0 1px 2px rgba(0,0,0,.6), 0 0 4px rgba(0,0,0,.35);
+  background:var(--fallback-color, #444);
+  padding:6px 8px;
+  text-align:center;
+  line-height:1.15;
+}
+
+.tool-chip.drop-in{ animation:chipDropIn .42s cubic-bezier(.34,1.4,.64,1) both; }
 .tool-chip.fall-out{ animation:chipFallOut .36s cubic-bezier(.5,0,.85,.4) both; }
 
 @keyframes chipDropIn{
-  0%   { transform:translateY(-70px) scale(.82); opacity:0; }
-  65%  { transform:translateY(4px)   scale(1.03); opacity:1; }
-  100% { transform:translateY(0)     scale(1);    opacity:1; }
+  0%   { transform:translateY(calc(-1 * var(--drop-distance, 120px))) scale(.85); opacity:0; }
+  55%  { opacity:1; }
+  80%  { transform:translateY(4px) scale(1.03); opacity:1; }
+  100% { transform:translateY(0)   scale(1);    opacity:1; }
 }
 
 @keyframes chipFallOut{
-  0%   { transform:translateY(0)    scale(1)   rotate(0);    opacity:1; }
-  100% { transform:translateY(48px) scale(.75) rotate(10deg); opacity:0; }
+  0%   { transform:translateY(0)     scale(1)   rotate(0);     opacity:1; }
+  100% { transform:translateY(520px) scale(.72) rotate(14deg); opacity:0; }
 }
 
 /* ============================================================
-   RESUME SECTION — Ryan's site scoped here
+   RESUME SECTION
    ============================================================ */
 #resume-section{
   position:relative;
@@ -426,7 +440,6 @@ body.vr-mode #ar-button {
   box-shadow:0 -20px 60px rgba(0,0,0,0.35);
 }
 
-/* Back-to-cinema floating button (mobile) */
 #back-to-cinema-fab{
   position:fixed;
   bottom:24px;
@@ -447,11 +460,9 @@ body.vr-mode #ar-button {
 #back-to-cinema-fab.visible{display:block}
 #back-to-cinema-fab:hover{border-color:var(--accent);color:var(--accent)}
 
-/* ---------- Ryan's global section base ---------- */
 section{padding:64px 0;border-bottom:1px solid var(--line)}
 section:last-of-type{border-bottom:0}
 
-/* ---------- Ryan's site content styles ---------- */
 .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
 
 .site-header{
@@ -916,7 +927,7 @@ h2.section-title{
 }
 </style>
 
-<!-- Google tag (gtag.js) -->
+<!-- Google tag -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-GTQP2J9E2X"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -928,9 +939,6 @@ h2.section-title{
 </head>
 <body>
 
-<!-- ============================================================
-     CINEMA
-     ============================================================ -->
 <section id="cinema-section">
   <canvas id="webgl-canvas"></canvas>
   <div id="css3d-root"></div>
@@ -941,9 +949,6 @@ h2.section-title{
 
 <div id="cinema-spacer"></div>
 
-<!-- ============================================================
-     RESUME (Ryan's site)
-     ============================================================ -->
 <section id="resume-section">
 
   <header class="site-header">
@@ -1224,9 +1229,7 @@ h2.section-title{
     <section class="contact" id="contact">
       <div class="wrap">
         <h2 class="section-title">Contact</h2>
-        <p>
-          The fastest way to reach me is email!
-        </p>
+        <p>The fastest way to reach me is email!</p>
         <div class="contact-links">
           <a href="mailto:vsfxryan@gmail.com">vsfxryan@gmail.com</a>
           <a href="https://www.linkedin.com/in/ryan-neal-791a5959/" target="_blank" rel="noopener">LinkedIn</a>
@@ -1308,7 +1311,6 @@ h2.section-title{
     </div>
   </footer>
 
-  <!-- Lightbox -->
   <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Project detail">
     <button class="lightbox__close" aria-label="Close">×</button>
     <div class="lightbox__inner">
@@ -1324,14 +1326,10 @@ h2.section-title{
 
 </section>
 
-<!-- Floating mobile "back to cinema" -->
 <button id="back-to-cinema-fab" aria-label="Back to Cinema" title="Back to Cinema">↑</button>
 
 <div id="loading">Loading cinema…</div>
 
-<!-- ============================================================
-     IMPORTS
-     ============================================================ -->
 <script type="importmap">
 {
   "imports": {
@@ -1342,41 +1340,39 @@ h2.section-title{
 }
 </script>
 
-<!-- ============================================================
-     CINEMA JS
-     ============================================================ -->
 <script type="module">
 import * as THREE from 'three';
 import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
 import html2canvas from 'html2canvas';
 
 // =========================================================
-// TOOLS — one entry per cartridge id.
-// 'short' is what shows on the badge. Swap in an <img> later if you get real logos.
+// TOOLS — logos live in ./images/logos/ (or wherever you host them)
+// If a logo file is missing, the chip falls back to a brand-colored
+// badge showing the FULL tool name (no more "DK" mystery).
 // =========================================================
 const TOOLS = {
   rendering: [
-    { name:'Deadline',    short:'DL',  color:'#e8443b' },
-    { name:'OpenCue',     short:'OC',  color:'#3b82f6' },
-    { name:'AWS',         short:'AWS', color:'#ff9900' },
-    { name:'Python',      short:'PY',  color:'#3776ab' },
-    { name:'Prometheus',  short:'PR',  color:'#e6522c' },
-    { name:'Grafana',     short:'GF',  color:'#f46800' },
+    { name:'Deadline',   logo:'./images/logos/deadline.png',   color:'#e8443b' },
+    { name:'OpenCue',    logo:'./images/logos/opencue.png',    color:'#3b82f6' },
+    { name:'AWS',        logo:'./images/logos/aws.svg',        color:'#ff9900' },
+    { name:'Python',     logo:'./images/logos/python.svg',     color:'#3776ab' },
+    { name:'Prometheus', logo:'./images/logos/prometheus.svg', color:'#e6522c' },
+    { name:'Grafana',    logo:'./images/logos/grafana.svg',    color:'#f46800' },
   ],
   pipeline: [
-    { name:'Python',      short:'PY',  color:'#3776ab' },
-    { name:'Maya',        short:'MA',  color:'#37a5cc' },
-    { name:'Nuke',        short:'NK',  color:'#d4a900' },
-    { name:'ShotGrid',    short:'SG',  color:'#00a4d4' },
-    { name:'Docker',      short:'DK',  color:'#2496ed' },
-    { name:'Kubernetes',  short:'K8',  color:'#326ce5' },
+    { name:'Python',     logo:'./images/logos/python.svg',     color:'#3776ab' },
+    { name:'Maya',       logo:'./images/logos/maya.png',       color:'#37a5cc' },
+    { name:'Nuke',       logo:'./images/logos/nuke.png',       color:'#d4a900' },
+    { name:'ShotGrid',   logo:'./images/logos/shotgrid.png',   color:'#00a4d4' },
+    { name:'Docker',     logo:'./images/logos/docker.svg',     color:'#2496ed' },
+    { name:'Kubernetes', logo:'./images/logos/kubernetes.svg', color:'#326ce5' },
   ],
   lookdev: [
-    { name:'Arnold',      short:'AR',  color:'#c9302c' },
-    { name:'Katana',      short:'KA',  color:'#7c3aed' },
-    { name:'Houdini',     short:'HD',  color:'#e64a19' },
-    { name:'Nuke',        short:'NK',  color:'#d4a900' },
-    { name:'OpenColorIO', short:'OCI', color:'#8b5cf6' },
+    { name:'Arnold',      logo:'./images/logos/arnold.png',      color:'#c9302c' },
+    { name:'Katana',      logo:'./images/logos/katana.png',      color:'#7c3aed' },
+    { name:'Houdini',     logo:'./images/logos/houdini.png',     color:'#e64a19' },
+    { name:'Nuke',        logo:'./images/logos/nuke.png',        color:'#d4a900' },
+    { name:'OpenColorIO', logo:'./images/logos/opencolorio.png', color:'#8b5cf6' },
   ],
 };
 
@@ -1420,13 +1416,12 @@ const CONTENT = {
     <h2>Tools</h2><p>Arnold · Katana · Houdini · Nuke · OpenColorIO</p>`,
 };
 
-// === Welcome content shown on page load (no auto-inserted cartridge) ===
 const WELCOME_CONTENT = `
   <div class="kicker">Interactive Resume</div>
   <h1>Pick a cartridge</h1>
   <p>Three cartridges sit on the shelf. Each one tells the same career story through a different role lens — pick the one closest to the role you're hiring for, or drag to look around first.</p>
   <h2>What you're looking at</h2>
-  <p>This is a 3D cinema built with Three.js. The cartridges are real DOM elements projected in 3D space. When you click one, it slides into the projector and the screen loads that role's resume.</p>
+  <p>This is a 3D cinema built with Three.js. The cartridges are real DOM elements projected in 3D space. When you click one, it slides into the projector, the screen loads that role's resume, and the toolkit tube fills with the software stack used on that job.</p>
   <h2>Short on time?</h2>
   <p>Click <strong>View Traditional Resume</strong> in the top-right corner to skip the cinema entirely.</p>
 `;
@@ -1458,7 +1453,7 @@ const CART_W = 320;
 const CART_H = 180;
 
 const panoTexture = new THREE.TextureLoader().load(
-  'https://dl.polyhaven.org/file/ph-assets/HDRIs/extra/Tonemapped%20JPG/tv_studio.jpg'
+  'https://dl.polyhaven.org/file/ph-assets/HDRIs/extra/Tonemapped%20JPG/studio_small_03.jpg'
 );
 panoTexture.colorSpace = THREE.SRGBColorSpace;
 const panoMaterial = new THREE.MeshBasicMaterial({ map: panoTexture, side: THREE.BackSide });
@@ -1473,7 +1468,6 @@ screenWrapper.appendChild(screenScroll);
 const screenObject = new CSS3DObject(screenWrapper);
 scene.add(screenObject);
 
-// Cartridges — image only, no text/color underneath.
 const CARTRIDGE_DEFS = [
   { id: 'rendering', title: 'Senior Render Wrangler', imgUrl: './cartridges/rendering.webp' },
   { id: 'pipeline',  title: 'Pipeline Engineer',      imgUrl: './cartridges/pipeline.webp'  },
@@ -1508,17 +1502,17 @@ CARTRIDGE_DEFS.forEach(({ id, title, imgUrl }) => {
 });
 
 // =========================================================
-// TOOL TUBE — a tall glass cylinder that lives to the left of the screen
+// TOOL TUBE — tall glass cylinder to the left of the screen
 // =========================================================
-const TUBE_W_CSS = 110;
-const TUBE_H_CSS = 340;
+const TUBE_W_CSS = 190;
+const TUBE_H_CSS = 460;
 
 const tubeWrap = document.createElement('div');
 tubeWrap.id = 'tool-tube-wrap';
 tubeWrap.innerHTML = `
   <div id="tool-tube-label">Toolkit</div>
   <div id="tool-tube">
-    <div class="tube-empty">Select a cartridge</div>
+    <div class="tube-empty">Select a cartridge<br>to load its toolkit</div>
   </div>
 `;
 const tubeObject = new CSS3DObject(tubeWrap);
@@ -1539,7 +1533,6 @@ let yaw = 0, pitch = 0, targetYaw = 0, targetPitch = 0;
 let targetCameraX = INITIAL_CAMERA_POS.x;
 let targetCameraY = INITIAL_CAMERA_POS.y;
 let targetCameraZ = INITIAL_CAMERA_POS.z;
-// true until first cartridge is picked (drives shelf view vs screen view)
 let inShelfView = true;
 
 const YAW_LIMIT   = THREE.MathUtils.degToRad(70);
@@ -1577,7 +1570,7 @@ canvas.addEventListener('pointerup', endDrag);
 canvas.addEventListener('pointercancel', endDrag);
 
 function faceScreen() {
-  inShelfView = false;   // leave shelf view when a cartridge is chosen
+  inShelfView = false;
   targetCameraX = screenObject.position.x;
   targetCameraY = screenObject.position.y;
   targetCameraZ = screenObject.position.z + CAMERA_SCREEN_DISTANCE;
@@ -1585,8 +1578,6 @@ function faceScreen() {
   targetPitch = 0;
 }
 
-// Compute a camera pose that fits the screen + all cartridges + the tool tube.
-// Only used in landscape; portrait preserves the existing z=5 zoom per user request.
 function computeShelfView() {
   const fovRad = (camera.fov * Math.PI) / 180;
   const aspect = camera.aspect;
@@ -1611,7 +1602,6 @@ function computeShelfView() {
     });
   }
 
-  // Include the tool tube so the camera pulls back to fit it
   if (tubeObject && tubeObject.visible && layoutState.tubeW) {
     items.push({
       minX: tubeObject.position.x - layoutState.tubeW / 2,
@@ -1763,7 +1753,6 @@ function positionCartridges(visibleW, screenWorldW, orientation) {
 function positionTube(cssScale, screenWorldW, orientation) {
   if (!tubeObject) return;
 
-  // Portrait viewport is too tight for a tube on the left edge — hide it.
   if (orientation === 'portrait') {
     tubeObject.visible = false;
     return;
@@ -1794,7 +1783,7 @@ let tubeTargetId  = null;
 function fillTube(cartId) {
   const tools = TOOLS[cartId];
   if (!tools) return;
-  if (cartId === tubeTargetId) return;      // already showing this cart's tools
+  if (cartId === tubeTargetId) return;
   tubeTargetId = cartId;
 
   if (tubeSwapTimer) { clearTimeout(tubeSwapTimer); tubeSwapTimer = null; }
@@ -1811,10 +1800,9 @@ function fillTube(cartId) {
 
   if (existing.length === 0) { doSwap(); return; }
 
-  // Fall out the old chips with a stagger
   existing.forEach((chip, i) => {
     chip.classList.remove('drop-in');
-    void chip.offsetWidth;                  // force reflow so animation restarts
+    void chip.offsetWidth;
     chip.classList.add('fall-out');
     chip.style.animationDelay = (i * 25) + 'ms';
   });
@@ -1826,13 +1814,43 @@ function fillTube(cartId) {
   }, fallTime);
 }
 
+// Chip layout numbers — must match the .tool-chip CSS
+const CHIP_H = 52;
+const CHIP_GAP = 5;
+const CHIP_PADDING_BOTTOM = 16;
+
 function addChips(tube, tools) {
   tools.forEach((tool, i) => {
     const chip = document.createElement('div');
     chip.className = 'tool-chip drop-in';
-    chip.textContent = tool.short;
-    chip.style.backgroundColor = tool.color;
     chip.style.animationDelay = (i * 70) + 'ms';
+    chip.style.setProperty('--fallback-color', tool.color || '#444');
+
+    // Compute how far this chip should fall from above the tube rim.
+    // Chips are laid out bottom-up (flex-direction:column-reverse), so
+    // index 0 sits at the bottom and index N-1 sits at the top.
+    const finalTopY = TUBE_H_CSS - CHIP_PADDING_BOTTOM - CHIP_H - i * (CHIP_H + CHIP_GAP);
+    const startY = -40;                      // start above the tube rim
+    const dropDistance = Math.max(80, finalTopY - startY);
+    chip.style.setProperty('--drop-distance', dropDistance + 'px');
+
+    if (tool.logo) {
+      const img = document.createElement('img');
+      img.src = tool.logo;
+      img.alt = tool.name;
+      img.draggable = false;
+      img.decoding = 'async';
+      img.onerror = () => {
+        img.remove();
+        chip.classList.add('is-fallback');
+        chip.textContent = tool.name;
+      };
+      chip.appendChild(img);
+    } else {
+      chip.classList.add('is-fallback');
+      chip.textContent = tool.name;
+    }
+
     tube.appendChild(chip);
   });
 }
@@ -1893,19 +1911,16 @@ function updateLayout() {
   positionCartridges(visibleW, screenWorldW, orientation);
 
   const cssScale = visibleW / w;
-  positionTube(cssScale, screenWorldW, orientation);   // ← sets layoutState.tubeW/H
+  positionTube(cssScale, screenWorldW, orientation);
 
   if (insertedCartridge && !insertedCartridge.anim) snapToSlot(insertedCartridge);
 
-  // Camera target: shelf view (landscape pulls back; portrait keeps z=5) or screen view
   if (inShelfView) {
     if (orientation === 'portrait') {
-      // Portrait: preserve current zoom (z=5, origin).
       targetCameraX = INITIAL_CAMERA_POS.x;
       targetCameraY = INITIAL_CAMERA_POS.y;
       targetCameraZ = INITIAL_CAMERA_POS.z;
     } else {
-      // Landscape: fit screen + all carts + tube.
       const shelf = computeShelfView();
       targetCameraX = shelf.x;
       targetCameraY = shelf.y;
@@ -2009,7 +2024,7 @@ async function selectCartridge(id) {
     c.el.classList.toggle('active', c.id === id);
   });
 
-  fillTube(id);   // ← fills the tool tube with this project's toolkit
+  fillTube(id);
 
   faceScreen();
   if (isInXR()) snapshotToXrScreen();
@@ -2033,7 +2048,6 @@ document.getElementById('view-resume-btn').addEventListener('click', () => {
   document.getElementById('resume-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
-// Scroll handlers for both back-to-cinema entry points
 function goToCinema() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
 const backNav = document.getElementById('back-to-cinema-nav');
 if (backNav) backNav.addEventListener('click', (e) => { e.preventDefault(); goToCinema(); });
@@ -2246,14 +2260,10 @@ function onResize() {
 window.addEventListener('resize', onResize);
 window.addEventListener('orientationchange', onResize);
 
-// =========================================================
-// BOOT — show welcome message, snap to shelf view, start loop
-// =========================================================
 updateLayout();
 
 screenScroll.innerHTML = WELCOME_CONTENT;
 
-// Snap camera to the computed shelf pose (no pan animation on first frame)
 camera.position.set(targetCameraX, targetCameraY, targetCameraZ);
 yaw = targetYaw;
 pitch = targetPitch;
@@ -2268,9 +2278,6 @@ requestAnimationFrame(() => {
 });
 </script>
 
-<!-- ============================================================
-     RYAN'S SITE JS — arcade game, lightbox, footer year, prewarm
-     ============================================================ -->
 <script>
 (function () {
   var canvas = document.getElementById('g-canvas');
@@ -2909,7 +2916,6 @@ requestAnimationFrame(() => {
   loop();
 })();
 
-/* Credits lightbox */
 (function () {
   var lb      = document.getElementById('lightbox');
   if (!lb) return;
@@ -2958,10 +2964,8 @@ requestAnimationFrame(() => {
   });
 })();
 
-/* Footer year */
 document.getElementById('year').textContent = new Date().getFullYear();
 
-/* Prewarm backend */
 (function prewarmBackend() {
   var BACKEND = "https://ai-stream-mvp.onrender.com";
   var ping = new Image();
