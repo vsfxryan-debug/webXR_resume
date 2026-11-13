@@ -1654,30 +1654,20 @@ function positionCartridges(visibleW, screenWorldW, orientation) {
   const gapBetweenCarts = 0.10;
   const gapFromScreen = 0.15;
 
-  if (orientation === 'landscape') {
-    const startX = screenRightEdge + gapFromScreen + cartWorldW / 2;
-    cartridgeObjects.forEach((c, i) => {
-      c.homeScale = cssScale;
-      c.homePosition = new THREE.Vector3(
-        startX + i * (cartWorldW + gapBetweenCarts),
-        screenObject.position.y,
-        0
-      );
-    });
-  } else {
-    const totalHeight =
-      cartridgeObjects.length * cartWorldH +
-      (cartridgeObjects.length - 1) * gapBetweenCarts;
-    const startY = screenObject.position.y + totalHeight / 2 - cartWorldH / 2;
-    cartridgeObjects.forEach((c, i) => {
-      c.homeScale = cssScale;
-      c.homePosition = new THREE.Vector3(
-        screenRightEdge + gapFromScreen + cartWorldW / 2,
-        startY - i * (cartWorldH + gapBetweenCarts),
-        0
-      );
-    });
-  }
+  // Always stack vertically, to the right of the screen — landscape + portrait alike
+  const totalHeight =
+    cartridgeObjects.length * cartWorldH +
+    (cartridgeObjects.length - 1) * gapBetweenCarts;
+  const startY = screenObject.position.y + totalHeight / 2 - cartWorldH / 2;
+
+  cartridgeObjects.forEach((c, i) => {
+    c.homeScale = cssScale;
+    c.homePosition = new THREE.Vector3(
+      screenRightEdge + gapFromScreen + cartWorldW / 2,
+      startY - i * (cartWorldH + gapBetweenCarts),
+      0
+    );
+  });
 
   for (const c of cartridgeObjects) {
     if (c.state === 'on_shelf' && !c.anim) snapToHome(c);
