@@ -264,22 +264,8 @@ body.vr-mode #ar-button {
    ============================================================ */
 #tool-tube-wrap{
   position:relative;
-  width:190px;
-  height:460px;
-  pointer-events:none;
-}
-
-#tool-tube-label{
-  position:absolute;
-  top:-24px;
-  left:0;
-  right:0;
-  text-align:center;
-  font-family:var(--mono);
-  font-size:10px;
-  letter-spacing:.24em;
-  text-transform:uppercase;
-  color:rgba(210,200,225,.6);
+  width:210px;
+  height:620px;
   pointer-events:none;
 }
 
@@ -287,7 +273,7 @@ body.vr-mode #ar-button {
   position:relative;
   width:100%;
   height:100%;
-  border-radius:95px / 28px;
+  border-radius:105px / 30px;
   background:
     linear-gradient(to right,
       rgba(8,6,12,.94) 0%,
@@ -307,75 +293,25 @@ body.vr-mode #ar-button {
   flex-direction:column-reverse;
   align-items:center;
   justify-content:flex-start;
-  padding:10px 0 16px 0;
-  gap:5px;
+  padding:12px 12px 16px 12px;   /* horizontal padding creates chip inset */
+  gap:6px;
   isolation:isolate;
 }
 
-#tool-tube::before{
-  content:'';
-  position:absolute;
-  top:3px; left:8%; right:8%;
-  height:26px;
-  border-radius:50%;
-  background:radial-gradient(ellipse at 50% 40%,
-    rgba(255,255,255,.18) 0%,
-    rgba(255,255,255,.05) 45%,
-    transparent 75%);
-  pointer-events:none;
-  z-index:3;
-}
-
-#tool-tube::after{
-  content:'';
-  position:absolute;
-  bottom:4px; left:14%; right:14%;
-  height:22px;
-  border-radius:50%;
-  background:radial-gradient(ellipse at center,
-    rgba(232,114,42,.26) 0%,
-    transparent 70%);
-  pointer-events:none;
-  z-index:0;
-}
-
-.tube-empty{
-  position:absolute;
-  inset:0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  text-align:center;
-  font-family:var(--mono);
-  font-size:10px;
-  letter-spacing:.16em;
-  text-transform:uppercase;
-  color:rgba(200,190,220,.38);
-  padding:0 28px;
-  line-height:1.7;
-  pointer-events:none;
-  z-index:1;
-}
-
-/* ── Tool chip (holds a logo <img>, or falls back to full name) ── */
+/* ── Tool chip — transparent, fills tube width, room for big logos ── */
 .tool-chip{
   position:relative;
   z-index:2;
-  width:148px;
-  height:52px;
-  border-radius:8px;
+  width:100%;                     /* fill tube interior (186px) */
+  height:92px;                    /* big enough for ~1.8× larger logos */
+  border-radius:12px;
   display:flex;
   align-items:center;
   justify-content:center;
-  padding:8px 12px;
-  background:#f7f4ee;
-  box-shadow:
-    0 3px 10px rgba(0,0,0,.55),
-    0 0 0 1px rgba(255,255,255,.06),
-    inset 0 1px 0 rgba(255,255,255,.95),
-    inset 0 -2px 0 rgba(0,0,0,.08);
+  padding:0;
+  background:transparent;         /* ⬅ no more cream rectangle */
   flex-shrink:0;
-  overflow:hidden;
+  overflow:visible;
   will-change:transform,opacity;
 }
 
@@ -389,19 +325,20 @@ body.vr-mode #ar-button {
   pointer-events:none;
   user-select:none;
   -webkit-user-drag:none;
+  filter:drop-shadow(0 3px 8px rgba(0,0,0,.55));
 }
 
-/* Fallback when the logo file is missing: full name on brand color */
+/* Only the missing-logo fallback gets a visible surface */
 .tool-chip.is-fallback{
+  background:var(--fallback-color, #444);
   color:#fff;
   font-family:var(--mono);
-  font-size:11px;
+  font-size:13px;
   font-weight:800;
   letter-spacing:.06em;
   text-transform:uppercase;
-  text-shadow:0 1px 2px rgba(0,0,0,.6), 0 0 4px rgba(0,0,0,.35);
-  background:var(--fallback-color, #444);
-  padding:6px 8px;
+  text-shadow:0 1px 2px rgba(0,0,0,.6), 0 0 6px rgba(0,0,0,.35);
+  padding:8px 14px;
   text-align:center;
   line-height:1.15;
 }
@@ -1504,8 +1441,8 @@ CARTRIDGE_DEFS.forEach(({ id, title, imgUrl }) => {
 // =========================================================
 // TOOL TUBE — tall glass cylinder to the left of the screen
 // =========================================================
-const TUBE_W_CSS = 190;
-const TUBE_H_CSS = 460;
+const TUBE_W_CSS = 210;
+const TUBE_H_CSS = 620;
 
 const tubeWrap = document.createElement('div');
 tubeWrap.id = 'tool-tube-wrap';
@@ -1815,8 +1752,8 @@ function fillTube(cartId) {
 }
 
 // Chip layout numbers — must match the .tool-chip CSS
-const CHIP_H = 52;
-const CHIP_GAP = 5;
+const CHIP_H = 92;
+const CHIP_GAP = 6;
 const CHIP_PADDING_BOTTOM = 16;
 
 function addChips(tube, tools) {
@@ -1830,7 +1767,7 @@ function addChips(tube, tools) {
     // Chips are laid out bottom-up (flex-direction:column-reverse), so
     // index 0 sits at the bottom and index N-1 sits at the top.
     const finalTopY = TUBE_H_CSS - CHIP_PADDING_BOTTOM - CHIP_H - i * (CHIP_H + CHIP_GAP);
-    const startY = -40;                      // start above the tube rim
+    const startY = -80;                       // was -40
     const dropDistance = Math.max(80, finalTopY - startY);
     chip.style.setProperty('--drop-distance', dropDistance + 'px');
 
