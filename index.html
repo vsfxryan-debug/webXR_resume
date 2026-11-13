@@ -1475,6 +1475,7 @@ CARTRIDGE_DEFS.forEach(({ id, title, imgUrl }) => {
 let shakeSession = null;
 let easterEggActive = false;
 let originalCabScreen = null;
+let lastEasterEggTriggerTime = 0;
 
 const SHAKE_MIN_COUNT         = 12;    // direction flips required
 const SHAKE_MIN_DURATION_MS   = 1000;  // must shake for at least this long
@@ -1569,6 +1570,7 @@ async function quickEject(cart) {
 
 function triggerEasterEgg() {
   if (easterEggActive) return;
+  lastEasterEggTriggerTime = performance.now(); 
   easterEggActive = true;
 
   const cart = insertedCartridge;
@@ -2166,7 +2168,9 @@ async function ejectCartridge(cart) {
 }
 
 async function selectCartridge(id) {
-  if (easterEggActive) exitEasterEgg(false);   // ← NEW LINE GOES HERE
+  // Ignore the click that fires immediately after a shake triggers the easter egg
+  if (performance.now() - lastEasterEggTriggerTime < 500) return;   // ← ADD THIS LINE
+  if (easterEggActive) exitEasterEgg(false);
   const newCart = cartridgeObjects.find(c => c.id === id);
   if (!newCart) return;
 
